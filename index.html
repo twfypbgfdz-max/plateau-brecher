@@ -960,6 +960,7 @@ function init(){
 }
 
 async function syncAllFromSheet(){
+  return; // SYNC DEAKTIVIERT — Bug-Fix ausstehend
   if(!API_URL)return;
   try{
     showStatus('ok','↻ Lade Sheet-Daten…');
@@ -1762,6 +1763,7 @@ let lastSyncTime = 0;
 const SYNC_COOLDOWN = 30000; // 30 Sekunden Mindestabstand
 
 async function syncFromSheet() {
+  return; // SYNC DEAKTIVIERT
   const url = store.apiUrl;
   if (!url) return;
   const now = Date.now();
