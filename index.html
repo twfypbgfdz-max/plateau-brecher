@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#080808">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PB V7.4">
-<title>Plateau-Brecher V7.4</title>
+<meta name="apple-mobile-web-app-title" content="PB V7.9">
+<title>Plateau-Brecher V7.9</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap');
 :root{
@@ -375,12 +375,21 @@ main{padding:16px;max-width:860px;}
 ::-webkit-scrollbar{width:3px;height:3px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--bor);border-radius:2px;}
+.consent-overlay{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(15px);}
+.consent-box{background:var(--sur);border:1px solid var(--acc);padding:24px;border-radius:var(--r);max-width:380px;text-align:center;}
 </style>
 </head>
 <body>
+<div class="consent-overlay" id="consentOverlay">
+  <div class="consent-box">
+    <h2 style="font-family:'Bebas Neue';color:var(--acc);">SYSTEM-START V7.9</h2>
+    <p style="font-size:11px;margin:15px 0;line-height:1.6;color:var(--tx2);">Daten werden lokal gespeichert und via API synchronisiert. Fehler-Logging ist aktiv.</p>
+    <button class="save-btn" onclick="acceptConsent()">Akzeptieren &amp; Starten</button>
+  </div>
+</div>
 <header>
   <div>
-    <div class="logo">PB<span style="color:var(--mu);font-size:.55em;vertical-align:middle"> V7.1</span></div>
+    <div class="logo">PB<span style="color:var(--mu);font-size:.55em;vertical-align:middle"> V7.9</span></div>
     <span class="hbadge" id="todayBadge">Lädt…</span>
   </div>
   <div class="header-right">
@@ -453,9 +462,19 @@ main{padding:16px;max-width:860px;}
   <div class="setup-step">
     <div class="step-num">5</div><div class="step-title">Groq API Key (KI-Analyse — Kostenlos)</div>
     <div class="step-desc" style="margin-bottom:6px;">Kostenloser Key auf <b><a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys ↗</a></b> — nur lokal gespeichert, wird nie übertragen</div>
-    <input class="ai-key-input" id="aiKeyInput" type="password" placeholder="gsk_…" autocomplete="off">
-    <button class="test-btn" style="margin-top:6px;" onclick="saveAiKey()"><svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;"><polyline points="20 6 9 17 4 12"/></svg>Key speichern</button>
+    <input class="ai-key-input" id="aiKeyInput" type="password" placeholder="gsk_… (Groq)" autocomplete="off">
+    <input class="ai-key-input" id="geminiKeyInput" type="password" placeholder="AIza… (Gemini)" autocomplete="off" style="margin-top:6px;">
+    <button class="test-btn" style="margin-top:6px;" onclick="saveAiKey()"><svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;"><polyline points="20 6 9 17 4 12"/></svg>Keys speichern</button>
     <div class="status" id="aiKeyStatus"></div>
+  </div>
+  <!-- Daten & Log -->
+  <div class="setup-step">
+    <div class="step-num">6</div><div class="step-title">Daten & Log</div>
+    <button class="test-btn" onclick="exportBackup()">💾 Backup (JSON)</button>
+    <button class="test-btn" onclick="alert(showDebugLog())">🔍 Fehler-Log anzeigen</button>
+    <input type="file" id="importFile" style="display:none" onchange="handleImport(this)">
+    <button class="test-btn" onclick="document.getElementById('importFile').click()">📥 Backup importieren</button>
+    <button class="test-btn" style="border-color:var(--acc2);color:var(--acc2);" onclick="wipeAllData()">⚠ Alle Daten löschen</button>
   </div>
 </div>
 
@@ -500,10 +519,14 @@ main{padding:16px;max-width:860px;}
   <!-- AI module -->
   <button class="ai-analyze-btn" id="aiAnalyzeBtn" onclick="runAiAnalysis()">
     <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-    KI-Analyse starten
+    Groq — Daten-Analyse
+  </button>
+  <button class="ai-analyze-btn" id="geminiAnalyzeBtn" onclick="runExpertAnalysis()" style="background:var(--acc2);color:#fff;margin-top:8px;">
+    <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    Gemini — Coach-Feedback
   </button>
   <div class="ai-section" id="aiModule" style="display:none;">
-    <div class="ai-section-title">🤖 KI-Analyse</div>
+    <div class="ai-section-title" id="aiModuleTitle">🤖 KI-Analyse</div>
     <div id="aiContent"></div>
   </div>
   <div style="margin-top:14px;background:var(--sur);border:1px solid var(--bor);padding:11px;border-radius:var(--r);">
@@ -552,7 +575,7 @@ main{padding:16px;max-width:860px;}
 // APPS SCRIPT CODE
 // ============================================================
 const SCRIPT_CODE = [
-  "// PLATEAU-BRECHER V6.2 — Google Apps Script API",
+  "// PLATEAU-BRECHER V7.9 — Google Apps Script API",
   "const SHEET_ID = '1NA5OUomzaSFSw6_VzdJ6U7FaD1bU0qTEsQCtIneJ1JI';",
   "",
   "function doPost(e) {",
@@ -566,6 +589,14 @@ const SCRIPT_CODE = [
   "      return ContentService.createTextOutput(JSON.stringify({success:false,message:'Keine Daten empfangen'})).setMimeType(ContentService.MimeType.JSON);",
   "    }",
   "    const data = JSON.parse(raw);",
+  "    // Log-Handling: App-Fehler in Log-Sheet schreiben",
+  "    if (data.type === 'log') {",
+  "      const ss2 = SpreadsheetApp.openById(SHEET_ID);",
+  "      const logSheet = ss2.getSheetByName('Log') || ss2.insertSheet('Log');",
+  "      if (logSheet.getLastRow() === 0) logSheet.appendRow(['Zeitstempel','Version','Typ','Nachricht','Gerät','Zeile']);",
+  "      logSheet.appendRow([new Date(), data.ver, data.type_detail, data.msg, data.device, data.line]);",
+  "      return ContentService.createTextOutput('Logged');",
+  "    }",
   "    if (data.type === 'pr') {",
   "      return ContentService.createTextOutput(JSON.stringify({success:true,message:writePR(data)})).setMimeType(ContentService.MimeType.JSON);",
   "    }",
@@ -580,7 +611,7 @@ const SCRIPT_CODE = [
   "  if(action==='getData'){try{return ContentService.createTextOutput(JSON.stringify(getData(e.parameter.sheet||'ZYKLUS 1',e.parameter.date||''  ))).setMimeType(ContentService.MimeType.JSON);}catch(err){return ContentService.createTextOutput(JSON.stringify({success:false,message:err.toString()})).setMimeType(ContentService.MimeType.JSON);}}",
   "  if(action==='getErrors'){try{return ContentService.createTextOutput(JSON.stringify(getErrors())).setMimeType(ContentService.MimeType.JSON);}catch(err){return ContentService.createTextOutput(JSON.stringify({success:false,message:err.toString()})).setMimeType(ContentService.MimeType.JSON);}}",
   "  if(action==='getAiContext'){try{return ContentService.createTextOutput(JSON.stringify(getAiContext(e.parameter.sheet||'ZYKLUS 1'))).setMimeType(ContentService.MimeType.JSON);}catch(err){return ContentService.createTextOutput(JSON.stringify({success:false,message:err.toString()})).setMimeType(ContentService.MimeType.JSON);}}",
-  "  return ContentService.createTextOutput(JSON.stringify({success:true,message:'Plateau-Brecher API laeuft!',version:'V6.5'})).setMimeType(ContentService.MimeType.JSON);",
+  "  return ContentService.createTextOutput(JSON.stringify({success:true,message:'Plateau-Brecher API laeuft!',version:'V7.9'})).setMimeType(ContentService.MimeType.JSON);",
   "}",
   "",
   "function getData(sheetName,targetDate){",
@@ -760,13 +791,35 @@ const PLAN = [
 // ============================================================
 // STORAGE
 // ============================================================
-const SK='pb_v7_4';
+const SK='pb_v7_9';
+const APP_VERSION='V7.9';
+const errorLog=[];
 let store={};
 try{store=JSON.parse(localStorage.getItem(SK)||'{}');}catch(e){}
 
+function logToSystem(msg,type='JS_ERROR',line=''){
+  const cleanMsg=msg.toString().replace(/(gsk_|AIza)[a-zA-Z0-9_-]+/g,'[REDACTED]');
+  errorLog.push(`[${new Date().toLocaleTimeString()}] ${type}: ${cleanMsg}`);
+  if(store._apiUrl){
+    const errObj={type:'log',type_detail:type,msg:cleanMsg,line:line,ver:APP_VERSION,device:navigator.userAgent.slice(0,50)};
+    fetch(store._apiUrl,{method:'POST',mode:'no-cors',body:JSON.stringify(errObj)}).catch(()=>{});
+  }
+}
+window.onerror=(m,u,l)=>logToSystem(m,'UI_ERROR',l);
+window.addEventListener('online',()=>{
+  const el=document.getElementById('connectionStatus');
+  if(el)el.textContent='Status: Online ✓';
+  document.body.style.borderTop='none';
+});
+window.addEventListener('offline',()=>{
+  const el=document.getElementById('connectionStatus');
+  if(el)el.textContent='Status: Offline';
+  document.body.style.borderTop='4px solid var(--acc2)';
+});
+
 // Migrate from old storage key if empty
 if(Object.keys(store).length===0){
-  ['pb_v7_3','pb_v7_2','pb_v7_1','pb_v6_4','pb_v6_1','pb_v5_4'].forEach(oldKey=>{
+  ['pb_v7_4','pb_v7_3','pb_v7_2','pb_v7_1','pb_v6_4','pb_v6_1','pb_v5_4'].forEach(oldKey=>{
     try{
       const old=JSON.parse(localStorage.getItem(oldKey)||'{}');
       if(Object.keys(old).length>0&&!store._migrated){
@@ -852,6 +905,33 @@ function loadBW(){
 // ============================================================
 // INIT
 // ============================================================
+function exportBackup(){
+  const blob=new Blob([JSON.stringify(store,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='pb_backup_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+}
+function handleImport(input){
+  const reader=new FileReader();
+  reader.onload=(e)=>{
+    try{
+      const imported=JSON.parse(e.target.result);
+      if(confirm('Backup importieren? Aktuelle Daten werden überschrieben.')){
+        Object.assign(store,imported);persist();location.reload();
+      }
+    }catch(err){alert('Fehler beim Lesen der Backup-Datei.');}
+  };
+  reader.readAsText(input.files[0]);
+}
+function wipeAllData(){
+  if(confirm('Alle lokalen Daten löschen? Diese Aktion kann nicht rückgängig gemacht werden!')){
+    localStorage.removeItem(SK);location.reload();
+  }
+}
+function showDebugLog(){
+  return errorLog.length>0?errorLog.join('\n'):'Kein Fehler-Log vorhanden.';
+}
 function init(){
   if(store._theme==='light')document.documentElement.setAttribute('data-theme','light');
   const now=new Date();
@@ -870,6 +950,8 @@ function init(){
     :'Rest';
   if(store._apiUrl){API_URL=store._apiUrl;const el=document.getElementById('apiUrlInput');if(el)el.value=API_URL;}
   if(store._aiKey){const el=document.getElementById('aiKeyInput');if(el)el.value=store._aiKey;}
+  if(store._geminiKey){const el=document.getElementById('geminiKeyInput');if(el)el.value=store._geminiKey;}
+  if(!store._consent){document.getElementById('consentOverlay').style.display='flex';}
   updateApiStatus();
   document.getElementById('scriptCodeBox').textContent=SCRIPT_CODE;
   renderCycleRow();renderWeekRow();renderDayRow();renderWorkout();renderOverview();renderRecords();
@@ -1073,9 +1155,55 @@ function saveAiKey(){
     const s=document.getElementById('aiKeyStatus');
     s.className='status vis err';s.textContent='⚠ Key zu kurz';s.style.display='block';return;
   }
-  store._aiKey=val;persist();
+  store._aiKey=val;
+  const gval=document.getElementById('geminiKeyInput').value.trim();
+  if(gval&&gval.length>10) store._geminiKey=gval;
+  persist();
   const s=document.getElementById('aiKeyStatus');
-  s.className='status vis ok';s.textContent='✓ Key gespeichert!';s.style.display='block';
+  s.className='status vis ok';s.textContent='✓ Keys gespeichert!';s.style.display='block';
+}
+function saveGeminiKey(){
+  const val=document.getElementById('geminiKeyInput').value.trim();
+  if(val&&val.length>10){store._geminiKey=val;persist();}
+}
+function acceptConsent(){
+  store._consent=true;persist();
+  document.getElementById('consentOverlay').style.display='none';
+}
+async function runExpertAnalysis(){
+  const btn=document.getElementById('geminiAnalyzeBtn');
+  const out=document.getElementById('aiContent');
+  const mod=document.getElementById('aiModule');
+  const title=document.getElementById('aiModuleTitle');
+  if(!store._geminiKey) return alert('Gemini Key fehlt — bitte im Setup eintragen.');
+  btn.disabled=true;
+  mod.style.display='block';
+  if(title) title.textContent='🌟 Gemini Coach-Feedback';
+  out.innerHTML='<div style="display:flex;align-items:center;gap:8px;"><div class="spinner"></div> Coach analysiert...</div>';
+  try{
+    const days=[];
+    for(let c=0;c<9;c++){
+      for(let w=0;w<4;w++){
+        for(let d=0;d<5;d++){
+          const k=c+'_'+w+'_'+d+'_0';
+          if(store[k]&&store[k].g1) days.push({c,w,d,data:store[k]});
+        }
+      }
+    }
+    if(days.length===0){out.innerHTML='⚠ Noch keine Trainingsdaten — trag erst ein paar Einheiten ein.';btn.disabled=false;return;}
+    const prompt=`Du bist ein erfahrener Personal Trainer. Analysiere diese Trainingsdaten und gib 3 konkrete Tipps zu Technik, Progression und Erholung. Daten: ${JSON.stringify(days.slice(-20))}. Antworte auf Deutsch, präzise, max 200 Wörter.`;
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${store._geminiKey}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})
+    });
+    const data=await r.json();
+    if(data.error) throw new Error(data.error.message);
+    out.innerHTML=data.candidates[0].content.parts[0].text.replace(/\n/g,'<br>');
+  }catch(e){
+    out.innerHTML='⚠ Fehler: '+e.message;
+    logToSystem(e,'GEMINI_ERROR');
+  }
+  btn.disabled=false;
 }
 
 async function runAiAnalysis(){
