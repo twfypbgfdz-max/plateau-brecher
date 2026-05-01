@@ -635,6 +635,7 @@ const SCRIPT_CODE = [
   "        }",
   "      }",
   "    });",
+  "    if (updated === 0) throw new Error('Sheet-Fehler: Datum ' + data.date + ' nicht gefunden. Nichts gespeichert!');",
   "    return ContentService.createTextOutput(JSON.stringify({success:true,message:updated+' Übungen aktualisiert ('+data.date+')'})).setMimeType(ContentService.MimeType.JSON);",
   "  } catch(err) {",
   "    return ContentService.createTextOutput(JSON.stringify({success:false,message:err.toString()})).setMimeType(ContentService.MimeType.JSON);",
@@ -845,6 +846,10 @@ function logToSystem(msg,type='JS_ERROR',line=''){
   }
 }
 window.onerror=(m,u,l)=>logToSystem(m,'UI_ERROR',l);
+window.addEventListener('unhandledrejection',(event)=>{
+  logToSystem(event.reason,'ASYNC_ERROR');
+  addToErrorLog('CRITICAL_FAIL',sanitize(String(event.reason)));
+});
 
 // XSS-Sanitize: alle Sheet-Daten durch diese Funktion jagen
 function sanitize(str){
@@ -1027,7 +1032,10 @@ async function syncAllFromSheet(){
     const matched=new Set();
     data.rows.forEach(row=>{
       // Datum-Check: nur Zeilen für exakt diesen Tag übernehmen
-      if(row.date && row.date !== day.date) return;
+      if(row.date && row.date !== day.date) {
+        addToErrorLog('DATEN_WARNUNG','Sheet liefert falsches Datum: '+row.date+' (Erwartet: '+day.date+')');
+        return;
+      }
       const normRow=normalize(row.exercise);
       // Suche nur wenn Übungsname im PLAN für diesen Tag vorkommt
       const exIdx=day.exercises.findIndex((ex,ei)=>{
@@ -1841,7 +1849,10 @@ async function syncFromSheet(){
     let changed=false;
     const matched=new Set();
     data.rows.forEach(row=>{
-      if(row.date && row.date !== day.date) return;
+      if(row.date && row.date !== day.date) {
+        addToErrorLog('DATEN_WARNUNG','Sheet liefert falsches Datum: '+row.date+' (Erwartet: '+day.date+')');
+        return;
+      }
       const normRow=normalize(row.exercise);
       const exIdx=day.exercises.findIndex((ex,ei)=>{
         if(matched.has(ei))return false;
@@ -1852,7 +1863,7 @@ async function syncFromSheet(){
       const d=getD(C,W,D,exIdx);
       const fields={g1:row.g1,r1:row.r1,g2:row.g2,r2:row.r2,g3:row.g3,r3:row.r3,rpe:row.rpe,notes:row.notes};
       Object.entries(fields).forEach(([k,v])=>{
-        const val=String(v||'').trim();
+        const val=sanitize(String(v||'').trim());
         if(val&&val!=='0'&&String(d[k]||'').trim()===''){d[k]=val;changed=true;}
       });
     });
