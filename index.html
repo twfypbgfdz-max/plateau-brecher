@@ -876,19 +876,8 @@ window.addEventListener('offline',()=>{
   document.body.style.borderTop='4px solid var(--acc2)';
 });
 
-// Migrate from old storage key if empty
-if(Object.keys(store).length===0){
-  ['pb_v7_4','pb_v7_3','pb_v7_2','pb_v7_1','pb_v6_4','pb_v6_1','pb_v5_4'].forEach(oldKey=>{
-    try{
-      const old=JSON.parse(localStorage.getItem(oldKey)||'{}');
-      if(Object.keys(old).length>0&&!store._migrated){
-        Object.assign(store,old);
-        store._migrated=oldKey;
-        persist();
-      }
-    }catch(e){}
-  });
-}
+// Migration deaktiviert — Sync holt Daten direkt vom Sheet
+// (alte Keys pb_v7_4 etc. werden nicht mehr importiert)
 
 function persist(){try{localStorage.setItem(SK,JSON.stringify(store));}catch(e){}}
 function getD(c,w,d,e){const k=c+'_'+w+'_'+d+'_'+e;if(!store[k])store[k]={g1:'',r1:'',g2:'',r2:'',g3:'',r3:'',notes:'',done:false};return store[k];}
