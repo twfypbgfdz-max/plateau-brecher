@@ -971,11 +971,18 @@ async function syncAllFromSheet(){
     if(!data.success||!data.rows||!data.rows.length){showStatus('ok','✓ Keine neuen Daten');return;}
     const normalize=s=>s.toLowerCase().replace(/[^a-z0-9äöüß]/g,'');
     let changed=false;
-    data.rows.forEach(row=>{
+    console.log('[SYNC] Rows vom Sheet:', data.rows.map(r=>r.exercise));
+    console.log('[SYNC] PLAN Übungen:', day.exercises);
+    data.rows.forEach((row,ri)=>{
+      const normRow=normalize(row.exercise);
       const exIdx=day.exercises.findIndex((_,ei)=>{
         const customName=store['exname_'+C+'_'+W+'_'+D+'_'+ei]||day.exercises[ei];
-        return normalize(row.exercise)===normalize(customName)||normalize(row.exercise)===normalize(day.exercises[ei]);
+        const normPlan=normalize(customName);
+        const normOrig=normalize(day.exercises[ei]);
+        console.log('[SYNC] Row'+ri+' "'+normRow+'" vs Plan'+ei+' "'+normPlan+'"');
+        return normRow===normPlan||normRow===normOrig;
       });
+      console.log('[SYNC] Row'+ri+' ('+row.exercise+') → exIdx='+exIdx);
       if(exIdx<0)return;
       const d=getD(C,W,D,exIdx);
       const fields={g1:row.g1,r1:row.r1,g2:row.g2,r2:row.r2,g3:row.g3,r3:row.r3,rpe:row.rpe,notes:row.notes};
@@ -1009,12 +1016,38 @@ function renderWeekRow(){
 function setW(i,btn){W=i;D=0;btn.parentElement.querySelectorAll('.dbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderDayRow();renderWorkout();loadBW();}
 function renderDayRow(){
   const week=PLAN[C].weeks[W];
-  document.getElementById('daySelRow').innerHTML=week.days.map((day,i)=>{
-    const ts=day.tag.split(':')[0]+':'+(day.tag.split(':')[1]||'').split('(')[0].trim();
-    return'<button class="dbtn '+(i===D?'active':'')+'" onclick="setD('+i+',this)">'+day.date+' '+ts+'</button>';
+  const days=week.days;
+  const prevDay=D>0?D-1:(W>0?PLAN[C].weeks[W-1].days.length-1:-1);
+  const nextDay=D<days.length-1?D+1:-1;
+  let html='<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">';
+  // Prev arrow
+  html+='<button class="dbtn" style="padding:6px 10px;font-size:14px;" onclick="prevDay()" '+(D===0&&W===0&&C===0?'disabled style="opacity:.3"':'')+'>‹</button>';
+  // Day buttons
+  html+=days.map((day,i)=>{
+    const ts=day.tag.split(':')[1]?day.tag.split(':')[1].split('(')[0].trim():day.tag;
+    return'<button class="dbtn '+(i===D?'active':'')+'" onclick="setD('+i+',this)" style="font-size:9px;"><span style="color:var(--mu);display:block;font-size:8px;">'+day.date+'</span>'+ts+'</button>';
   }).join('');
+  // Next arrow
+  html+='<button class="dbtn" style="padding:6px 10px;font-size:14px;" onclick="nextDay()" '+(D===days.length-1&&W===PLAN[C].weeks.length-1&&C===PLAN.length-1?'disabled style="opacity:.3"':'')+'>›</button>';
+  html+='</div>';
+  document.getElementById('daySelRow').innerHTML=html;
 }
-function setD(i,btn){D=i;btn.parentElement.querySelectorAll('.dbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderWorkout();loadBW();}
+function setD(i,btn){D=i;btn.closest('.sec').querySelectorAll('.dbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderWorkout();loadBW();if(API_URL)syncAllFromSheet();}
+function prevDay(){
+  if(D>0){D--;}
+  else if(W>0){W--;D=PLAN[C].weeks[W].days.length-1;}
+  else if(C>0){C--;W=PLAN[C].weeks.length-1;D=PLAN[C].weeks[W].days.length-1;renderCycleRow();renderWeekRow();}
+  else return;
+  renderDayRow();renderWorkout();loadBW();
+}
+function nextDay(){
+  const days=PLAN[C].weeks[W].days;
+  if(D<days.length-1){D++;}
+  else if(W<PLAN[C].weeks.length-1){W++;D=0;renderWeekRow();}
+  else if(C<PLAN.length-1){C++;W=0;D=0;renderCycleRow();renderWeekRow();}
+  else return;
+  renderDayRow();renderWorkout();loadBW();
+}
 
 // ============================================================
 // CALCULATIONS
@@ -1179,20 +1212,16 @@ async function runExpertAnalysis(){
   btn.disabled=true;
   mod.style.display='block';
   if(title) title.textContent='🌟 Gemini Coach-Feedback';
-  out.innerHTML='<div style="display:flex;align-items:center;gap:8px;"><div class="spinner"></div> Coach analysiert...</div>';
+  out.innerHTML='<div style="display:flex;align-items:center;gap:8px;"><div class="spinner"></div> <span style="color:var(--acc2)">Coach-Modus: Analyse...</span></div>';
+  // Kontext: letzte Trainingseinheiten aus store
+  const trainingContext=Object.keys(store)
+    .filter(k=>!k.startsWith('_'))
+    .slice(-15)
+    .map(k=>k+': '+JSON.stringify(store[k])).join('\n');
+  if(!trainingContext.trim()){out.innerHTML='⚠ Noch keine Trainingsdaten — trag erst ein paar Einheiten ein.';btn.disabled=false;return;}
+  const prompt='Du bist ein Expert-Coach. Analysiere diese Trainingsdaten: '+trainingContext+'. Gib 3 konkrete Tipps zu Progression und Technik auf Deutsch, max 200 Wörter.';
   try{
-    const days=[];
-    for(let c=0;c<9;c++){
-      for(let w=0;w<4;w++){
-        for(let d=0;d<5;d++){
-          const k=c+'_'+w+'_'+d+'_0';
-          if(store[k]&&store[k].g1) days.push({c,w,d,data:store[k]});
-        }
-      }
-    }
-    if(days.length===0){out.innerHTML='⚠ Noch keine Trainingsdaten — trag erst ein paar Einheiten ein.';btn.disabled=false;return;}
-    const prompt=`Du bist ein erfahrener Personal Trainer. Analysiere diese Trainingsdaten und gib 3 konkrete Tipps zu Technik, Progression und Erholung. Daten: ${JSON.stringify(days.slice(-20))}. Antworte auf Deutsch, präzise, max 200 Wörter.`;
-    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${store._geminiKey}`,{
+    const r=await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key='+store._geminiKey,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})
     });
