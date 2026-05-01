@@ -1192,7 +1192,7 @@ async function runExpertAnalysis(){
     }
     if(days.length===0){out.innerHTML='⚠ Noch keine Trainingsdaten — trag erst ein paar Einheiten ein.';btn.disabled=false;return;}
     const prompt=`Du bist ein erfahrener Personal Trainer. Analysiere diese Trainingsdaten und gib 3 konkrete Tipps zu Technik, Progression und Erholung. Daten: ${JSON.stringify(days.slice(-20))}. Antworte auf Deutsch, präzise, max 200 Wörter.`;
-    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${store._geminiKey}`,{
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${store._geminiKey}`,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})
     });
