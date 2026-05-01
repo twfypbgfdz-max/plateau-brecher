@@ -960,7 +960,6 @@ function init(){
 }
 
 async function syncAllFromSheet(){
-  return; // SYNC DEAKTIVIERT — Bug-Fix ausstehend
   if(!API_URL)return;
   try{
     showStatus('ok','↻ Lade Sheet-Daten…');
@@ -970,33 +969,37 @@ async function syncAllFromSheet(){
     if(!resp.ok){showStatus('err','⚠ Sheet-Fehler '+resp.status);return;}
     const data=await resp.json();
     if(!data.success||!data.rows||!data.rows.length){showStatus('ok','✓ Keine neuen Daten');return;}
-    const normalize=s=>s.toLowerCase().replace(/[^a-z0-9äöüß]/g,'');
+    // SAUBERES MATCHING: Sheet-Zeilen kommen in Reihenfolge der Übungen
+    // Wir matchen nur wenn Übungsname exakt (normalisiert) übereinstimmt
+    // Fallback: positionsbasiert (Zeile 0 → Übung 0, Zeile 1 → Übung 1, etc.)
+    const normalize=s=>String(s).toLowerCase().replace(/[^a-z0-9äöüß]/g,'');
     let changed=false;
-    console.log('[SYNC] Rows vom Sheet:', data.rows.map(r=>r.exercise));
-    console.log('[SYNC] PLAN Übungen:', day.exercises);
-    data.rows.forEach((row,ri)=>{
+    // Erst: versuche exaktes Name-Matching
+    const matched=new Set();
+    data.rows.forEach(row=>{
       const normRow=normalize(row.exercise);
-      const exIdx=day.exercises.findIndex((_,ei)=>{
-        const customName=store['exname_'+C+'_'+W+'_'+D+'_'+ei]||day.exercises[ei];
-        const normPlan=normalize(customName);
-        const normOrig=normalize(day.exercises[ei]);
-        console.log('[SYNC] Row'+ri+' "'+normRow+'" vs Plan'+ei+' "'+normPlan+'"');
-        return normRow===normPlan||normRow===normOrig;
+      // Suche nur wenn Übungsname im PLAN für diesen Tag vorkommt
+      const exIdx=day.exercises.findIndex((ex,ei)=>{
+        if(matched.has(ei))return false; // bereits gematcht
+        return normalize(ex)===normRow;
       });
-      console.log('[SYNC] Row'+ri+' ('+row.exercise+') → exIdx='+exIdx);
       if(exIdx<0)return;
+      matched.add(exIdx);
       const d=getD(C,W,D,exIdx);
+      // Nur leere Felder überschreiben
       const fields={g1:row.g1,r1:row.r1,g2:row.g2,r2:row.r2,g3:row.g3,r3:row.r3,rpe:row.rpe,notes:row.notes};
       Object.entries(fields).forEach(([k,v])=>{
-        if(v!==''&&v!==null&&v!==undefined&&String(v)!=='0'&&String(d[k])===''){
-          d[k]=String(v);changed=true;
+        const val=String(v||'').trim();
+        if(val&&val!=='0'&&String(d[k]||'').trim()===''){
+          d[k]=val;changed=true;
         }
       });
     });
-    if(changed){persist();renderWorkout();showStatus('ok','✓ Sheet-Daten übernommen!');}
+    if(changed){persist();renderWorkout();showStatus('ok','✓ Sheet-Daten übernommen ('+matched.size+' Übungen)');}
     else{showStatus('ok','✓ Alles aktuell');}
   }catch(e){
     showStatus('err','⚠ Sync fehlgeschlagen: '+e.message);
+    logToSystem(e,'SYNC_ERROR');
   }
 }
 
@@ -1762,37 +1765,37 @@ init();
 let lastSyncTime = 0;
 const SYNC_COOLDOWN = 30000; // 30 Sekunden Mindestabstand
 
-async function syncFromSheet() {
-  return; // SYNC DEAKTIVIERT
-  const url = store.apiUrl;
-  if (!url) return;
-  const now = Date.now();
-  if (now - lastSyncTime < SYNC_COOLDOWN) return;
-  lastSyncTime = now;
-  try {
-    const sheetName = 'ZYKLUS ' + (C + 1);
-    const day = PLAN[C].weeks[W].days[D];
-    const resp = await fetch(url + '?action=getData&sheet=' + encodeURIComponent(sheetName) + '&date=' + encodeURIComponent(day.date), {method:'GET'});
-    const data = await resp.json();
-    if (!data.success || !data.rows || !data.rows.length) return;
-    let changed = false;
-    data.rows.forEach(row => {
-      const exIdx = day.exercises.findIndex(ex => {
-        const normalize = s => s.toLowerCase().replace(/[^a-z0-9äöüß]/g,'');
-        const customName = store['exname_'+C+'_'+W+'_'+D+'_'+day.exercises.indexOf(ex)] || ex;
-        return normalize(row.exercise) === normalize(customName) || normalize(row.exercise) === normalize(ex);
+async function syncFromSheet(){
+  if(!API_URL)return;
+  const now=Date.now();
+  if(now-lastSyncTime<SYNC_COOLDOWN)return;
+  lastSyncTime=now;
+  try{
+    const sheetName='ZYKLUS '+(C+1);
+    const day=PLAN[C].weeks[W].days[D];
+    const resp=await fetch(API_URL+'?action=getData&sheet='+encodeURIComponent(sheetName)+'&date='+encodeURIComponent(day.date),{method:'GET'});
+    const data=await resp.json();
+    if(!data.success||!data.rows||!data.rows.length)return;
+    const normalize=s=>String(s).toLowerCase().replace(/[^a-z0-9äöüß]/g,'');
+    let changed=false;
+    const matched=new Set();
+    data.rows.forEach(row=>{
+      const normRow=normalize(row.exercise);
+      const exIdx=day.exercises.findIndex((ex,ei)=>{
+        if(matched.has(ei))return false;
+        return normalize(ex)===normRow;
       });
-      if (exIdx < 0) return;
-      const d = getD(C, W, D, exIdx);
-      const fields = {g1:row.g1,r1:row.r1,g2:row.g2,r2:row.r2,g3:row.g3,r3:row.r3,rpe:row.rpe,notes:row.notes};
-      Object.entries(fields).forEach(([k,v]) => {
-        if (v !== '' && v !== null && v !== undefined && String(v) !== '0' && String(d[k]) === '') {
-          d[k] = String(v); changed = true;
-        }
+      if(exIdx<0)return;
+      matched.add(exIdx);
+      const d=getD(C,W,D,exIdx);
+      const fields={g1:row.g1,r1:row.r1,g2:row.g2,r2:row.r2,g3:row.g3,r3:row.r3,rpe:row.rpe,notes:row.notes};
+      Object.entries(fields).forEach(([k,v])=>{
+        const val=String(v||'').trim();
+        if(val&&val!=='0'&&String(d[k]||'').trim()===''){d[k]=val;changed=true;}
       });
     });
-    if (changed) { persist(); renderWorkout(); showStatus('ok', '↻ Sheet-Daten geladen'); }
-  } catch(e) { /* silent fail */ }
+    if(changed){persist();renderWorkout();showStatus('ok','↻ Sheet-Daten geladen');}
+  }catch(e){/* silent fail */}
 }
 
 document.addEventListener('visibilitychange', () => { if (!document.hidden) syncFromSheet(); });
