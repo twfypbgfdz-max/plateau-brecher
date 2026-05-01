@@ -474,7 +474,7 @@ main{padding:16px;max-width:860px;}
     <button class="test-btn" onclick="alert(showDebugLog())">🔍 Fehler-Log anzeigen</button>
     <input type="file" id="importFile" style="display:none" onchange="handleImport(this)">
     <button class="test-btn" onclick="document.getElementById('importFile').click()">📥 Backup importieren</button>
-    <button class="test-btn" style="border-color:var(--acc2);color:var(--acc2);" onclick="wipeAllData()">⚠ Alle Daten löschen</button>
+    <button class="test-btn" style="border-color:var(--acc2);color:var(--acc2);" onclick="if(this.dataset.confirm){wipeAllData();}else{this.textContent='⚠ Nochmal tippen zum Bestätigen';this.dataset.confirm='1';}">⚠ Alle Daten löschen</button>
   </div>
 </div>
 
@@ -596,6 +596,11 @@ const SCRIPT_CODE = [
   "      if (logSheet.getLastRow() === 0) logSheet.appendRow(['Zeitstempel','Version','Typ','Nachricht','Gerät','Zeile']);",
   "      logSheet.appendRow([new Date(), data.ver, data.type_detail, data.msg, data.device, data.line]);",
   "      return ContentService.createTextOutput('Logged');",
+  "    }",
+  "    if (!data.exercises || !Array.isArray(data.exercises)) {",
+  "      if (data.type !== 'log' && data.type !== 'pr') {",
+  "        return ContentService.createTextOutput(JSON.stringify({success:false,message:'Fehler: Keine Übungsliste erhalten'})).setMimeType(ContentService.MimeType.JSON);",
+  "      }",
   "    }",
   "    if (data.type === 'pr') {",
   "      return ContentService.createTextOutput(JSON.stringify({success:true,message:writePR(data)})).setMimeType(ContentService.MimeType.JSON);",
@@ -925,9 +930,10 @@ function handleImport(input){
   reader.readAsText(input.files[0]);
 }
 function wipeAllData(){
-  if(confirm('Alle lokalen Daten löschen? Diese Aktion kann nicht rückgängig gemacht werden!')){
-    localStorage.removeItem(SK);location.reload();
-  }
+  // confirm() kann auf manchen Browsern/PWAs geblockt sein — direkter Reset
+  localStorage.clear();
+  store={};
+  location.reload();
 }
 function showDebugLog(){
   return errorLog.length>0?errorLog.join('\n'):'Kein Fehler-Log vorhanden.';
@@ -1536,7 +1542,8 @@ async function saveToSheet(){
     // Nur wenn irgendein Feld sich geändert hat
     const dirty=['g1','r1','g2','r2','g3','r3','rpe','notes'].some(f=>String(d[f])!==String(p[f]||''));
     if(!dirty&&p.sent)return null;
-    return{exercise:customName||ex,originalName:ex,g1:d.g1,r1:d.r1,g2:d.g2,r2:d.r2,g3:d.g3,r3:d.r3,rpe:d.rpe||'',
+    return{exercise:customName||ex,originalName:ex,ex_id:'C'+C+'_W'+W+'_D'+D+'_idx'+i,
+      g1:d.g1,r1:d.r1,g2:d.g2,r2:d.r2,g3:d.g3,r3:d.r3,rpe:d.rpe||'',
       gesamtlast:calcTotal(d),orm:calc1RM(d),notes:d.notes,
       warmup:d.g1?Math.round(parseFloat(d.g1)*0.6*2)/2:''};
   }).filter(e=>e&&(e.g1||e.r1));
@@ -1551,6 +1558,12 @@ async function saveToSheet(){
     kcal:stats.kcal||'',pulse:stats.pulse||'',duration:stats.dur||'',
     exercises
   });
+  // Payload-Validierung
+  const payloadObj=JSON.parse(payload);
+  if(!payloadObj.date||!payloadObj.sheet||!payloadObj.exercises||payloadObj.exercises.length===0){
+    showStatus('err','⚠ Fehler: Leere oder ungültige Daten (Payload-Validierung)');
+    setBtnLoading(false);return;
+  }
   // Versuch 1: normaler fetch mit text/plain (kein CORS-Preflight)
   try{
     const resp=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:payload});
