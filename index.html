@@ -471,7 +471,11 @@ main{padding:16px;max-width:860px;}
   <div class="setup-step">
     <div class="step-num">6</div><div class="step-title">Daten & Log</div>
     <button class="test-btn" onclick="exportBackup()">💾 Backup (JSON)</button>
-    <button class="test-btn" onclick="alert(showDebugLog())">🔍 Fehler-Log anzeigen</button>
+    <button class="test-btn" onclick="document.getElementById('appLogBox').style.display=document.getElementById('appLogBox').style.display==='none'?'block':'none'">🔍 Live-Log anzeigen/ausblenden</button>
+    <div id="appLogBox" style="display:none;margin-top:8px;background:var(--bg);border:1px solid var(--bor);border-radius:var(--r);padding:8px;max-height:200px;overflow-y:auto;">
+      <div style="font-family:'Space Mono';font-size:8px;color:var(--mu);margin-bottom:4px;">LIVE FEHLERPROTOKOLL</div>
+      <div id="appLogContent" style="font-family:'Space Mono';"></div>
+    </div>
     <input type="file" id="importFile" style="display:none" onchange="handleImport(this)">
     <button class="test-btn" onclick="document.getElementById('importFile').click()">📥 Backup importieren</button>
     <button class="test-btn" style="border-color:var(--acc2);color:var(--acc2);" onclick="if(this.dataset.confirm){wipeAllData();}else{this.textContent='⚠ Nochmal tippen zum Bestätigen';this.dataset.confirm='1';}">⚠ Alle Daten löschen</button>
@@ -608,22 +612,25 @@ const SCRIPT_CODE = [
   "        const rowEx = normalize(String(values[r][4]).trim());",
   "        if (rowDate === data.date && rowEx === targetName) {",
   "          const sr = r + 1;",
-  "          if (data.bodyWeight) sheet.getRange(sr,3).setValue(data.bodyWeight);",
-  "          sheet.getRange(sr,4).setValue(data.tag);",
-  "          if (ex.g1 !== '' && ex.g1 !== undefined) sheet.getRange(sr,7).setValue(ex.g1);",
-  "          if (ex.r1 !== '' && ex.r1 !== undefined) sheet.getRange(sr,8).setValue(ex.r1);",
-  "          if (ex.g2 !== '' && ex.g2 !== undefined) sheet.getRange(sr,9).setValue(ex.g2);",
-  "          if (ex.r2 !== '' && ex.r2 !== undefined) sheet.getRange(sr,10).setValue(ex.r2);",
-  "          if (ex.g3 !== '' && ex.g3 !== undefined) sheet.getRange(sr,11).setValue(ex.g3);",
-  "          if (ex.r3 !== '' && ex.r3 !== undefined) sheet.getRange(sr,12).setValue(ex.r3);",
-  "          if (ex.gesamtlast) sheet.getRange(sr,13).setValue(ex.gesamtlast);",
-  "          if (ex.orm)        sheet.getRange(sr,14).setValue(ex.orm);",
-  "          if (ex.rpe)        sheet.getRange(sr,15).setValue(ex.rpe);",
-  "          if (ex.warmup)     sheet.getRange(sr,18).setValue(ex.warmup);",
-  "          if (ex.notes)      sheet.getRange(sr,19).setValue(ex.notes);",
-  "          if (data.kcal)     sheet.getRange(sr,20).setValue(data.kcal);",
-  "          if (data.pulse)    sheet.getRange(sr,21).setValue(data.pulse);",
-  "          if (data.duration) sheet.getRange(sr,22).setValue(data.duration);",
+  "          // setValues: alle Spalten in einem Aufruf schreiben (speed)",
+  "          const rowVals = sheet.getRange(sr,1,1,22).getValues()[0];",
+  "          if (data.bodyWeight) rowVals[2] = data.bodyWeight;",
+  "          rowVals[3] = data.tag;",
+  "          if (ex.g1 !== '' && ex.g1 !== undefined) rowVals[6]  = parseNum(ex.g1);",
+  "          if (ex.r1 !== '' && ex.r1 !== undefined) rowVals[7]  = parseNum(ex.r1);",
+  "          if (ex.g2 !== '' && ex.g2 !== undefined) rowVals[8]  = parseNum(ex.g2);",
+  "          if (ex.r2 !== '' && ex.r2 !== undefined) rowVals[9]  = parseNum(ex.r2);",
+  "          if (ex.g3 !== '' && ex.g3 !== undefined) rowVals[10] = parseNum(ex.g3);",
+  "          if (ex.r3 !== '' && ex.r3 !== undefined) rowVals[11] = parseNum(ex.r3);",
+  "          if (ex.gesamtlast) rowVals[12] = ex.gesamtlast;",
+  "          if (ex.orm)        rowVals[13] = ex.orm;",
+  "          if (ex.rpe)        rowVals[14] = parseNum(ex.rpe);",
+  "          if (ex.warmup)     rowVals[17] = ex.warmup;",
+  "          if (ex.notes)      rowVals[18] = ex.notes;",
+  "          if (data.kcal)     rowVals[19] = data.kcal;",
+  "          if (data.pulse)    rowVals[20] = data.pulse;",
+  "          if (data.duration) rowVals[21] = data.duration;",
+  "          sheet.getRange(sr,1,1,22).setValues([rowVals]);",
   "          updated++; break;",
   "        }",
   "      }",
@@ -834,6 +841,26 @@ function logToSystem(msg,type='JS_ERROR',line=''){
   }
 }
 window.onerror=(m,u,l)=>logToSystem(m,'UI_ERROR',l);
+
+// XSS-Sanitize: alle Sheet-Daten durch diese Funktion jagen
+function sanitize(str){
+  return String(str||'')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#x27;');
+}
+
+// Fehlerprotokoll — sichtbar im Setup
+const appLog=[];
+function addToErrorLog(type,msg){
+  const ts=new Date().toLocaleTimeString('de-DE');
+  appLog.unshift('['+ts+'] '+type+': '+msg);
+  if(appLog.length>50)appLog.pop();
+  const el=document.getElementById('appLogContent');
+  if(el)el.innerHTML=appLog.map(l=>'<div style="border-bottom:1px solid var(--bor);padding:4px 0;font-size:9px;color:'+(l.includes('ERR')||l.includes('FAIL')?'var(--acc2)':l.includes('OK')||l.includes('INFO')?'var(--ok)':'var(--tx2)')+'">'+sanitize(l)+'</div>').join('');
+}
 window.addEventListener('online',()=>{
   const el=document.getElementById('connectionStatus');
   if(el)el.textContent='Status: Online ✓';
@@ -1006,6 +1033,8 @@ async function syncAllFromSheet(){
     // Erst: versuche exaktes Name-Matching
     const matched=new Set();
     data.rows.forEach(row=>{
+      // Datum-Check: nur Zeilen für exakt diesen Tag übernehmen
+      if(row.date && row.date !== day.date) return;
       const normRow=normalize(row.exercise);
       // Suche nur wenn Übungsname im PLAN für diesen Tag vorkommt
       const exIdx=day.exercises.findIndex((ex,ei)=>{
@@ -1018,16 +1047,23 @@ async function syncAllFromSheet(){
       // Nur leere Felder überschreiben
       const fields={g1:row.g1,r1:row.r1,g2:row.g2,r2:row.r2,g3:row.g3,r3:row.r3,rpe:row.rpe,notes:row.notes};
       Object.entries(fields).forEach(([k,v])=>{
-        const val=String(v||'').trim();
+        const val=sanitize(String(v||'').trim());
         if(val&&val!=='0'&&String(d[k]||'').trim()===''){
           d[k]=val;changed=true;
         }
       });
     });
-    if(changed){persist();renderWorkout();showStatus('ok','✓ Sheet-Daten übernommen ('+matched.size+' Übungen)');}
-    else{showStatus('ok','✓ Alles aktuell');}
+    if(changed){
+      persist();renderWorkout();
+      showStatus('ok','✓ Sheet-Daten übernommen ('+matched.size+' Übungen)');
+      addToErrorLog('SYNC_OK',''+matched.size+' Übungen geladen ('+day.date+')');
+    } else {
+      showStatus('ok','✓ Alles aktuell');
+      addToErrorLog('INFO','Sync: Alles aktuell ('+day.date+')');
+    }
   }catch(e){
     showStatus('err','⚠ Sync fehlgeschlagen: '+e.message);
+    addToErrorLog('SYNC_FAIL',e.message);
     logToSystem(e,'SYNC_ERROR');
   }
 }
@@ -1587,32 +1623,28 @@ async function saveToSheet(){
     showStatus('err','⚠ Fehler: Leere oder ungültige Daten (Payload-Validierung)');
     setBtnLoading(false);return;
   }
-  // Versuch 1: normaler fetch mit text/plain (kein CORS-Preflight)
   try{
     const resp=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:payload});
     const txt=await resp.text();
-    try{
-      const j=JSON.parse(txt);
-      if(j.success){showStatus('ok','✓ '+exercises.length+' Übungen gespeichert! ('+day.date+')');setBtnLoading(false);return;}
-      else{throw new Error(j.message);}
-    }catch(e){showStatus('ok','✓ Gesendet! ('+day.date+')');setBtnLoading(false);return;}
-  }catch(e){}
-
-  // Versuch 2: no-cors (kein Response-Feedback, aber funktioniert)
-  try{
-    await fetch(API_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:payload});
-    showStatus('ok','✓ Gesendet! ('+day.date+') — Sheet prüfen');setBtnLoading(false);return;
-  }catch(e){}
-
-  // Versuch 3: GET mit URL-Parametern (maximale Kompatibilität)
-  try{
-    const url=API_URL+'?payload='+encodeURIComponent(payload);
-    await fetch(url,{method:'GET',mode:'no-cors'});
-    showStatus('ok','✓ Gesendet via GET! ('+day.date+') — Sheet prüfen');setBtnLoading(false);return;
+    let j=null;
+    try{j=JSON.parse(txt);}catch(e){}
+    if(j&&j.success){
+      showStatus('ok','✓ '+exercises.length+' Übungen gespeichert! ('+day.date+')');
+      addToErrorLog('INFO','Sync OK: '+exercises.length+' Übungen ('+day.date+')');
+    } else if(j&&!j.success){
+      showStatus('err','⚠ Script-Fehler: '+j.message);
+      addToErrorLog('SYNC_ERR','Script: '+j.message);
+      logToSystem('Script-Fehler: '+j.message,'SYNC_ERROR');
+    } else {
+      showStatus('ok','✓ Gesendet! ('+day.date+')');
+      addToErrorLog('INFO','Gesendet (kein JSON zurück): '+day.date);
+    }
   }catch(e){
-    // Offline: in Buffer speichern
+    // Netzwerkfehler — offline buffern
     bufferOffline(payload);
     showStatus('err','⚠ Offline — '+exercises.length+' Einträge lokal gespeichert');
+    addToErrorLog('OFFLINE','Offline-Buffer: '+e.message);
+    logToSystem(e,'OFFLINE_ERROR');
   }
   setBtnLoading(false);
 }
@@ -1816,6 +1848,7 @@ async function syncFromSheet(){
     let changed=false;
     const matched=new Set();
     data.rows.forEach(row=>{
+      if(row.date && row.date !== day.date) return;
       const normRow=normalize(row.exercise);
       const exIdx=day.exercises.findIndex((ex,ei)=>{
         if(matched.has(ei))return false;
