@@ -1255,8 +1255,8 @@ function renderWorkout(){
 
     // Previous week data for badge
     let prevOrm=null;
-    if(W>0){const pv=getD(C,W-1,D,i);prevOrm=calc1RM(pv);}
-    else if(C>0){const pv=getD(C-1,PLAN[C-1].weeks.length-2,D,i);prevOrm=calc1RM(pv);}
+    if(W>0){const pv=getD(C,W-1,D,i);const v=calc1RM(pv);if(v>0)prevOrm=v;}
+    else if(C>0){const pv=getD(C-1,PLAN[C-1].weeks.length-2,D,i);const v=calc1RM(pv);if(v>0)prevOrm=v;}
 
     // Warmup values from S1
     const wu=d.g1?parseFloat(d.g1):null;
@@ -1968,6 +1968,43 @@ function renderKiChat() {
   box.scrollTop = box.scrollHeight;
 }
 
+// Baut Trainingskontext aus aktuellem Stand für KI-System-Prompt
+function buildKiContext() {
+  const day = PLAN[C].weeks[W].days[D];
+  const lines = [
+    '=== TRAININGSKONTEXT ===',
+    'Athlet: Felix (Fitnessindustrie-Azubi, Wefit Memmingen)',
+    'Aktuell: Zyklus '+(C+1)+', '+PLAN[C].weeks[W].weekLabel+', '+day.tag+' ('+day.date+')',
+    'Muskelgruppe: '+day.muscle,
+    '',
+    '--- Heutige Übungen ---',
+  ];
+  day.exercises.forEach((ex, i) => {
+    const d = getD(C, W, D, i);
+    const orm = calc1RM(d);
+    const rec = getRecord(ex);
+    if (d.g1 || d.r1) {
+      lines.push(ex + ': S1='+d.g1+'kg×'+d.r1+' | S2='+d.g2+'kg×'+d.r2+' | S3='+d.g3+'kg×'+d.r3
+        + (d.rpe?' | RPE='+d.rpe:'')
+        + (orm?' | 1RM est.='+orm+'kg':'')
+        + (rec?' | PR='+rec.orm+'kg':''));
+    } else {
+      lines.push(ex + ': (noch keine Daten heute)');
+    }
+  });
+  // Bestleistungen
+  const prs = Object.keys(store).filter(k => k.startsWith('rec_'));
+  if (prs.length > 0) {
+    lines.push('', '--- Bestleistungen (1RM) ---');
+    prs.forEach(k => {
+      const rec = store[k];
+      lines.push(k.replace('rec_','') + ': ' + rec.orm + ' kg (' + rec.date + ')');
+    });
+  }
+  lines.push('', '=== ENDE KONTEXT ===', '');
+  return lines.join('\n');
+}
+
 async function sendKiMessage() {
   const inp = document.getElementById('kiInput');
   const btn = document.getElementById('kiSendBtn');
@@ -2003,7 +2040,7 @@ async function sendKiMessage() {
     if (kiModel === 'groq') {
       // Groq: kompletten Chatverlauf mitsenden
       const messages = [
-        { role: 'system', content: 'Du bist ein erfahrener Kraft- und Fitness-Coach. Antworte auf Deutsch, klar und strukturiert. Max. 300 Wörter.' },
+        { role: 'system', content: 'Du bist ein erfahrener Kraft- und Fitness-Coach für Felix. Hier sind seine aktuellen Trainingsdaten:\n\n' + buildKiContext() + '\nNutze diese Daten für deine Antworten. Antworte auf Deutsch, klar und strukturiert. Max. 300 Wörter.' },
         ...kiHistory.filter(m => m.role !== 'assistant' || m.model === 'groq').map(m => ({
           role: m.role === 'ai' ? 'assistant' : m.role,
           content: m.content
@@ -2023,7 +2060,7 @@ async function sendKiMessage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: 'Du bist ein Kraft- und Fitness-Coach. Antworte auf Deutsch, max 300 Wörter.\n\nFrage: ' + text }] }]
+          contents: [{ parts: [{ text: 'Du bist ein Kraft- und Fitness-Coach für Felix. Hier sind seine aktuellen Trainingsdaten:\n\n' + buildKiContext() + '\nFrage: ' + text + '\n\nAntworte auf Deutsch, max 300 Wörter.' }] }]
         })
       });
       const data = await resp.json();
