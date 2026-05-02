@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="PB V8.0">
-<title>Plateau-Brecher V8.0</title>
+<title>Plateau-Brecher V9.0</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap');
 :root{
@@ -201,6 +201,15 @@ main{padding:16px;max-width:860px;}
 .sinput::-webkit-outer-spin-button,.sinput::-webkit-inner-spin-button{-webkit-appearance:none;}
 .sinput:focus{border-color:var(--acc);background:var(--sur3);}
 .sinput::placeholder{color:var(--mu);font-size:10px;font-weight:400;}
+
+/* PROGRESSION ARROWS */
+.prog-arrow{font-family:'Space Mono',monospace;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;white-space:nowrap;}
+.prog-arrow.up{color:var(--ok);background:rgba(0,230,118,.12);}
+.prog-arrow.down{color:var(--acc2);background:rgba(255,68,68,.12);}
+.prog-arrow.flat{color:var(--mu);background:var(--sur2);}
+.prog-stat.up{color:var(--ok)!important;}
+.prog-stat.down{color:var(--acc2)!important;}
+.prog-stat.flat{color:var(--mu)!important;}
 
 /* 1RM INLINE - prominent display */
 .orm-inline{
@@ -562,236 +571,106 @@ main{padding:16px;max-width:860px;}
 // APPS SCRIPT CODE
 // ============================================================
 const SCRIPT_CODE = [
-  "// PLATEAU-BRECHER V7.9 — Google Apps Script API",
+  "// PLATEAU-BRECHER V9.0 — Google Apps Script",
   "const SHEET_ID = '1NA5OUomzaSFSw6_VzdJ6U7FaD1bU0qTEsQCtIneJ1JI';",
   "",
   "function doPost(e) {",
+  "  const lock = LockService.getScriptLock();",
+  "  lock.tryLock(10000);",
   "  try {",
-  "    const raw = (e.postData && e.postData.contents) || (e.parameter && e.parameter.payload) || '';",
-  "    if (!raw) throw new Error('Keine Daten empfangen');",
-  "    const data = JSON.parse(raw);",
+  "    const data = JSON.parse(e.postData.contents);",
   "    const ss = SpreadsheetApp.openById(SHEET_ID);",
-  "    if (data.type === 'log') {",
-  "      const logSheet = ss.getSheetByName('Log') || ss.insertSheet('Log');",
-  "      if (logSheet.getLastRow() === 0) logSheet.appendRow(['Zeitstempel','Version','Typ','Nachricht','Gerät','Zeile']);",
-  "      logSheet.appendRow([new Date(), data.ver, data.type_detail, data.msg, data.device, data.line||'']);",
-  "      return ContentService.createTextOutput('Logged');",
-  "    }",
-  "    if (data.type === 'pr') {",
-  "      return ContentService.createTextOutput(JSON.stringify({success:true,message:writePR(data)})).setMimeType(ContentService.MimeType.JSON);",
-  "    }",
-  "    if (!data.exercises || !Array.isArray(data.exercises) || data.exercises.length === 0) {",
-  "      return ContentService.createTextOutput(JSON.stringify({success:false,message:'Fehler: Keine gültigen Übungen'})).setMimeType(ContentService.MimeType.JSON);",
-  "    }",
-  "    const sheet = ss.getSheetByName(data.sheet || 'ZYKLUS 1');",
-  "    if (!sheet) throw new Error('Sheet nicht gefunden: ' + data.sheet);",
-  "    const values = sheet.getRange(1,1,sheet.getLastRow(),22).getValues();",
-  "    const normalize = s => String(s).toLowerCase().replace(/[^a-z0-9äöüß]/g,'');",
+  "    // Bulk-Upload: data.exercises = Array, oder einzelne Übung (Legacy)",
+  "    const entries = Array.isArray(data.exercises) ? data.exercises : [data];",
+  "    const sheetName = data.sheet || (entries[0] && entries[0].sheet);",
+  "    const sheet = ss.getSheetByName(sheetName);",
+  "    if (!sheet) throw new Error('Sheet nicht gefunden: ' + sheetName);",
+  "    const values = sheet.getRange(1, 1, sheet.getLastRow(), 22).getValues();",
   "    let updated = 0;",
-  "    data.exercises.forEach(ex => {",
-  "      const targetName = normalize(ex.originalName || ex.exercise);",
+  "    for (const entry of entries) {",
   "      for (let r = 3; r < values.length; r++) {",
   "        const rowDate = String(values[r][1]).trim();",
-  "        const rowEx = normalize(String(values[r][4]).trim());",
-  "        if (rowDate === data.date && rowEx === targetName) {",
+  "        const rowEx   = String(values[r][4]).trim();",
+  "        if (rowDate === entry.date && rowEx.toLowerCase() === entry.uebung.toLowerCase()) {",
   "          const sr = r + 1;",
-  "          // setValues: alle Spalten in einem Aufruf schreiben (speed)",
-  "          const rowVals = sheet.getRange(sr,1,1,22).getValues()[0];",
-  "          if (data.bodyWeight) rowVals[2] = data.bodyWeight;",
-  "          rowVals[3] = data.tag;",
-  "          if (ex.g1 !== '' && ex.g1 !== undefined) rowVals[6]  = parseNum(ex.g1);",
-  "          if (ex.r1 !== '' && ex.r1 !== undefined) rowVals[7]  = parseNum(ex.r1);",
-  "          if (ex.g2 !== '' && ex.g2 !== undefined) rowVals[8]  = parseNum(ex.g2);",
-  "          if (ex.r2 !== '' && ex.r2 !== undefined) rowVals[9]  = parseNum(ex.r2);",
-  "          if (ex.g3 !== '' && ex.g3 !== undefined) rowVals[10] = parseNum(ex.g3);",
-  "          if (ex.r3 !== '' && ex.r3 !== undefined) rowVals[11] = parseNum(ex.r3);",
-  "          if (ex.gesamtlast) rowVals[12] = ex.gesamtlast;",
-  "          if (ex.orm)        rowVals[13] = ex.orm;",
-  "          if (ex.rpe)        rowVals[14] = parseNum(ex.rpe);",
-  "          if (ex.warmup)     rowVals[17] = ex.warmup;",
-  "          if (ex.notes)      rowVals[18] = ex.notes;",
-  "          if (data.kcal)     rowVals[19] = data.kcal;",
-  "          if (data.pulse)    rowVals[20] = data.pulse;",
-  "          if (data.duration) rowVals[21] = data.duration;",
-  "          sheet.getRange(sr,1,1,22).setValues([rowVals]);",
+  "          if (entry.kg)       sheet.getRange(sr, 3).setValue(parseNum(entry.kg));",
+  "          const sets = [[parseNum(entry.g1), parseNum(entry.r1), parseNum(entry.g2), parseNum(entry.r2), parseNum(entry.g3), parseNum(entry.r3)]];",
+  "          sheet.getRange(sr, 7, 1, 6).setValues(sets);",
+  "          if (entry.rpe)      sheet.getRange(sr, 15).setValue(parseNum(entry.rpe));",
+  "          if (entry.kcal)     sheet.getRange(sr, 20).setValue(parseNum(entry.kcal));",
+  "          if (entry.bpm)      sheet.getRange(sr, 21).setValue(parseNum(entry.bpm));",
+  "          if (entry.duration) sheet.getRange(sr, 22).setValue(parseNum(entry.duration));",
+  "          const maxG = Math.max(parseNum(entry.g1), parseNum(entry.g2), parseNum(entry.g3));",
+  "          updatePersonalBest(entry.uebung, maxG, entry.date);",
   "          updated++; break;",
   "        }",
   "      }",
-  "    });",
-  "    if (updated === 0) throw new Error('Sheet-Fehler: Datum ' + data.date + ' nicht gefunden. Nichts gespeichert!');",
-  "    return ContentService.createTextOutput(JSON.stringify({success:true,message:updated+' Übungen aktualisiert ('+data.date+')'})).setMimeType(ContentService.MimeType.JSON);",
-  "  } catch(err) {",
-  "    return ContentService.createTextOutput(JSON.stringify({success:false,message:err.toString()})).setMimeType(ContentService.MimeType.JSON);",
+  "    }",
+  "    logError('SYNC_OK', 'Bulk-Upload: ' + updated + '/' + entries.length + ' gespeichert', data.date || '');",
+  "    return ContentService.createTextOutput(JSON.stringify({",
+  "      success: updated > 0,",
+  "      updated: updated,",
+  "      total: entries.length,",
+  "      message: updated + ' von ' + entries.length + ' Uebungen gespeichert.'",
+  "    })).setMimeType(ContentService.MimeType.JSON);",
+  "  } catch (err) {",
+  "    logError('API POST', err.toString(), e.postData ? e.postData.contents.substring(0,200) : 'Kein Inhalt');",
+  "    return ContentService.createTextOutput(JSON.stringify({success: false, error: err.toString()})).setMimeType(ContentService.MimeType.JSON);",
+  "  } finally {",
+  "    lock.releaseLock();",
   "  }",
   "}",
   "",
   "function doGet(e) {",
-  "  const action=(e&&e.parameter&&e.parameter.action)||'ping';",
-  "  if(action==='getData'){try{return ContentService.createTextOutput(JSON.stringify(getData(e.parameter.sheet||'ZYKLUS 1',e.parameter.date||''  ))).setMimeType(ContentService.MimeType.JSON);}catch(err){return ContentService.createTextOutput(JSON.stringify({success:false,message:err.toString()})).setMimeType(ContentService.MimeType.JSON);}}",
-  "  if(action==='getErrors'){try{return ContentService.createTextOutput(JSON.stringify(getErrors())).setMimeType(ContentService.MimeType.JSON);}catch(err){return ContentService.createTextOutput(JSON.stringify({success:false,message:err.toString()})).setMimeType(ContentService.MimeType.JSON);}}",
-  "  if(action==='getAiContext'){try{return ContentService.createTextOutput(JSON.stringify(getAiContext(e.parameter.sheet||'ZYKLUS 1'))).setMimeType(ContentService.MimeType.JSON);}catch(err){return ContentService.createTextOutput(JSON.stringify({success:false,message:err.toString()})).setMimeType(ContentService.MimeType.JSON);}}",
-  "  return ContentService.createTextOutput(JSON.stringify({success:true,message:'Plateau-Brecher API laeuft!',version:'V8.0'})).setMimeType(ContentService.MimeType.JSON);",
-  "}",
-  "",
-  "function getData(sheetName,targetDate){",
-  "  const ss=SpreadsheetApp.openById(SHEET_ID);",
-  "  let sheet=ss.getSheetByName(sheetName)||ss.getSheets().find(s=>s.getName().includes(sheetName));",
-  "  if(!sheet)return{success:false,message:'Sheet nicht gefunden: '+sheetName};",
-  "  const lastRow=sheet.getLastRow();if(lastRow<4)return{success:true,rows:[]};",
-  "  const values=sheet.getRange(1,1,lastRow,22).getValues();",
-  "  const rows=[]; let inTargetBlock = false; let lastDate = '';",
-  "  for(let r=3;r<values.length;r++){",
-  "    const rowDate = String(values[r][1]).trim();",
-  "    if(rowDate){",
-  "      lastDate = rowDate;",
-  "      inTargetBlock = (!targetDate || rowDate === targetDate);",
-  "    }",
-  "    if(targetDate && !inTargetBlock) continue;",
-  "    const cellEx=String(values[r][4]).trim();if(!cellEx)continue;",
-  "    rows.push({date:lastDate,tag:String(values[r][3]).trim(),exercise:cellEx,muscle:String(values[r][5]).trim(),g1:parseNum(values[r][6]),r1:parseNum(values[r][7]),g2:parseNum(values[r][8]),r2:parseNum(values[r][9]),g3:parseNum(values[r][10]),r3:parseNum(values[r][11]),gesamtlast:values[r][12],orm:values[r][13],rpe:parseNum(values[r][14]),notes:String(values[r][18]).trim(),kcal:values[r][19],bpm:values[r][20],duration:values[r][21]});",
-  "  }",
-  "  return{success:true,sheet:sheetName,date:targetDate,rows:rows};",
-  "}",
-  "",
-  "function getErrors(){",
-  "  const ss=SpreadsheetApp.openById(SHEET_ID);",
-  "  let s=ss.getSheetByName('Fehlerprotokoll');",
-  "  if(!s){s=ss.insertSheet('Fehlerprotokoll');s.getRange(1,1,1,4).setValues([['Zeitstempel','Typ','Nachricht','Details']]);}",
-  "  const lr=s.getLastRow();if(lr<2)return{success:true,errors:[]};",
-  "  return{success:true,errors:s.getRange(2,1,lr-1,4).getValues().map(r=>({ts:String(r[0]),type:r[1],msg:r[2],details:r[3]}))};",
-  "}",
-  "",
-  "function logError(type,msg,details){",
-  "  try{const ss=SpreadsheetApp.openById(SHEET_ID);let s=ss.getSheetByName('Fehlerprotokoll')||ss.insertSheet('Fehlerprotokoll');if(s.getLastRow()<1)s.getRange(1,1,1,4).setValues([['Zeitstempel','Typ','Nachricht','Details']]);s.appendRow([new Date(),type,msg,details||'']);}catch(e){}}",
-  "",
-  "function getAiContext(sheetName){",
-  "  const ss=SpreadsheetApp.openById(SHEET_ID);",
-  "  let sheet=ss.getSheetByName(sheetName)||ss.getSheets().find(s=>s.getName().includes(sheetName));",
-  "  if(!sheet)return{success:false,message:'Sheet nicht gefunden'};",
-  "  const lastRow=sheet.getLastRow();if(lastRow<4)return{success:true,exercises:{}};",
-  "  const values=sheet.getRange(1,1,lastRow,22).getValues();",
-  "  const exercises={};let lastDate='';",
-  "  for(let r=3;r<values.length;r++){",
-  "    if(String(values[r][1]).trim())lastDate=String(values[r][1]).trim();",
-  "    const ex=String(values[r][4]).trim();if(!ex)continue;",
-  "    if(!exercises[ex])exercises[ex]=[];",
-  "    const g1=parseFloat(values[r][6]),r1=parseFloat(values[r][7]),orm=parseFloat(values[r][13]),rpe=parseFloat(values[r][14]);",
-  "    if(g1)exercises[ex].push({date:lastDate,g1,r1,orm:orm||null,rpe:rpe||null});",
-  "  }",
-  "  const prSheet=ss.getSheetByName('Bestleistungen');const prs={};",
-  "  if(prSheet&&prSheet.getLastRow()>1){prSheet.getRange(2,1,prSheet.getLastRow()-1,3).getValues().forEach(r=>{if(r[0])prs[String(r[0]).trim()]={orm:r[1],date:r[2]};});}",
-  "  return{success:true,sheet:sheetName,exercises,prs};",
-  "}",
-  "",
-  "function writeWorkout(data) {",
-  "  const ss = SpreadsheetApp.openById(SHEET_ID);",
-  "  const targetDate = data.date, exercises = data.exercises, bodyWeight = data.bodyWeight || '';",
-  "  const sheetName = data.sheet || 'ZYKLUS 1';",
-  "  let updatedCount = 0; const notFound = [];",
-  "  // Zielblatt direkt suchen",
-  "  let targetSheet = ss.getSheetByName(sheetName);",
-  "  if (!targetSheet) targetSheet = ss.getSheets().find(s => s.getName().includes(sheetName)) || null;",
-  "  if (!targetSheet) return 'FEHLER: Sheet ' + sheetName + ' nicht gefunden!';",
-  "  const sheets = [targetSheet];",
-  "  for (const sheet of sheets) {",
-  "    const lastRow = sheet.getLastRow(); if (lastRow < 4) continue;",
-  "    const values = sheet.getRange(1,1,lastRow,22).getValues();",
-  "    let lastDate = ''; let bwWritten = false;",
-  "    for (let r = 3; r < values.length; r++) {",
-  "      if (String(values[r][1]).trim()) lastDate = String(values[r][1]).trim();",
-  "      if (lastDate !== targetDate) continue;",
-  "      const cellEx = String(values[r][4]).trim(); if (!cellEx) continue;",
-  "      for (const ex of exercises) {",
-  "        const normalize = s => s.toLowerCase().replace(/[^a-z0-9äöüß]/g,'');",
-  "        const cellNorm = normalize(cellEx);",
-  "        const exNorm = normalize(ex.exercise);",
-  "        const exOrigNorm = normalize(ex.originalName || ex.exercise);",
-  "        const matched = cellNorm === exNorm || cellNorm === exOrigNorm;",
-  "        if (matched) {",
-  "          const sr = r + 1;",
-  "          if (bodyWeight && !bwWritten) { sheet.getRange(sr,3).setValue(parseNum(bodyWeight)); bwWritten = true; }",
-  "          if (ex.g1 !== '' && ex.g1 !== undefined) sheet.getRange(sr, 7).setValue(parseNum(ex.g1));",
-  "          if (ex.r1 !== '' && ex.r1 !== undefined) sheet.getRange(sr, 8).setValue(parseNum(ex.r1));",
-  "          if (ex.g2 !== '' && ex.g2 !== undefined) sheet.getRange(sr, 9).setValue(parseNum(ex.g2));",
-  "          if (ex.r2 !== '' && ex.r2 !== undefined) sheet.getRange(sr,10).setValue(parseNum(ex.r2));",
-  "          if (ex.g3 !== '' && ex.g3 !== undefined) sheet.getRange(sr,11).setValue(parseNum(ex.g3));",
-  "          if (ex.r3 !== '' && ex.r3 !== undefined) sheet.getRange(sr,12).setValue(parseNum(ex.r3));",
-  "          if (ex.gesamtlast) sheet.getRange(sr,13).setValue(ex.gesamtlast);",
-  "          if (ex.orm)        sheet.getRange(sr,14).setValue(ex.orm);",
-  "          if (ex.rpe)        sheet.getRange(sr,15).setValue(parseFloat(ex.rpe));",
-  "          if (ex.warmup)     sheet.getRange(sr,18).setValue(ex.warmup);",
-  "          if (ex.notes)      sheet.getRange(sr,19).setValue(ex.notes);",
-  "          if (!bwWritten && data.kcal)     sheet.getRange(sr,20).setValue(data.kcal);",
-  "          if (!bwWritten && data.pulse)    sheet.getRange(sr,21).setValue(data.pulse);",
-  "          if (!bwWritten && data.duration) sheet.getRange(sr,22).setValue(data.duration);",
-  "          updatedCount++; break;",
-  "        }",
+  "  try {",
+  "    const action = e.parameter.action;",
+  "    const ss = SpreadsheetApp.openById(SHEET_ID);",
+  "    if (action === 'getPlan') {",
+  "      const sheetName = e.parameter.sheet;",
+  "      const sheet = ss.getSheetByName(sheetName);",
+  "      if (!sheet) {",
+  "        logError('API GET', 'Sheet nicht gefunden', sheetName);",
+  "        return ContentService.createTextOutput('Fehler: Blatt nicht gefunden.').setMimeType(ContentService.MimeType.TEXT);",
   "      }",
+  "      const data = sheet.getRange(4, 1, sheet.getLastRow() - 3, 22).getValues();",
+  "      return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);",
   "    }",
+  "    return ContentService.createTextOutput('API aktiv - V9.0').setMimeType(ContentService.MimeType.TEXT);",
+  "  } catch (err) {",
+  "    logError('API GET KRITISCH', err.toString(), JSON.stringify(e.parameter));",
+  "    return ContentService.createTextOutput('Fehler: ' + err.toString()).setMimeType(ContentService.MimeType.TEXT);",
   "  }",
-  "  if (updatedCount === 0) return 'FEHLER: Keine Übung gefunden für Datum ' + targetDate + ' in ' + sheetName;",
-  "  return updatedCount + ' Uebungen eingetragen (' + targetDate + ' in ' + sheetName + ')';",
   "}",
   "",
-  "function parseNum(val) { return parseFloat(String(val).replace(',','.')) || val; }",
-  "",
-  "function writePR(data) {",
+  "function updatePersonalBest(uebung, gewicht, datum) {",
+  "  if (!gewicht || gewicht <= 0) return;",
   "  const ss = SpreadsheetApp.openById(SHEET_ID);",
-  "  let sheet = ss.getSheetByName('Bestleistungen');",
-  "  if (!sheet) return 'Kein Bestleistungen-Tab gefunden';",
-  "  const lastRow = sheet.getLastRow();",
-  "  const values = lastRow > 1 ? sheet.getRange(2,1,lastRow-1,4).getValues() : [];",
-  "  for (let r = 0; r < values.length; r++) {",
-  "    if (String(values[r][0]).trim() === data.exercise) {",
-  "      if (parseFloat(values[r][1]) < data.orm) {",
-  "        sheet.getRange(r+2, 2).setValue(data.orm);",
-  "        sheet.getRange(r+2, 3).setValue(data.date);",
-  "        sheet.getRange(r+2, 4).setValue('Zyklus ' + data.cycle);",
-  "        return 'PR aktualisiert: ' + data.exercise;",
+  "  const pbSheet = ss.getSheetByName('Bestleistungen');",
+  "  if (!pbSheet) return;",
+  "  const data = pbSheet.getDataRange().getValues();",
+  "  for (let i = 4; i < data.length; i++) {",
+  "    if (String(data[i][0]).trim().toLowerCase() === uebung.toLowerCase()) {",
+  "      const best = parseFloat(data[i][1]) || 0;",
+  "      if (parseFloat(gewicht) >= best) {",
+  "        pbSheet.getRange(i + 1, 2).setValue(gewicht);",
+  "        pbSheet.getRange(i + 1, 5).setValue(datum);",
+  "        pbSheet.getRange(i + 1, 7).setValue('App-Update V9.0');",
   "      }",
-  "      return 'Kein neuer PR';",
+  "      return;",
   "    }",
   "  }",
-  "  sheet.appendRow([data.exercise, data.orm, data.date, 'Zyklus ' + data.cycle]);",
-  "  return 'Neuer PR eingetragen: ' + data.exercise;",
   "}",
   "",
-  "// 4. ZYKLUS-GENERATOR",
-  "function checkAndCreateNextCycle() {",
-  "  const result = createNextCycle();",
-  "  SpreadsheetApp.getUi().alert(result);",
+  "function parseNum(val) {",
+  "  if (typeof val === 'string') return parseFloat(val.replace(',', '.')) || 0;",
+  "  return parseFloat(val) || 0;",
   "}",
-  "function createNextCycle() {",
+  "",
+  "function logError(typ, nachricht, details) {",
   "  const ss = SpreadsheetApp.openById(SHEET_ID);",
-  "  const sheets = ss.getSheets().filter(s => s.getName().startsWith('ZYKLUS'));",
-  "  if (!sheets.length) return 'Keine ZYKLUS-Sheets gefunden';",
-  "  const lastSheet = sheets[sheets.length - 1];",
-  "  const lastNum = parseInt(lastSheet.getName().replace('ZYKLUS ','')) || sheets.length;",
-  "  const nextName = 'ZYKLUS ' + (lastNum + 1);",
-  "  if (ss.getSheetByName(nextName)) return nextName + ' existiert bereits';",
-  "  const lr = lastSheet.getLastRow(); if (lr < 4) return 'Sheet zu leer';",
-  "  const vals = lastSheet.getRange(1,1,lr,22).getValues();",
-  "  const deloadDone = vals.some(r => String(r[3]).includes('60%') && (r[6] || r[7]));",
-  "  if (!deloadDone) return 'Deload-Woche noch nicht abgeschlossen';",
-  "  const newSheet = lastSheet.copyTo(ss);",
-  "  newSheet.setName(nextName);",
-  "  ss.setActiveSheet(newSheet); ss.moveActiveSheet(sheets.length + 1);",
-  "  const newVals = newSheet.getRange(1,1,newSheet.getLastRow(),22).getValues();",
-  "  let inW3 = false;",
-  "  for (let r = 3; r < newVals.length; r++) {",
-  "    const w = String(newVals[r][0]);",
-  "    if (w.includes('Woche 3')) inW3 = true;",
-  "    if (w.includes('Woche 4') || w.includes('DELOAD')) inW3 = false;",
-  "    if (inW3) {",
-  "      [[7,6],[9,8],[11,10]].forEach(([col,valCol]) => {",
-  "        const v = parseFloat(newVals[r][valCol]);",
-  "        if (v) newSheet.getRange(r+1,col).setValue(Math.round(v*1.025*2)/2);",
-  "      });",
-  "    }",
-  "  }",
-  "  logError('INFO',''+nextName+' erstellt mit +2.5% Startgewichten','');",
-  "  return nextName + ' erfolgreich erstellt!';",
-  "}"
+  "  const logSheet = ss.getSheetByName('Fehlerprotokoll');",
+  "  if (logSheet) logSheet.appendRow([new Date(), typ, nachricht, String(details).substring(0, 500)]);",
+  "}",
 ].join('\n');
 
 // ============================================================
@@ -814,8 +693,8 @@ const PLAN = [
 // ============================================================
 // STORAGE
 // ============================================================
-const SK='pb_v8_1';
-const APP_VERSION='V8.1';
+const SK='pb_v9_0';
+const APP_VERSION='V9.0';
 const errorLog=[];
 let store={};
 try{store=JSON.parse(localStorage.getItem(SK)||'{}');}catch(e){}
@@ -1003,7 +882,7 @@ async function syncAllFromSheet(){
     showStatus('ok','↻ Lade Sheet-Daten…');
     const sheetName='ZYKLUS '+(C+1);
     const day=PLAN[C].weeks[W].days[D];
-    const resp=await fetch(API_URL+'?action=getData&sheet='+encodeURIComponent(sheetName)+'&date='+encodeURIComponent(day.date),{method:'GET',mode:'cors'});
+    const resp=await fetch(API_URL+'?action=getPlan&sheet='+encodeURIComponent(sheetName)+'&date='+encodeURIComponent(day.date),{method:'GET',mode:'cors'});
     if(!resp.ok){showStatus('err','⚠ Sheet-Fehler '+resp.status);return;}
     const data=await resp.json();
     if(!data.success||!data.rows||!data.rows.length){showStatus('ok','✓ Keine neuen Daten');return;}
@@ -1358,13 +1237,25 @@ function renderWorkout(){
     const wu=d.g1?parseFloat(d.g1):null;
 
     const isStag=checkStagnation(i);
+    // Progressionspfeil vs. Vorwoche
+    let progArrow='', progClass='flat', progDiff='';
+    if(orm&&prevOrm){
+      const diff=Math.round((orm-prevOrm)*10)/10;
+      if(diff>0){progArrow='▲';progClass='up';progDiff='+'+diff;}
+      else if(diff<0){progArrow='▼';progClass='down';progDiff=''+diff;}
+      else{progArrow='►';progClass='flat';progDiff='±0';}
+    } else if(orm&&!prevOrm){
+      progArrow='►';progClass='flat';progDiff='Neu';
+    }
+
     html+='<div class="excard '+(d.done?'done ':'')+( isOpen?'open-ex ':'')+( isPR?'pr-card':'')+( isStag?'stagnation-card':'')+'" id="ec'+i+'">'
       +'<div class="exhead" onclick="toggleEx('+i+')">'
       +'<div class="exname">'+(i+1)+'. <span id="exlabel'+i+'" onclick="event.stopPropagation();editExName('+i+')" style="cursor:text;border-bottom:1px dashed var(--bor);" title="Tippen zum Umbenennen">'+exName+'</span>'
       +'<button class="hist-btn" onclick="event.stopPropagation();showHistory('+i+')" title="Verlauf">📊</button>'
       +'</div>'
       +'<div class="exmeta">'
-      +(prevOrm?'<span class="prev-badge">'+prevOrm+' kg</span>':'')
+      +(progArrow?'<span class="prog-arrow '+progClass+'">'+progArrow+' '+progDiff+' kg</span>':'')
+      +(prevOrm&&!progArrow?'<span class="prev-badge">'+prevOrm+' kg</span>':'')
       +'<div class="exstatus">'+(d.done?'✓':orm?orm+' kg 1RM':'—')+'</div>'
       +'<svg class="ex-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>'
       +'</div></div>'
@@ -1397,6 +1288,8 @@ function renderWorkout(){
       // STATS — only 1RM Best + PR record
       +'<div class="stats-row">'
       +'<div class="sbox"><div class="skey">1RM Est.</div><div class="sval" id="orm'+i+'">'+(orm?orm+' kg':'—')+'</div></div>'
+      +'<div class="sbox"><div class="skey">Vorwoche</div><div class="sval" style="font-size:14px;color:var(--mu)">'+(prevOrm?prevOrm+' kg':'—')+'</div></div>'
+      +'<div class="sbox"><div class="skey">Progression</div><div class="sval prog-stat '+progClass+'" style="font-size:16px;">'+(progArrow?progArrow+' '+progDiff+' kg':'—')+'</div></div>'
       +'<div class="sbox"><div class="skey">Bestleistung</div><div class="sval" style="color:var(--warn)">'+(rec?rec.orm+' kg':'—')+'</div></div>'
       +'</div>'
       +buildSparkline(i, orm)
@@ -1566,7 +1459,7 @@ async function flushOfflineBuffer(){
   const remaining=[];
   for(const item of buf){
     try{
-      await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:item.payload});
+      await fetch(API_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:item.payload});
     }catch(e){remaining.push(item);}
   }
   localStorage.setItem(OFFLINE_KEY,JSON.stringify(remaining));
@@ -1578,62 +1471,67 @@ setTimeout(()=>flushOfflineBuffer(),3000);
 
 async function saveToSheet(){
   if(!API_URL){showStatus('err','⚠ API nicht verbunden — URL in Setup eintragen');return;}
-  const week=PLAN[C].weeks[W],day=week.days[D];
-  // Dirty-Check: nur Felder senden die geändert wurden
+  const week=PLAN[C].weeks[W], day=week.days[D];
+  const sheetName='ZYKLUS '+(C+1);
   const prevKey='pb_prev_'+C+'_'+W+'_'+D;
   const prev=JSON.parse(localStorage.getItem(prevKey)||'{}');
+  const bw  = document.getElementById('bwInput')?.value||'';
+  const kcal= document.getElementById('kcalInput')?.value||'';
+  const bpm = document.getElementById('pulseInput')?.value||'';
+  const dur = document.getElementById('durInput')?.value||'';
+
+  // Alle Übungen mit Daten sammeln (Dirty-Check)
   const exercises=day.exercises.map((ex,i)=>{
     const d=getD(C,W,D,i);
     const customName=store['exname_'+C+'_'+W+'_'+D+'_'+i];
+    if(!d.g1&&!d.r1)return null;
     const p=prev[i]||{};
-    // Nur wenn irgendein Feld sich geändert hat
     const dirty=['g1','r1','g2','r2','g3','r3','rpe','notes'].some(f=>String(d[f])!==String(p[f]||''));
     if(!dirty&&p.sent)return null;
-    return{exercise:customName||ex,originalName:ex,ex_id:'C'+C+'_W'+W+'_D'+D+'_idx'+i,
-      g1:d.g1,r1:d.r1,g2:d.g2,r2:d.r2,g3:d.g3,r3:d.r3,rpe:d.rpe||'',
-      gesamtlast:calcTotal(d),orm:calc1RM(d),notes:d.notes,
-      warmup:d.g1?Math.round(parseFloat(d.g1)*0.6*2)/2:''};
-  }).filter(e=>e&&(e.g1||e.r1));
-  if(!exercises.length){showStatus('err','⚠ Keine Daten eingetragen.');return;}
-  setBtnLoading(true);showStatus('loading','⏳ Wird gespeichert…');
-  const stats=store['stats_'+C+'_'+W+'_'+D]||{};
-  const sheetName='ZYKLUS '+(C+1);
-  const payload=JSON.stringify({
-    sheet:sheetName,
-    date:day.date,tag:day.tag,cycle:C+1,weekLabel:week.weekLabel,
-    bodyWeight:store['bw_'+C+'_'+W+'_'+D]||'',
-    kcal:stats.kcal||'',pulse:stats.pulse||'',duration:stats.dur||'',
-    exercises
+    return{
+      date:day.date, uebung:customName||ex,
+      kg:bw, g1:d.g1||'',r1:d.r1||'',g2:d.g2||'',r2:d.r2||'',
+      g3:d.g3||'',r3:d.r3||'',rpe:d.rpe||'',
+      kcal,bpm,duration:dur,notes:d.notes||'',
+      _i:i
+    };
+  }).filter(Boolean);
+
+  if(!exercises.length){showStatus('err','⚠ Keine neuen Daten eingetragen.');return;}
+
+  // Bulk-Payload: ein einziger POST mit allen Übungen
+  const payload=JSON.stringify({sheet:sheetName, date:day.date, exercises});
+
+  setBtnLoading(true);
+  showStatus('loading','⏳ '+exercises.length+' Übung(en) werden gespeichert…');
+
+  // Lokal als gesendet markieren (optimistisch — vor dem fetch)
+  const newPrev=JSON.parse(localStorage.getItem(prevKey)||'{}');
+  exercises.forEach(e=>{
+    const d=getD(C,W,D,e._i);
+    newPrev[e._i]={g1:d.g1,r1:d.r1,g2:d.g2,r2:d.r2,g3:d.g3,r3:d.r3,rpe:d.rpe,notes:d.notes,sent:true};
   });
-  // Payload-Validierung
-  const payloadObj=JSON.parse(payload);
-  if(!payloadObj.date||!payloadObj.sheet||!payloadObj.exercises||payloadObj.exercises.length===0){
-    showStatus('err','⚠ Fehler: Leere oder ungültige Daten (Payload-Validierung)');
-    setBtnLoading(false);return;
-  }
+  localStorage.setItem(prevKey,JSON.stringify(newPrev));
+
   try{
-    const resp=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:payload});
-    const txt=await resp.text();
-    let j=null;
-    try{j=JSON.parse(txt);}catch(e){}
-    if(j&&j.success){
-      showStatus('ok','✓ '+exercises.length+' Übungen gespeichert! ('+day.date+')');
-      addToErrorLog('INFO','Sync OK: '+exercises.length+' Übungen ('+day.date+')');
-    } else if(j&&!j.success){
-      showStatus('err','⚠ Script-Fehler: '+j.message);
-      addToErrorLog('SYNC_ERR','Script: '+j.message);
-      logToSystem('Script-Fehler: '+j.message,'SYNC_ERROR');
-    } else {
-      showStatus('ok','✓ Gesendet! ('+day.date+')');
-      addToErrorLog('INFO','Gesendet (kein JSON zurück): '+day.date);
-    }
+    // no-cors: kein Response-Parsing möglich → Fire-and-Forget
+    await fetch(API_URL,{
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
+      body:payload
+    });
+    // no-cors fetch wirft keinen Fehler bei Erfolg
+    showStatus('ok','✓ '+exercises.length+' Übung(en) gesendet! ('+day.date+')');
+    addToErrorLog('SYNC_OK','Bulk-Upload: '+exercises.length+' Übungen ('+day.date+')');
   }catch(e){
-    // Netzwerkfehler — offline buffern
+    // Nur bei echtem Netzwerkfehler (offline)
     bufferOffline(payload);
-    showStatus('err','⚠ Offline — '+exercises.length+' Einträge lokal gespeichert');
+    showStatus('err','⚠ Offline — lokal gespeichert, wird später gesendet');
     addToErrorLog('OFFLINE','Offline-Buffer: '+e.message);
     logToSystem(e,'OFFLINE_ERROR');
   }
+
   setBtnLoading(false);
 }
 
@@ -1979,7 +1877,7 @@ async function syncFromSheet(){
   try{
     const sheetName='ZYKLUS '+(C+1);
     const day=PLAN[C].weeks[W].days[D];
-    const resp=await fetch(API_URL+'?action=getData&sheet='+encodeURIComponent(sheetName)+'&date='+encodeURIComponent(day.date),{method:'GET'});
+    const resp=await fetch(API_URL+'?action=getPlan&sheet='+encodeURIComponent(sheetName)+'&date='+encodeURIComponent(day.date),{method:'GET'});
     const data=await resp.json();
     if(!data.success||!data.rows||!data.rows.length)return;
     const normalize=s=>String(s).toLowerCase().replace(/[^a-z0-9äöüß]/g,'');
