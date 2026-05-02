@@ -327,6 +327,24 @@ main{padding:16px;max-width:860px;}
 .pr-del-btn{background:none;border:1px solid var(--bor);color:var(--mu);font-size:10px;padding:5px 8px;border-radius:4px;cursor:pointer;}
 .pr-del-btn:hover{border-color:var(--acc2);color:var(--acc2);}
 .pr-summary{font-family:'Space Mono',monospace;font-size:9px;color:var(--mu);padding:10px 0 4px;text-align:center;}
+/* KI-TAB */
+.ki-model-btn{font-family:'Space Mono',monospace;font-size:9px;padding:6px 12px;border:1px solid var(--bor);background:var(--sur);color:var(--mu);border-radius:var(--r);cursor:pointer;transition:all .2s;flex:1;}
+.ki-model-btn.active{border-color:var(--acc);color:var(--acc);background:rgba(200,255,0,.06);}
+.ki-model-btn:active{opacity:.7;}
+#kiChatBox{display:flex;flex-direction:column;gap:10px;min-height:120px;margin-bottom:12px;max-height:55vh;overflow-y:auto;padding-bottom:4px;}
+.ki-msg{padding:10px 13px;border-radius:var(--r);font-size:12px;line-height:1.6;max-width:92%;}
+.ki-msg.user{background:var(--sur2);border:1px solid var(--bor);color:var(--tx);align-self:flex-end;font-family:'Space Mono',monospace;font-size:10px;}
+.ki-msg.ai{background:var(--sur);border:1px solid var(--bor2);color:var(--tx);align-self:flex-start;}
+.ki-msg.ai .ki-label{font-family:'Space Mono',monospace;font-size:7px;color:var(--acc);text-transform:uppercase;letter-spacing:2px;margin-bottom:5px;}
+.ki-msg.loading{background:var(--sur);border:1px solid var(--bor);align-self:flex-start;display:flex;align-items:center;gap:8px;color:var(--mu);font-size:11px;}
+.ki-input-wrap{display:flex;gap:8px;align-items:flex-end;}
+.ki-textarea{flex:1;background:var(--sur2);border:1px solid var(--bor);color:var(--tx);font-family:'Space Mono',monospace;font-size:11px;padding:10px 12px;border-radius:var(--r);resize:none;line-height:1.5;}
+.ki-textarea:focus{outline:none;border-color:var(--acc);}
+.ki-textarea::placeholder{color:var(--mu);}
+.ki-send-btn{background:var(--acc);color:#000;border:none;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;padding:10px 16px;border-radius:var(--r);cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;height:fit-content;}
+.ki-send-btn:disabled{opacity:.5;cursor:not-allowed;}
+.ki-send-btn:active:not(:disabled){opacity:.8;}
+/* END KI-TAB */
 /* END PR-SEITE */
 /* END SPARKLINE */
 .ov-today-lbl{font-family:'Space Mono',monospace;font-size:8px;color:var(--mu);text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;}
@@ -445,6 +463,7 @@ main{padding:16px;max-width:860px;}
   <button class="tab active" onclick="showTab('workout',this)"><svg viewBox="0 0 24 24"><path d="M6 4v16M18 4v16M6 12h12M2 7h4M18 7h4M2 17h4M18 17h4"/></svg>Training</button>
   <button class="tab" onclick="showTab('setup',this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Setup</button>
   <button class="tab" onclick="showTab('records',this)"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>PRs</button>
+  <button class="tab" onclick="showTab('ki',this)"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8zm-1-5h2v2h-2zm0-8h2v5h-2z"/></svg>KI</button>
 
 </div>
 
@@ -528,6 +547,35 @@ main{padding:16px;max-width:860px;}
   <div id="recordsList"></div>
 </div>
 
+
+<!-- KI-TAB -->
+<div class="sec" id="tab-ki">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;padding:4px 0 10px;">
+    <h2 style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;margin:0;">KI Coach</h2>
+    <span style="font-family:'Space Mono',monospace;font-size:8px;color:var(--mu);" id="kiModelBadge">GROQ · llama-3.1-8b</span>
+  </div>
+
+  <!-- Modell-Auswahl -->
+  <div style="display:flex;gap:6px;margin-bottom:12px;">
+    <button class="ki-model-btn active" id="kiBtnGroq" onclick="setKiModel('groq')">⚡ Groq (schnell)</button>
+    <button class="ki-model-btn" id="kiBtnGemini" onclick="setKiModel('gemini')">✨ Gemini (tiefgründig)</button>
+  </div>
+
+  <!-- Chat-Verlauf -->
+  <div id="kiChatBox"></div>
+
+  <!-- Eingabe -->
+  <div class="ki-input-wrap">
+    <textarea id="kiInput" class="ki-textarea" placeholder="Stell mir eine Frage zu deinem Training, deiner Technik, Ernährung, Regeneration …" rows="3"></textarea>
+    <button class="ki-send-btn" id="kiSendBtn" onclick="sendKiMessage()">
+      <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      Senden
+    </button>
+  </div>
+  <div style="font-family:'Space Mono',monospace;font-size:8px;color:var(--mu);margin-top:6px;text-align:center;">
+    Keys im Setup eintragen · Kein Kontext wird automatisch gesendet
+  </div>
+</div>
 
 </main>
 
@@ -1534,6 +1582,7 @@ function showTab(name,btn){
   const footer=document.getElementById('saveFooter');
   if(footer)footer.style.display=(name==='workout')?'block':'none';
   if(name==='records')renderRecords();
+  if(name==='ki')initKiTab();
 }
 
 // ============================================================
@@ -1881,6 +1930,126 @@ async function syncFromSheet(){
     if(changed){persist();renderWorkout();showStatus('ok','↻ Sheet-Daten geladen');}
   }catch(e){/* silent fail */}
 }
+
+// ============================================================
+// KI-TAB — Groq + Gemini freier Chat
+// ============================================================
+let kiModel = 'groq'; // 'groq' | 'gemini'
+const kiHistory = []; // {role:'user'|'assistant', content, model}
+
+function setKiModel(m) {
+  kiModel = m;
+  document.getElementById('kiBtnGroq').classList.toggle('active', m === 'groq');
+  document.getElementById('kiBtnGemini').classList.toggle('active', m === 'gemini');
+  document.getElementById('kiModelBadge').textContent =
+    m === 'groq' ? 'GROQ · llama-3.1-8b' : 'GEMINI · gemini-2.0-flash';
+}
+
+function initKiTab() {
+  renderKiChat();
+}
+
+function renderKiChat() {
+  const box = document.getElementById('kiChatBox');
+  if (!box) return;
+  if (kiHistory.length === 0) {
+    box.innerHTML = '<div style="font-family:\'Space Mono\',monospace;font-size:9px;color:var(--mu);text-align:center;padding:20px 0;">Noch kein Gespräch — stell eine Frage!</div>';
+    return;
+  }
+  box.innerHTML = kiHistory.map(m => {
+    if (m.role === 'user') {
+      return '<div class="ki-msg user">' + sanitize(m.content) + '</div>';
+    } else {
+      const label = m.model === 'gemini' ? '✨ Gemini Coach' : '⚡ Groq Coach';
+      return '<div class="ki-msg ai"><div class="ki-label">' + label + '</div>'
+        + m.content.replace(/\n/g, '<br>') + '</div>';
+    }
+  }).join('');
+  box.scrollTop = box.scrollHeight;
+}
+
+async function sendKiMessage() {
+  const inp = document.getElementById('kiInput');
+  const btn = document.getElementById('kiSendBtn');
+  const text = inp.value.trim();
+  if (!text) return;
+
+  // Key-Check
+  if (kiModel === 'groq' && !store._aiKey) {
+    alert('Groq API Key fehlt — bitte im Setup unter Schritt 5 eintragen.');
+    return;
+  }
+  if (kiModel === 'gemini' && !store._geminiKey) {
+    alert('Gemini API Key fehlt — bitte im Setup unter Schritt 5 eintragen.');
+    return;
+  }
+
+  // User-Nachricht
+  kiHistory.push({ role: 'user', content: text });
+  inp.value = '';
+  btn.disabled = true;
+  renderKiChat();
+
+  // Loading-Indicator
+  const box = document.getElementById('kiChatBox');
+  const loading = document.createElement('div');
+  loading.className = 'ki-msg loading';
+  loading.innerHTML = '<div class="spinner"></div> <span>' + (kiModel === 'groq' ? 'Groq' : 'Gemini') + ' denkt…</span>';
+  box.appendChild(loading);
+  box.scrollTop = box.scrollHeight;
+
+  let result = '';
+  try {
+    if (kiModel === 'groq') {
+      // Groq: kompletten Chatverlauf mitsenden
+      const messages = [
+        { role: 'system', content: 'Du bist ein erfahrener Kraft- und Fitness-Coach. Antworte auf Deutsch, klar und strukturiert. Max. 300 Wörter.' },
+        ...kiHistory.filter(m => m.role !== 'assistant' || m.model === 'groq').map(m => ({
+          role: m.role === 'ai' ? 'assistant' : m.role,
+          content: m.content
+        }))
+      ];
+      const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + store._aiKey },
+        body: JSON.stringify({ model: 'llama-3.1-8b-instant', max_tokens: 600, messages })
+      });
+      if (!resp.ok) { const e = await resp.json().catch(() => ({})); throw new Error('Groq ' + resp.status + ': ' + (e.error?.message || '')); }
+      const data = await resp.json();
+      result = data.choices?.[0]?.message?.content || '(Keine Antwort)';
+    } else {
+      // Gemini: nur letzte Nachricht (kein Chatverlauf-Support nötig für einfache Nutzung)
+      const resp = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=' + store._geminiKey, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: 'Du bist ein Kraft- und Fitness-Coach. Antworte auf Deutsch, max 300 Wörter.\n\nFrage: ' + text }] }]
+        })
+      });
+      const data = await resp.json();
+      if (data.error) throw new Error(data.error.message);
+      result = data.candidates?.[0]?.content?.parts?.[0]?.text || '(Keine Antwort)';
+    }
+  } catch (e) {
+    result = '⚠ Fehler: ' + e.message;
+    addToErrorLog('KI_ERROR', e.message);
+  }
+
+  loading.remove();
+  kiHistory.push({ role: 'assistant', content: result, model: kiModel });
+  btn.disabled = false;
+  renderKiChat();
+}
+
+// Enter = Senden, Shift+Enter = Neue Zeile
+document.addEventListener('DOMContentLoaded', () => {
+  const inp = document.getElementById('kiInput');
+  if (inp) {
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendKiMessage(); }
+    });
+  }
+});
 
 document.addEventListener('visibilitychange', () => { if (!document.hidden) syncFromSheet(); });
 window.addEventListener('focus', () => syncFromSheet());
