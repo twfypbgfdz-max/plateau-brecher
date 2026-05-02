@@ -202,15 +202,6 @@ main{padding:16px;max-width:860px;}
 .sinput:focus{border-color:var(--acc);background:var(--sur3);}
 .sinput::placeholder{color:var(--mu);font-size:10px;font-weight:400;}
 
-/* PROGRESSION ARROWS */
-.prog-arrow{font-family:'Space Mono',monospace;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;white-space:nowrap;}
-.prog-arrow.up{color:var(--ok);background:rgba(0,230,118,.12);}
-.prog-arrow.down{color:var(--acc2);background:rgba(255,68,68,.12);}
-.prog-arrow.flat{color:var(--mu);background:var(--sur2);}
-.prog-stat.up{color:var(--ok)!important;}
-.prog-stat.down{color:var(--acc2)!important;}
-.prog-stat.flat{color:var(--mu)!important;}
-
 /* 1RM INLINE - prominent display */
 .orm-inline{
   font-family:'Space Mono',monospace;font-size:10px;
@@ -571,7 +562,6 @@ main{padding:16px;max-width:860px;}
 // APPS SCRIPT CODE
 // ============================================================
 const SCRIPT_CODE = [
-  "// PLATEAU-BRECHER V9.0 — Google Apps Script",
   "const SHEET_ID = '1NA5OUomzaSFSw6_VzdJ6U7FaD1bU0qTEsQCtIneJ1JI';",
   "",
   "function doPost(e) {",
@@ -580,41 +570,34 @@ const SCRIPT_CODE = [
   "  try {",
   "    const data = JSON.parse(e.postData.contents);",
   "    const ss = SpreadsheetApp.openById(SHEET_ID);",
-  "    // Bulk-Upload: data.exercises = Array, oder einzelne Übung (Legacy)",
-  "    const entries = Array.isArray(data.exercises) ? data.exercises : [data];",
-  "    const sheetName = data.sheet || (entries[0] && entries[0].sheet);",
-  "    const sheet = ss.getSheetByName(sheetName);",
-  "    if (!sheet) throw new Error('Sheet nicht gefunden: ' + sheetName);",
+  "    const sheet = ss.getSheetByName(data.sheet);",
+  "    if (!sheet) throw new Error('Sheet nicht gefunden: ' + data.sheet);",
   "    const values = sheet.getRange(1, 1, sheet.getLastRow(), 22).getValues();",
   "    let updated = 0;",
-  "    for (const entry of entries) {",
-  "      for (let r = 3; r < values.length; r++) {",
-  "        const rowDate = String(values[r][1]).trim();",
-  "        const rowEx   = String(values[r][4]).trim();",
-  "        if (rowDate === entry.date && rowEx.toLowerCase() === entry.uebung.toLowerCase()) {",
-  "          const sr = r + 1;",
-  "          if (entry.kg)       sheet.getRange(sr, 3).setValue(parseNum(entry.kg));",
-  "          const sets = [[parseNum(entry.g1), parseNum(entry.r1), parseNum(entry.g2), parseNum(entry.r2), parseNum(entry.g3), parseNum(entry.r3)]];",
-  "          sheet.getRange(sr, 7, 1, 6).setValues(sets);",
-  "          if (entry.rpe)      sheet.getRange(sr, 15).setValue(parseNum(entry.rpe));",
-  "          if (entry.kcal)     sheet.getRange(sr, 20).setValue(parseNum(entry.kcal));",
-  "          if (entry.bpm)      sheet.getRange(sr, 21).setValue(parseNum(entry.bpm));",
-  "          if (entry.duration) sheet.getRange(sr, 22).setValue(parseNum(entry.duration));",
-  "          const maxG = Math.max(parseNum(entry.g1), parseNum(entry.g2), parseNum(entry.g3));",
-  "          updatePersonalBest(entry.uebung, maxG, entry.date);",
-  "          updated++; break;",
-  "        }",
+  "    for (let r = 3; r < values.length; r++) {",
+  "      const rowDate = String(values[r][1]).trim();",
+  "      const rowEx   = String(values[r][4]).trim();",
+  "      if (rowDate === data.date && rowEx.toLowerCase() === data.uebung.toLowerCase()) {",
+  "        const sr = r + 1;",
+  "        if (data.kg)       sheet.getRange(sr, 3).setValue(parseNum(data.kg));",
+  "        const sets = [[parseNum(data.g1), parseNum(data.r1), parseNum(data.g2), parseNum(data.r2), parseNum(data.g3), parseNum(data.r3)]];",
+  "        sheet.getRange(sr, 7, 1, 6).setValues(sets);",
+  "        if (data.rpe)      sheet.getRange(sr, 15).setValue(parseNum(data.rpe));",
+  "        if (data.kcal)     sheet.getRange(sr, 20).setValue(parseNum(data.kcal));",
+  "        if (data.bpm)      sheet.getRange(sr, 21).setValue(parseNum(data.bpm));",
+  "        if (data.duration) sheet.getRange(sr, 22).setValue(parseNum(data.duration));",
+  "        const maxGewicht = Math.max(parseNum(data.g1), parseNum(data.g2), parseNum(data.g3));",
+  "        updatePersonalBest(data.uebung, maxGewicht, data.date);",
+  "        updated++;",
+  "        break;",
   "      }",
   "    }",
-  "    logError('SYNC_OK', 'Bulk-Upload: ' + updated + '/' + entries.length + ' gespeichert', data.date || '');",
   "    return ContentService.createTextOutput(JSON.stringify({",
   "      success: updated > 0,",
-  "      updated: updated,",
-  "      total: entries.length,",
-  "      message: updated + ' von ' + entries.length + ' Uebungen gespeichert.'",
+  "      message: updated > 0 ? 'Training gespeichert!' : 'Fehler: Uebung/Datum nicht gefunden.'",
   "    })).setMimeType(ContentService.MimeType.JSON);",
   "  } catch (err) {",
-  "    logError('API POST', err.toString(), e.postData ? e.postData.contents.substring(0,200) : 'Kein Inhalt');",
+  "    logError('API POST', err.toString(), e.postData ? e.postData.contents : 'Kein Inhalt');",
   "    return ContentService.createTextOutput(JSON.stringify({success: false, error: err.toString()})).setMimeType(ContentService.MimeType.JSON);",
   "  } finally {",
   "    lock.releaseLock();",
@@ -629,15 +612,15 @@ const SCRIPT_CODE = [
   "      const sheetName = e.parameter.sheet;",
   "      const sheet = ss.getSheetByName(sheetName);",
   "      if (!sheet) {",
-  "        logError('API GET', 'Sheet nicht gefunden', sheetName);",
+  "        logError('API GET', 'Sheet nicht gefunden', 'Gesuchtes Blatt: ' + sheetName);",
   "        return ContentService.createTextOutput('Fehler: Blatt nicht gefunden.').setMimeType(ContentService.MimeType.TEXT);",
   "      }",
   "      const data = sheet.getRange(4, 1, sheet.getLastRow() - 3, 22).getValues();",
   "      return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);",
   "    }",
-  "    return ContentService.createTextOutput('API aktiv - V9.0').setMimeType(ContentService.MimeType.TEXT);",
+  "    return ContentService.createTextOutput('API aktiv').setMimeType(ContentService.MimeType.TEXT);",
   "  } catch (err) {",
-  "    logError('API GET KRITISCH', err.toString(), JSON.stringify(e.parameter));",
+  "    logError('API GET KRITISCH', err.toString(), 'Parameter: ' + JSON.stringify(e.parameter));",
   "    return ContentService.createTextOutput('Fehler: ' + err.toString()).setMimeType(ContentService.MimeType.TEXT);",
   "  }",
   "}",
@@ -650,11 +633,11 @@ const SCRIPT_CODE = [
   "  const data = pbSheet.getDataRange().getValues();",
   "  for (let i = 4; i < data.length; i++) {",
   "    if (String(data[i][0]).trim().toLowerCase() === uebung.toLowerCase()) {",
-  "      const best = parseFloat(data[i][1]) || 0;",
-  "      if (parseFloat(gewicht) >= best) {",
+  "      const aktuellesBest = parseFloat(data[i][1]) || 0;",
+  "      if (parseFloat(gewicht) >= aktuellesBest) {",
   "        pbSheet.getRange(i + 1, 2).setValue(gewicht);",
   "        pbSheet.getRange(i + 1, 5).setValue(datum);",
-  "        pbSheet.getRange(i + 1, 7).setValue('App-Update V9.0');",
+  "        pbSheet.getRange(i + 1, 7).setValue('App-Update');",
   "      }",
   "      return;",
   "    }",
@@ -669,7 +652,7 @@ const SCRIPT_CODE = [
   "function logError(typ, nachricht, details) {",
   "  const ss = SpreadsheetApp.openById(SHEET_ID);",
   "  const logSheet = ss.getSheetByName('Fehlerprotokoll');",
-  "  if (logSheet) logSheet.appendRow([new Date(), typ, nachricht, String(details).substring(0, 500)]);",
+  "  if (logSheet) logSheet.appendRow([new Date(), typ, nachricht, details]);",
   "}",
 ].join('\n');
 
@@ -789,6 +772,7 @@ function toggleTheme(){
 // API
 // ============================================================
 let API_URL=store._apiUrl||'';
+let lastSync=0;
 function saveApiUrl(){API_URL=document.getElementById('apiUrlInput').value.trim();store._apiUrl=API_URL;persist();updateApiStatus();showSetupStatus('ok','✓ URL gespeichert!');}
 function updateApiStatus(){
   const dot=document.getElementById('apiDot'),txt=document.getElementById('apiStatusTxt');
@@ -882,46 +866,38 @@ async function syncAllFromSheet(){
     showStatus('ok','↻ Lade Sheet-Daten…');
     const sheetName='ZYKLUS '+(C+1);
     const day=PLAN[C].weeks[W].days[D];
-    const resp=await fetch(API_URL+'?action=getPlan&sheet='+encodeURIComponent(sheetName)+'&date='+encodeURIComponent(day.date),{method:'GET',mode:'cors'});
+    const resp=await fetch(API_URL+'?action=getPlan&sheet='+encodeURIComponent(sheetName)+'&date='+encodeURIComponent(day.date),{method:'GET'});
     if(!resp.ok){showStatus('err','⚠ Sheet-Fehler '+resp.status);return;}
     const data=await resp.json();
-    if(!data.success||!data.rows||!data.rows.length){showStatus('ok','✓ Keine neuen Daten');return;}
-    // SAUBERES MATCHING: Sheet-Zeilen kommen in Reihenfolge der Übungen
-    // Wir matchen nur wenn Übungsname exakt (normalisiert) übereinstimmt
-    // Fallback: positionsbasiert (Zeile 0 → Übung 0, Zeile 1 → Übung 1, etc.)
+    if(!Array.isArray(data)||data.length===0){showStatus('ok','✓ Keine neuen Daten');return;}
     const normalize=s=>String(s).toLowerCase().replace(/[^a-z0-9äöüß]/g,'');
-    let changed=false;
-    // Erst: versuche exaktes Name-Matching
+    let changed=false,lastDate='';
     const matched=new Set();
-    data.rows.forEach(row=>{
-      // Datum-Check: nur Zeilen für exakt diesen Tag übernehmen
-      if(row.date && row.date !== day.date) {
-        addToErrorLog('DATEN_WARNUNG','Sheet liefert falsches Datum: '+row.date+' (Erwartet: '+day.date+')');
-        return;
-      }
-      const normRow=normalize(row.exercise);
-      // Suche nur wenn Übungsname im PLAN für diesen Tag vorkommt
+    data.forEach(row=>{
+      const datum=String(row[1]||'').trim();
+      if(datum)lastDate=datum;
+      const rowEx=String(row[4]||'').trim();
+      if(!rowEx)return;
+      if(lastDate&&lastDate!==day.date)return;
+      const normRow=normalize(rowEx);
       const exIdx=day.exercises.findIndex((ex,ei)=>{
-        if(matched.has(ei))return false; // bereits gematcht
+        if(matched.has(ei))return false;
         return normalize(ex)===normRow;
       });
       if(exIdx<0)return;
       matched.add(exIdx);
       const d=getD(C,W,D,exIdx);
-      // Nur leere Felder überschreiben
-      const fields={g1:row.g1,r1:row.r1,g2:row.g2,r2:row.r2,g3:row.g3,r3:row.r3,rpe:row.rpe,notes:row.notes};
+      const fields={g1:row[6],r1:row[7],g2:row[8],r2:row[9],g3:row[10],r3:row[11],rpe:row[14],notes:row[18]};
       Object.entries(fields).forEach(([k,v])=>{
         const val=sanitize(String(v||'').trim());
-        if(val&&val!=='0'&&String(d[k]||'').trim()===''){
-          d[k]=val;changed=true;
-        }
+        if(val&&val!=='0'&&String(d[k]||'').trim()===''){d[k]=val;changed=true;}
       });
     });
     if(changed){
       persist();renderWorkout();
       showStatus('ok','✓ Sheet-Daten übernommen ('+matched.size+' Übungen)');
       addToErrorLog('SYNC_OK',''+matched.size+' Übungen geladen ('+day.date+')');
-    } else {
+    }else{
       showStatus('ok','✓ Alles aktuell');
       addToErrorLog('INFO','Sync: Alles aktuell ('+day.date+')');
     }
@@ -931,6 +907,7 @@ async function syncAllFromSheet(){
     logToSystem(e,'SYNC_ERROR');
   }
 }
+
 
 // ============================================================
 // SELECTORS
@@ -1237,25 +1214,13 @@ function renderWorkout(){
     const wu=d.g1?parseFloat(d.g1):null;
 
     const isStag=checkStagnation(i);
-    // Progressionspfeil vs. Vorwoche
-    let progArrow='', progClass='flat', progDiff='';
-    if(orm&&prevOrm){
-      const diff=Math.round((orm-prevOrm)*10)/10;
-      if(diff>0){progArrow='▲';progClass='up';progDiff='+'+diff;}
-      else if(diff<0){progArrow='▼';progClass='down';progDiff=''+diff;}
-      else{progArrow='►';progClass='flat';progDiff='±0';}
-    } else if(orm&&!prevOrm){
-      progArrow='►';progClass='flat';progDiff='Neu';
-    }
-
     html+='<div class="excard '+(d.done?'done ':'')+( isOpen?'open-ex ':'')+( isPR?'pr-card':'')+( isStag?'stagnation-card':'')+'" id="ec'+i+'">'
       +'<div class="exhead" onclick="toggleEx('+i+')">'
       +'<div class="exname">'+(i+1)+'. <span id="exlabel'+i+'" onclick="event.stopPropagation();editExName('+i+')" style="cursor:text;border-bottom:1px dashed var(--bor);" title="Tippen zum Umbenennen">'+exName+'</span>'
       +'<button class="hist-btn" onclick="event.stopPropagation();showHistory('+i+')" title="Verlauf">📊</button>'
       +'</div>'
       +'<div class="exmeta">'
-      +(progArrow?'<span class="prog-arrow '+progClass+'">'+progArrow+' '+progDiff+' kg</span>':'')
-      +(prevOrm&&!progArrow?'<span class="prev-badge">'+prevOrm+' kg</span>':'')
+      +(prevOrm?'<span class="prev-badge">'+prevOrm+' kg</span>':'')
       +'<div class="exstatus">'+(d.done?'✓':orm?orm+' kg 1RM':'—')+'</div>'
       +'<svg class="ex-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>'
       +'</div></div>'
@@ -1288,8 +1253,6 @@ function renderWorkout(){
       // STATS — only 1RM Best + PR record
       +'<div class="stats-row">'
       +'<div class="sbox"><div class="skey">1RM Est.</div><div class="sval" id="orm'+i+'">'+(orm?orm+' kg':'—')+'</div></div>'
-      +'<div class="sbox"><div class="skey">Vorwoche</div><div class="sval" style="font-size:14px;color:var(--mu)">'+(prevOrm?prevOrm+' kg':'—')+'</div></div>'
-      +'<div class="sbox"><div class="skey">Progression</div><div class="sval prog-stat '+progClass+'" style="font-size:16px;">'+(progArrow?progArrow+' '+progDiff+' kg':'—')+'</div></div>'
       +'<div class="sbox"><div class="skey">Bestleistung</div><div class="sval" style="color:var(--warn)">'+(rec?rec.orm+' kg':'—')+'</div></div>'
       +'</div>'
       +buildSparkline(i, orm)
@@ -1459,7 +1422,7 @@ async function flushOfflineBuffer(){
   const remaining=[];
   for(const item of buf){
     try{
-      await fetch(API_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:item.payload});
+      await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:item.payload});
     }catch(e){remaining.push(item);}
   }
   localStorage.setItem(OFFLINE_KEY,JSON.stringify(remaining));
@@ -1473,66 +1436,78 @@ async function saveToSheet(){
   if(!API_URL){showStatus('err','⚠ API nicht verbunden — URL in Setup eintragen');return;}
   const week=PLAN[C].weeks[W], day=week.days[D];
   const sheetName='ZYKLUS '+(C+1);
+  const stats=store['stats_'+C+'_'+W+'_'+D]||{};
+
+  // Dirty-Check: nur Übungen senden die Daten haben
   const prevKey='pb_prev_'+C+'_'+W+'_'+D;
   const prev=JSON.parse(localStorage.getItem(prevKey)||'{}');
-  const bw  = document.getElementById('bwInput')?.value||'';
-  const kcal= document.getElementById('kcalInput')?.value||'';
-  const bpm = document.getElementById('pulseInput')?.value||'';
-  const dur = document.getElementById('durInput')?.value||'';
 
-  // Alle Übungen mit Daten sammeln (Dirty-Check)
-  const exercises=day.exercises.map((ex,i)=>{
+  const toSend=day.exercises.map((ex,i)=>{
     const d=getD(C,W,D,i);
     const customName=store['exname_'+C+'_'+W+'_'+D+'_'+i];
-    if(!d.g1&&!d.r1)return null;
+    if(!d.g1&&!d.r1)return null; // keine Daten
     const p=prev[i]||{};
     const dirty=['g1','r1','g2','r2','g3','r3','rpe','notes'].some(f=>String(d[f])!==String(p[f]||''));
     if(!dirty&&p.sent)return null;
     return{
-      date:day.date, uebung:customName||ex,
-      kg:bw, g1:d.g1||'',r1:d.r1||'',g2:d.g2||'',r2:d.r2||'',
-      g3:d.g3||'',r3:d.r3||'',rpe:d.rpe||'',
-      kcal,bpm,duration:dur,notes:d.notes||'',
-      _i:i
+      sheet:    sheetName,
+      date:     day.date,
+      uebung:   customName||ex,
+      kg:       document.getElementById('bwInput')?.value||'',
+      g1:d.g1||'', r1:d.r1||'',
+      g2:d.g2||'', r2:d.r2||'',
+      g3:d.g3||'', r3:d.r3||'',
+      rpe:      d.rpe||'',
+      kcal:     document.getElementById('kcalInput')?.value||'',
+      bpm:      document.getElementById('pulseInput')?.value||'',
+      duration: document.getElementById('durInput')?.value||'',
+      notes:    d.notes||'',
+      _exIdx:   i,
     };
   }).filter(Boolean);
 
-  if(!exercises.length){showStatus('err','⚠ Keine neuen Daten eingetragen.');return;}
-
-  // Bulk-Payload: ein einziger POST mit allen Übungen
-  const payload=JSON.stringify({sheet:sheetName, date:day.date, exercises});
-
+  if(!toSend.length){showStatus('err','⚠ Keine neuen Daten eingetragen.');return;}
   setBtnLoading(true);
-  showStatus('loading','⏳ '+exercises.length+' Übung(en) werden gespeichert…');
+  showStatus('loading','⏳ '+toSend.length+' Übung(en) werden gespeichert…');
 
-  // Lokal als gesendet markieren (optimistisch — vor dem fetch)
-  const newPrev=JSON.parse(localStorage.getItem(prevKey)||'{}');
-  exercises.forEach(e=>{
-    const d=getD(C,W,D,e._i);
-    newPrev[e._i]={g1:d.g1,r1:d.r1,g2:d.g2,r2:d.r2,g3:d.g3,r3:d.r3,rpe:d.rpe,notes:d.notes,sent:true};
-  });
-  localStorage.setItem(prevKey,JSON.stringify(newPrev));
-
-  try{
-    // no-cors: kein Response-Parsing möglich → Fire-and-Forget
-    await fetch(API_URL,{
-      method:'POST',
-      mode:'no-cors',
-      headers:{'Content-Type':'text/plain'},
-      body:payload
-    });
-    // no-cors fetch wirft keinen Fehler bei Erfolg
-    showStatus('ok','✓ '+exercises.length+' Übung(en) gesendet! ('+day.date+')');
-    addToErrorLog('SYNC_OK','Bulk-Upload: '+exercises.length+' Übungen ('+day.date+')');
-  }catch(e){
-    // Nur bei echtem Netzwerkfehler (offline)
-    bufferOffline(payload);
-    showStatus('err','⚠ Offline — lokal gespeichert, wird später gesendet');
-    addToErrorLog('OFFLINE','Offline-Buffer: '+e.message);
-    logToSystem(e,'OFFLINE_ERROR');
+  let ok=0, failed=0;
+  for(const entry of toSend){
+    const payload=JSON.stringify(entry);
+    try{
+      const resp=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:payload});
+      let j=null;
+      try{j=JSON.parse(await resp.text());}catch(e){}
+      if(j&&j.success){
+        ok++;
+        // Dirty-State zurücksetzen
+        const p=JSON.parse(localStorage.getItem(prevKey)||'{}');
+        const d=getD(C,W,D,entry._exIdx);
+        p[entry._exIdx]={g1:d.g1,r1:d.r1,g2:d.g2,r2:d.r2,g3:d.g3,r3:d.r3,rpe:d.rpe,notes:d.notes,sent:true};
+        localStorage.setItem(prevKey,JSON.stringify(p));
+      } else {
+        failed++;
+        const msg=j&&j.message?j.message:'Unbekannt';
+        addToErrorLog('SYNC_ERR','Script: '+msg+' ('+entry.uebung+')');
+        logToSystem('Script-Fehler: '+msg,'SYNC_ERROR');
+      }
+    }catch(e){
+      bufferOffline(payload);
+      failed++;
+      addToErrorLog('OFFLINE','Offline-Buffer: '+entry.uebung+' — '+e.message);
+    }
   }
 
   setBtnLoading(false);
+  if(failed===0){
+    showStatus('ok','✓ '+ok+' Übung(en) gespeichert! ('+day.date+')');
+    addToErrorLog('SYNC_OK','Sync OK: '+ok+' Übungen ('+day.date+')');
+  } else if(ok>0){
+    showStatus('err','⚠ '+ok+' OK, '+failed+' fehlgeschlagen — offline gepuffert');
+    addToErrorLog('SYNC_FAIL','Teilfehler: '+ok+' OK / '+failed+' fail');
+  } else {
+    showStatus('err','⚠ Speichern fehlgeschlagen — offline gepuffert');
+    addToErrorLog('CRITICAL_FAIL','Alle '+failed+' Uploads fehlgeschlagen');
+  }
 }
 
 function setBtnLoading(on){
@@ -1879,16 +1854,17 @@ async function syncFromSheet(){
     const day=PLAN[C].weeks[W].days[D];
     const resp=await fetch(API_URL+'?action=getPlan&sheet='+encodeURIComponent(sheetName)+'&date='+encodeURIComponent(day.date),{method:'GET'});
     const data=await resp.json();
-    if(!data.success||!data.rows||!data.rows.length)return;
+    if(!Array.isArray(data)||data.length===0)return;
     const normalize=s=>String(s).toLowerCase().replace(/[^a-z0-9äöüß]/g,'');
-    let changed=false;
+    let changed=false,lastDate='';
     const matched=new Set();
-    data.rows.forEach(row=>{
-      if(row.date && row.date !== day.date) {
-        addToErrorLog('DATEN_WARNUNG','Sheet liefert falsches Datum: '+row.date+' (Erwartet: '+day.date+')');
-        return;
-      }
-      const normRow=normalize(row.exercise);
+    data.forEach(row=>{
+      const datum=String(row[1]||'').trim();
+      if(datum)lastDate=datum;
+      const rowEx=String(row[4]||'').trim();
+      if(!rowEx)return;
+      if(lastDate&&lastDate!==day.date)return;
+      const normRow=normalize(rowEx);
       const exIdx=day.exercises.findIndex((ex,ei)=>{
         if(matched.has(ei))return false;
         return normalize(ex)===normRow;
@@ -1896,7 +1872,7 @@ async function syncFromSheet(){
       if(exIdx<0)return;
       matched.add(exIdx);
       const d=getD(C,W,D,exIdx);
-      const fields={g1:row.g1,r1:row.r1,g2:row.g2,r2:row.r2,g3:row.g3,r3:row.r3,rpe:row.rpe,notes:row.notes};
+      const fields={g1:row[6],r1:row[7],g2:row[8],r2:row[9],g3:row[10],r3:row[11],rpe:row[14],notes:row[18]};
       Object.entries(fields).forEach(([k,v])=>{
         const val=sanitize(String(v||'').trim());
         if(val&&val!=='0'&&String(d[k]||'').trim()===''){d[k]=val;changed=true;}
