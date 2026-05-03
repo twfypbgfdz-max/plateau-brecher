@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#080808">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PB V8.0">
+<meta name="apple-mobile-web-app-title" content="PB V9.0">
 <title>Plateau-Brecher V9.0</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap');
@@ -152,7 +152,7 @@ main{padding:16px;max-width:860px;}
 .hist-btn:hover{opacity:1;}
 #histOverlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center;}
 #histOverlay.open{display:flex;}
-#histBox{background:var(--bg2);border:1px solid var(--acc);border-radius:8px;padding:16px;min-width:260px;max-width:340px;width:90%;}
+#histBox{background:var(--sur);border:1px solid var(--acc);border-radius:8px;padding:16px;min-width:260px;max-width:340px;width:90%;}
 #histTitle{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;color:var(--acc);margin-bottom:10px;}
 .hist-row{display:grid;grid-template-columns:60px 1fr 1fr 1fr;gap:4px;padding:5px 0;border-bottom:1px solid var(--bor);font-size:11px;}
 .hist-row .hd{color:var(--mu);font-size:9px;font-weight:bold;}
@@ -327,6 +327,34 @@ main{padding:16px;max-width:860px;}
 .pr-del-btn{background:none;border:1px solid var(--bor);color:var(--mu);font-size:10px;padding:5px 8px;border-radius:4px;cursor:pointer;}
 .pr-del-btn:hover{border-color:var(--acc2);color:var(--acc2);}
 .pr-summary{font-family:'Space Mono',monospace;font-size:9px;color:var(--mu);padding:10px 0 4px;text-align:center;}
+/* PROGRESSION ARROWS */
+.prog-arrow{font-family:'Space Mono',monospace;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;white-space:nowrap;}
+.prog-arrow.up{color:var(--ok);background:rgba(0,230,118,.12);}
+.prog-arrow.down{color:var(--acc2);background:rgba(255,68,68,.12);}
+.prog-arrow.flat{color:var(--mu);background:var(--sur2);}
+.prog-stat.up{color:var(--ok)!important;}
+.prog-stat.down{color:var(--acc2)!important;}
+.prog-stat.flat{color:var(--mu)!important;}
+/* PAUSE TIMER */
+.pause-bar{display:flex;align-items:center;gap:8px;padding:8px 0;margin-top:6px;}
+.pause-btn{font-family:'Space Mono',monospace;font-size:8px;padding:5px 10px;border:1px solid var(--bor);background:var(--sur2);color:var(--tx2);border-radius:4px;cursor:pointer;transition:all .15s;letter-spacing:1px;}
+.pause-btn:hover{border-color:var(--acc);color:var(--acc);}
+.pause-btn.active{background:var(--acc);border-color:var(--acc);color:#000;font-weight:700;}
+.pause-countdown{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--acc);letter-spacing:2px;min-width:44px;}
+/* END PAUSE TIMER */
+/* SELF-CHECK BANNER */
+.sc-banner{display:none;margin:0 0 12px;border-radius:var(--r);overflow:hidden;}
+.sc-banner.show{display:block;}
+.sc-item{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(0,0,0,.15);font-family:'Space Mono',monospace;font-size:9px;line-height:1.6;}
+.sc-item:last-child{border-bottom:none;}
+.sc-item.warn{background:rgba(255,171,0,.08);color:var(--warn);}
+.sc-item.err{background:rgba(255,61,0,.08);color:var(--acc2);}
+.sc-item.ok{background:rgba(0,230,118,.06);color:var(--ok);}
+.sc-icon{font-size:13px;flex-shrink:0;margin-top:1px;}
+.sc-text b{display:block;margin-bottom:2px;font-size:10px;}
+.sc-close{background:none;border:none;color:inherit;cursor:pointer;font-size:14px;margin-left:auto;padding:0 0 0 8px;opacity:.7;flex-shrink:0;}
+.sc-close:hover{opacity:1;}
+/* END SELF-CHECK */
 /* KI-TAB */
 .ki-model-btn{font-family:'Space Mono',monospace;font-size:9px;padding:6px 12px;border:1px solid var(--bor);background:var(--sur);color:var(--mu);border-radius:var(--r);cursor:pointer;transition:all .2s;flex:1;}
 .ki-model-btn.active{border-color:var(--acc);color:var(--acc);background:rgba(200,255,0,.06);}
@@ -438,14 +466,14 @@ main{padding:16px;max-width:860px;}
 <body>
 <div class="consent-overlay" id="consentOverlay">
   <div class="consent-box">
-    <h2 style="font-family:'Bebas Neue';color:var(--acc);">SYSTEM-START V8.0</h2>
+    <h2 style="font-family:'Bebas Neue';color:var(--acc);">SYSTEM-START V9.0</h2>
     <p style="font-size:11px;margin:15px 0;line-height:1.6;color:var(--tx2);">Daten werden lokal gespeichert und via API synchronisiert. Fehler-Logging ist aktiv.</p>
     <button class="save-btn" onclick="acceptConsent()">Akzeptieren &amp; Starten</button>
   </div>
 </div>
 <header>
   <div>
-    <div class="logo">PB<span style="color:var(--mu);font-size:.55em;vertical-align:middle"> V8.0</span></div>
+    <div class="logo">PB<span style="color:var(--mu);font-size:.55em;vertical-align:middle"> V9.0</span></div>
     <span class="hbadge" id="todayBadge">Lädt…</span>
   </div>
   <div class="header-right">
@@ -470,6 +498,7 @@ main{padding:16px;max-width:860px;}
 <main>
 <!-- TRAINING TAB -->
 <div class="sec active" id="tab-workout">
+  <div id="selfCheckBanner" class="sc-banner"></div>
   <div class="sel-row" style="margin-bottom:7px;"><span class="sel-label">Zyklus</span><div id="cycleSelRow" style="display:flex;gap:4px;flex-wrap:wrap;"></div></div>
   <div class="sel-row"><span class="sel-label">Woche</span><div id="weekSelRow" style="display:flex;gap:4px;flex-wrap:wrap;"></div></div>
   <div class="cinfo" id="cinfo"></div>
@@ -573,7 +602,7 @@ main{padding:16px;max-width:860px;}
     </button>
   </div>
   <div style="font-family:'Space Mono',monospace;font-size:8px;color:var(--mu);margin-top:6px;text-align:center;">
-    Keys im Setup eintragen · Kein Kontext wird automatisch gesendet
+    Keys im Setup eintragen · Trainingsdaten werden automatisch als Kontext gesendet
   </div>
 </div>
 
@@ -589,6 +618,14 @@ main{padding:16px;max-width:860px;}
 
 <!-- FIXED FOOTER -->
 <div class="save-footer" id="saveFooter">
+  <!-- Pause Timer Bar -->
+  <div class="pause-bar" id="pauseBar">
+    <span class="pause-countdown" id="pauseTimerDisplay"></span>
+    <button class="pause-btn" onclick="startPauseTimer(60)">60s</button>
+    <button class="pause-btn" onclick="startPauseTimer(90)">90s</button>
+    <button class="pause-btn" onclick="startPauseTimer(120)">120s</button>
+    <button class="pause-btn" onclick="stopPauseTimer()" style="margin-left:auto;">✕ Stop</button>
+  </div>
   <button class="save-btn" id="saveBtn" onclick="saveToSheet()">
     <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
     <span id="saveBtnTxt">In Google Sheet speichern</span>
@@ -610,6 +647,7 @@ main{padding:16px;max-width:860px;}
 // APPS SCRIPT CODE
 // ============================================================
 const SCRIPT_CODE = [
+  "// PLATEAU-BRECHER V9.0 — Google Apps Script",
   "const SHEET_ID = '1NA5OUomzaSFSw6_VzdJ6U7FaD1bU0qTEsQCtIneJ1JI';",
   "",
   "function doPost(e) {",
@@ -618,34 +656,41 @@ const SCRIPT_CODE = [
   "  try {",
   "    const data = JSON.parse(e.postData.contents);",
   "    const ss = SpreadsheetApp.openById(SHEET_ID);",
-  "    const sheet = ss.getSheetByName(data.sheet);",
-  "    if (!sheet) throw new Error('Sheet nicht gefunden: ' + data.sheet);",
+  "    // Bulk-Upload: data.exercises = Array; Legacy: einzelne Übung direkt",
+  "    const entries = Array.isArray(data.exercises) ? data.exercises : [data];",
+  "    const sheetName = data.sheet || (entries[0] && entries[0].sheet);",
+  "    const sheet = ss.getSheetByName(sheetName);",
+  "    if (!sheet) throw new Error('Sheet nicht gefunden: ' + sheetName);",
   "    const values = sheet.getRange(1, 1, sheet.getLastRow(), 22).getValues();",
   "    let updated = 0;",
-  "    for (let r = 3; r < values.length; r++) {",
-  "      const rowDate = String(values[r][1]).trim();",
-  "      const rowEx   = String(values[r][4]).trim();",
-  "      if (rowDate === data.date && rowEx.toLowerCase() === data.uebung.toLowerCase()) {",
-  "        const sr = r + 1;",
-  "        if (data.kg)       sheet.getRange(sr, 3).setValue(parseNum(data.kg));",
-  "        const sets = [[parseNum(data.g1), parseNum(data.r1), parseNum(data.g2), parseNum(data.r2), parseNum(data.g3), parseNum(data.r3)]];",
-  "        sheet.getRange(sr, 7, 1, 6).setValues(sets);",
-  "        if (data.rpe)      sheet.getRange(sr, 15).setValue(parseNum(data.rpe));",
-  "        if (data.kcal)     sheet.getRange(sr, 20).setValue(parseNum(data.kcal));",
-  "        if (data.bpm)      sheet.getRange(sr, 21).setValue(parseNum(data.bpm));",
-  "        if (data.duration) sheet.getRange(sr, 22).setValue(parseNum(data.duration));",
-  "        const maxGewicht = Math.max(parseNum(data.g1), parseNum(data.g2), parseNum(data.g3));",
-  "        updatePersonalBest(data.uebung, maxGewicht, data.date);",
-  "        updated++;",
-  "        break;",
+  "    for (const entry of entries) {",
+  "      for (let r = 3; r < values.length; r++) {",
+  "        const rowDate = String(values[r][1]).trim();",
+  "        const rowEx   = String(values[r][4]).trim();",
+  "        if (rowDate === entry.date && rowEx.toLowerCase() === entry.uebung.toLowerCase()) {",
+  "          const sr = r + 1;",
+  "          if (entry.kg)       sheet.getRange(sr, 3).setValue(parseNum(entry.kg));",
+  "          const sets = [[parseNum(entry.g1), parseNum(entry.r1), parseNum(entry.g2), parseNum(entry.r2), parseNum(entry.g3), parseNum(entry.r3)]];",
+  "          sheet.getRange(sr, 7, 1, 6).setValues(sets);",
+  "          if (entry.rpe)      sheet.getRange(sr, 15).setValue(parseNum(entry.rpe));",
+  "          if (entry.kcal)     sheet.getRange(sr, 20).setValue(parseNum(entry.kcal));",
+  "          if (entry.bpm)      sheet.getRange(sr, 21).setValue(parseNum(entry.bpm));",
+  "          if (entry.duration) sheet.getRange(sr, 22).setValue(parseNum(entry.duration));",
+  "          const maxG = Math.max(parseNum(entry.g1), parseNum(entry.g2), parseNum(entry.g3));",
+  "          updatePersonalBest(entry.uebung, maxG, entry.date);",
+  "          updated++; break;",
+  "        }",
   "      }",
   "    }",
+  "    logError('SYNC_OK', 'Bulk: ' + updated + '/' + entries.length + ' gespeichert', data.date || '');",
   "    return ContentService.createTextOutput(JSON.stringify({",
   "      success: updated > 0,",
-  "      message: updated > 0 ? 'Training gespeichert!' : 'Fehler: Uebung/Datum nicht gefunden.'",
+  "      updated: updated,",
+  "      total: entries.length,",
+  "      message: updated + ' von ' + entries.length + ' Uebungen gespeichert.'",
   "    })).setMimeType(ContentService.MimeType.JSON);",
   "  } catch (err) {",
-  "    logError('API POST', err.toString(), e.postData ? e.postData.contents : 'Kein Inhalt');",
+  "    logError('API POST', err.toString(), e.postData ? e.postData.contents.substring(0, 200) : 'Kein Inhalt');",
   "    return ContentService.createTextOutput(JSON.stringify({success: false, error: err.toString()})).setMimeType(ContentService.MimeType.JSON);",
   "  } finally {",
   "    lock.releaseLock();",
@@ -660,15 +705,15 @@ const SCRIPT_CODE = [
   "      const sheetName = e.parameter.sheet;",
   "      const sheet = ss.getSheetByName(sheetName);",
   "      if (!sheet) {",
-  "        logError('API GET', 'Sheet nicht gefunden', 'Gesuchtes Blatt: ' + sheetName);",
+  "        logError('API GET', 'Sheet nicht gefunden', sheetName);",
   "        return ContentService.createTextOutput('Fehler: Blatt nicht gefunden.').setMimeType(ContentService.MimeType.TEXT);",
   "      }",
   "      const data = sheet.getRange(4, 1, sheet.getLastRow() - 3, 22).getValues();",
   "      return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);",
   "    }",
-  "    return ContentService.createTextOutput('API aktiv').setMimeType(ContentService.MimeType.TEXT);",
+  "    return ContentService.createTextOutput('API aktiv - V9.0').setMimeType(ContentService.MimeType.TEXT);",
   "  } catch (err) {",
-  "    logError('API GET KRITISCH', err.toString(), 'Parameter: ' + JSON.stringify(e.parameter));",
+  "    logError('API GET KRITISCH', err.toString(), JSON.stringify(e.parameter));",
   "    return ContentService.createTextOutput('Fehler: ' + err.toString()).setMimeType(ContentService.MimeType.TEXT);",
   "  }",
   "}",
@@ -681,11 +726,11 @@ const SCRIPT_CODE = [
   "  const data = pbSheet.getDataRange().getValues();",
   "  for (let i = 4; i < data.length; i++) {",
   "    if (String(data[i][0]).trim().toLowerCase() === uebung.toLowerCase()) {",
-  "      const aktuellesBest = parseFloat(data[i][1]) || 0;",
-  "      if (parseFloat(gewicht) >= aktuellesBest) {",
+  "      const best = parseFloat(data[i][1]) || 0;",
+  "      if (parseFloat(gewicht) >= best) {",
   "        pbSheet.getRange(i + 1, 2).setValue(gewicht);",
   "        pbSheet.getRange(i + 1, 5).setValue(datum);",
-  "        pbSheet.getRange(i + 1, 7).setValue('App-Update');",
+  "        pbSheet.getRange(i + 1, 7).setValue('App-Update V9.0');",
   "      }",
   "      return;",
   "    }",
@@ -700,7 +745,7 @@ const SCRIPT_CODE = [
   "function logError(typ, nachricht, details) {",
   "  const ss = SpreadsheetApp.openById(SHEET_ID);",
   "  const logSheet = ss.getSheetByName('Fehlerprotokoll');",
-  "  if (logSheet) logSheet.appendRow([new Date(), typ, nachricht, details]);",
+  "  if (logSheet) logSheet.appendRow([new Date(), typ, nachricht, String(details).substring(0, 500)]);",
   "}",
 ].join('\n');
 
@@ -774,8 +819,8 @@ window.addEventListener('offline',()=>{
   document.body.style.borderTop='4px solid var(--acc2)';
 });
 
-// Migration: pb_v8_0 → pb_v8_1
-if(Object.keys(store).length===0){try{const old=JSON.parse(localStorage.getItem('pb_v8_0')||'{}');if(Object.keys(old).length>0){Object.assign(store,old);persist();}}catch(e){}}
+// Migration: pb_v8_1 → pb_v9_0
+if(Object.keys(store).length===0){try{const old=JSON.parse(localStorage.getItem('pb_v8_1')||'{}');if(Object.keys(old).length>0){Object.assign(store,old);persist();}}catch(e){}}
 // (alte Keys pb_v7_4 etc. werden nicht mehr importiert)
 
 function persist(){try{localStorage.setItem(SK,JSON.stringify(store));}catch(e){}}
@@ -904,8 +949,132 @@ function init(){
   updateApiStatus();
   document.getElementById('scriptCodeBox').textContent=SCRIPT_CODE;
   renderCycleRow();renderWeekRow();renderDayRow();renderWorkout();
+  selfCheck();
   // Auto-Sync beim Start: Sheet-Daten laden
   if(API_URL) syncAllFromSheet();
+}
+
+// ============================================================
+// SELF-CHECK — prüft kritische Konfiguration beim App-Start
+// Zeigt Warnungen/Fehler direkt im Training-Tab
+// ============================================================
+function selfCheck(){
+  const issues = [];
+
+  // 1. API-URL fehlt
+  if(!store._apiUrl){
+    issues.push({
+      level:'err',
+      icon:'🔌',
+      title:'Kein Google Sheet verbunden',
+      text:'Daten werden nur lokal gespeichert. → Setup Tab → Schritt 4: URL eintragen.'
+    });
+  } else {
+    // 2. API-URL Format prüfen
+    const validUrl = /^https:\/\/script\.google\.com\/macros\/s\/.+\/exec/.test(store._apiUrl);
+    if(!validUrl){
+      issues.push({
+        level:'err',
+        icon:'⚠️',
+        title:'API-URL ungültig',
+        text:'Die eingetragene URL sieht nicht wie eine Apps Script URL aus. Bitte prüfen.'
+      });
+    }
+  }
+
+  // 3. Groq-Key fehlt
+  if(!store._aiKey){
+    issues.push({
+      level:'warn',
+      icon:'🤖',
+      title:'Kein Groq API Key',
+      text:'KI-Coach nicht verfügbar. → Setup Tab → Schritt 5.'
+    });
+  }
+
+  // 4. Storage-Größe prüfen (>3 MB = Warnung, >4.5 MB = kritisch)
+  try{
+    const size = new Blob([JSON.stringify(store)]).size;
+    const mb = (size/1024/1024).toFixed(2);
+    if(size > 4.5*1024*1024){
+      issues.push({
+        level:'err',
+        icon:'💾',
+        title:'Speicher fast voll ('+mb+' MB)',
+        text:'localStorage Limit fast erreicht. Backup erstellen und Hard-Reset durchführen.'
+      });
+    } else if(size > 3*1024*1024){
+      issues.push({
+        level:'warn',
+        icon:'💾',
+        title:'Speicher groß ('+mb+' MB)',
+        text:'Empfehlung: Backup unter Setup → Schritt 6 erstellen.'
+      });
+    }
+  }catch(e){}
+
+  // 5. Heutiges Datum außerhalb Trainingsplan
+  const now = new Date();
+  const ts = String(now.getDate()).padStart(2,'0')+'.'+String(now.getMonth()+1).padStart(2,'0');
+  const inPlan = PLAN.some(cyc => cyc.weeks.some(wk => wk.days.some(d => d.date===ts)));
+  if(!inPlan){
+    issues.push({
+      level:'warn',
+      icon:'📅',
+      title:'Heute ('+ts+') kein Trainingstag',
+      text:'Rest Day oder außerhalb des Plans. Manuell einen Tag auswählen.'
+    });
+  }
+
+  // 6. Offline-Buffer vorhanden
+  try{
+    const buf = JSON.parse(localStorage.getItem('pb_offline_buf')||'[]');
+    if(buf.length > 0){
+      issues.push({
+        level:'warn',
+        icon:'📤',
+        title:buf.length+' Einträge im Offline-Buffer',
+        text:'Nicht synchronisierte Daten vorhanden. App speichert beim nächsten Verbindungsaufbau automatisch.'
+      });
+    }
+  }catch(e){}
+
+  // 7. Version-Check: SK stimmt mit aktuellem Code überein?
+  if(store._migrated && store._migrated !== 'pb_v8_1'){
+    issues.push({
+      level:'warn',
+      icon:'🔄',
+      title:'Daten aus alter Version ('+store._migrated+')',
+      text:'Migration wurde durchgeführt. Prüfe ob alle Daten korrekt übertragen wurden.'
+    });
+  }
+
+  // Banner rendern
+  const banner = document.getElementById('selfCheckBanner');
+  if(!banner) return;
+
+  if(issues.length === 0){
+    // Alles OK — kein Banner zeigen (kein Rauschen bei perfektem Setup)
+    banner.classList.remove('show');
+    banner.innerHTML = '';
+    return;
+  }
+
+  const html = issues.map((issue,idx) =>
+    '<div class="sc-item '+issue.level+'">'
+    +'<span class="sc-icon">'+issue.icon+'</span>'
+    +'<span class="sc-text"><b>'+issue.title+'</b>'+issue.text+'</span>'
+    +(idx===0?'<button class="sc-close" onclick="document.getElementById(\'selfCheckBanner\').classList.remove(\'show\')" title="Schließen">✕</button>':'')
+    +'</div>'
+  ).join('');
+
+  banner.innerHTML = html;
+  banner.classList.add('show');
+  // Warnungen ins Error-Log schreiben
+  issues.forEach(i => addToErrorLog(
+    i.level==='err' ? 'DATEN_WARNUNG' : 'INFO',
+    '[SelfCheck] '+i.title
+  ));
 }
 
 async function syncAllFromSheet(){
@@ -1186,7 +1355,12 @@ async function runExpertAnalysis(){
       body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})
     });
     const data=await r.json();
-    if(data.error) throw new Error(data.error.message);
+    if(data.error){
+      const m=data.error.message||'';
+      if(m.includes('quota')||m.includes('RESOURCE_EXHAUSTED'))
+        throw new Error('Gemini Tageslimit erreicht. Morgen erneut versuchen oder ⚡ Groq nutzen.');
+      throw new Error(m);
+    }
     out.innerHTML=data.candidates[0].content.parts[0].text.replace(/\n/g,'<br>');
   }catch(e){
     out.innerHTML='⚠ Fehler: '+e.message;
@@ -1258,6 +1432,15 @@ function renderWorkout(){
     if(W>0){const pv=getD(C,W-1,D,i);const v=calc1RM(pv);if(v>0)prevOrm=v;}
     else if(C>0){const pv=getD(C-1,PLAN[C-1].weeks.length-2,D,i);const v=calc1RM(pv);if(v>0)prevOrm=v;}
 
+    // Progressionspfeil vs. Vorwoche
+    let progArrow='',progClass='flat',progDiff='';
+    if(orm&&prevOrm){
+      const diff=Math.round((orm-prevOrm)*10)/10;
+      if(diff>0){progArrow='▲';progClass='up';progDiff='+'+diff;}
+      else if(diff<0){progArrow='▼';progClass='down';progDiff=''+diff;}
+      else{progArrow='►';progClass='flat';progDiff='±0';}
+    }
+
     // Warmup values from S1
     const wu=d.g1?parseFloat(d.g1):null;
 
@@ -1268,7 +1451,8 @@ function renderWorkout(){
       +'<button class="hist-btn" onclick="event.stopPropagation();showHistory('+i+')" title="Verlauf">📊</button>'
       +'</div>'
       +'<div class="exmeta">'
-      +(prevOrm?'<span class="prev-badge">'+prevOrm+' kg</span>':'')
+      +(progArrow?'<span class="prog-arrow '+progClass+'">'+progArrow+' '+progDiff+' kg</span>':'')
+      +(prevOrm&&!progArrow?'<span class="prev-badge">'+prevOrm+' kg</span>':'')
       +'<div class="exstatus">'+(d.done?'✓':orm?orm+' kg 1RM':'—')+'</div>'
       +'<svg class="ex-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>'
       +'</div></div>'
@@ -1399,11 +1583,49 @@ function editExName(idx){
   el.onkeydown=(e)=>{if(e.key==='Enter'){e.preventDefault();el.blur();}};
 }
 
+let pauseTimerInterval=null;
+let pauseTimerEl=null;
+
+function startPauseTimer(sec){
+  if(pauseTimerInterval){clearInterval(pauseTimerInterval);pauseTimerInterval=null;}
+  let remaining=sec;
+  const el=document.getElementById('pauseTimerDisplay');
+  if(!el)return;
+  el.textContent=remaining+'s';
+  pauseTimerEl=el;
+  pauseTimerInterval=setInterval(()=>{
+    remaining--;
+    if(el)el.textContent=remaining>0?remaining+'s':'✓';
+    if(remaining<=0){
+      clearInterval(pauseTimerInterval);pauseTimerInterval=null;
+      try{if(navigator.vibrate)navigator.vibrate([200,100,200]);}catch(e){}
+      // Audio-Beep
+      try{
+        const ctx=new(window.AudioContext||window.webkitAudioContext)();
+        const osc=ctx.createOscillator();osc.connect(ctx.destination);
+        osc.frequency.value=880;osc.start();
+        setTimeout(()=>{osc.stop();ctx.close();},150);
+      }catch(e){}
+      setTimeout(()=>{if(el)el.textContent='';},2000);
+    }
+  },1000);
+}
+
+function stopPauseTimer(){
+  if(pauseTimerInterval){clearInterval(pauseTimerInterval);pauseTimerInterval=null;}
+  const el=document.getElementById('pauseTimerDisplay');
+  if(el)el.textContent='';
+}
+
 function toggleDone(idx){
   const d=getD(C,W,D,idx);d.done=!d.done;persist();
   if(d.done){
     const orm=calc1RM(d);
     if(orm){const exName=getExName(idx);const isPR=checkPR(exName,orm);if(isPR&&API_URL)savePRToSheet(exName,orm);}
+    // Pause-Timer automatisch starten (90s Default)
+    startPauseTimer(90);
+  } else {
+    stopPauseTimer();
   }
   renderWorkout();
   if(d.done){
@@ -1470,7 +1692,7 @@ async function flushOfflineBuffer(){
   const remaining=[];
   for(const item of buf){
     try{
-      await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:item.payload});
+      await fetch(API_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:item.payload});
     }catch(e){remaining.push(item);}
   }
   localStorage.setItem(OFFLINE_KEY,JSON.stringify(remaining));
@@ -1518,44 +1740,37 @@ async function saveToSheet(){
   setBtnLoading(true);
   showStatus('loading','⏳ '+toSend.length+' Übung(en) werden gespeichert…');
 
-  let ok=0, failed=0;
-  for(const entry of toSend){
-    const payload=JSON.stringify(entry);
-    try{
-      const resp=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:payload});
-      let j=null;
-      try{j=JSON.parse(await resp.text());}catch(e){}
-      if(j&&j.success){
-        ok++;
-        // Dirty-State zurücksetzen
-        const p=JSON.parse(localStorage.getItem(prevKey)||'{}');
-        const d=getD(C,W,D,entry._exIdx);
-        p[entry._exIdx]={g1:d.g1,r1:d.r1,g2:d.g2,r2:d.r2,g3:d.g3,r3:d.r3,rpe:d.rpe,notes:d.notes,sent:true};
-        localStorage.setItem(prevKey,JSON.stringify(p));
-      } else {
-        failed++;
-        const msg=j&&j.message?j.message:'Unbekannt';
-        addToErrorLog('SYNC_ERR','Script: '+msg+' ('+entry.uebung+')');
-        logToSystem('Script-Fehler: '+msg,'SYNC_ERROR');
-      }
-    }catch(e){
-      bufferOffline(payload);
-      failed++;
-      addToErrorLog('OFFLINE','Offline-Buffer: '+entry.uebung+' — '+e.message);
-    }
-  }
+  // Bulk-Payload: ein einziger POST mit allen Übungen
+  const exercises = toSend.map(e => {
+    const {_exIdx,...rest} = e;
+    return rest;
+  });
+  const payload = JSON.stringify({sheet:sheetName, date:day.date, exercises});
 
-  setBtnLoading(false);
-  if(failed===0){
-    showStatus('ok','✓ '+ok+' Übung(en) gespeichert! ('+day.date+')');
-    addToErrorLog('SYNC_OK','Sync OK: '+ok+' Übungen ('+day.date+')');
-  } else if(ok>0){
-    showStatus('err','⚠ '+ok+' OK, '+failed+' fehlgeschlagen — offline gepuffert');
-    addToErrorLog('SYNC_FAIL','Teilfehler: '+ok+' OK / '+failed+' fail');
-  } else {
-    showStatus('err','⚠ Speichern fehlgeschlagen — offline gepuffert');
-    addToErrorLog('CRITICAL_FAIL','Alle '+failed+' Uploads fehlgeschlagen');
+  // Optimistisch: Dirty-State vor dem Fetch zurücksetzen
+  const newPrev = JSON.parse(localStorage.getItem(prevKey)||'{}');
+  toSend.forEach(e => {
+    const d = getD(C,W,D,e._exIdx);
+    newPrev[e._exIdx] = {g1:d.g1,r1:d.r1,g2:d.g2,r2:d.r2,g3:d.g3,r3:d.r3,rpe:d.rpe,notes:d.notes,sent:true};
+  });
+  localStorage.setItem(prevKey, JSON.stringify(newPrev));
+
+  try{
+    // no-cors: Fire-and-Forget — kein Response-Parsing möglich
+    await fetch(API_URL,{
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
+      body:payload
+    });
+    showStatus('ok','✓ '+toSend.length+' Übung(en) gesendet! ('+day.date+')');
+    addToErrorLog('SYNC_OK','Bulk: '+toSend.length+' Übungen ('+day.date+')');
+  }catch(e){
+    bufferOffline(payload);
+    showStatus('err','⚠ Offline — lokal gespeichert');
+    addToErrorLog('OFFLINE','Offline-Buffer: '+e.message);
   }
+  setBtnLoading(false);
 }
 
 function setBtnLoading(on){
@@ -1702,7 +1917,7 @@ const PR_GROUPS = [
     'Bizeps-Maschine (Preacher)', 'Hammer-Curls (Seil)', 'Kabel-Curls (Stange)',
   ]},
   { label: 'Brust / Schulter / Trizeps', exercises: [
-    'Incline Chest Press (Hammer)', 'Brustpresse (horizontal)', 'Chest Press (breit)',
+    'Incline Chest Press', 'Brustpresse (horizontal)', 'Chest Press (breit)',
     'Pec Deck (Butterfly)', 'Reverse Butterfly Maschine',
     'Schulterdrück-Maschine', 'Seithebe-Maschine', 'Kabel-Seitheben',
     'Trizeps-Dips-Maschine', 'Trizeps-Kabel (V-Griff)', 'Trizeps über Kopf (Seil)',
@@ -2064,7 +2279,12 @@ async function sendKiMessage() {
         })
       });
       const data = await resp.json();
-      if (data.error) throw new Error(data.error.message);
+      if (data.error) {
+      const m = data.error.message || '';
+      if (m.includes('quota') || m.includes('RESOURCE_EXHAUSTED'))
+        throw new Error('Gemini Tageslimit erreicht. Morgen erneut versuchen oder ⚡ Groq nutzen.');
+      throw new Error(m);
+    }
       result = data.candidates?.[0]?.content?.parts?.[0]?.text || '(Keine Antwort)';
     }
   } catch (e) {
