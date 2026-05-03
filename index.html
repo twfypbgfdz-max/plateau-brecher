@@ -765,10 +765,8 @@ try{store=JSON.parse(localStorage.getItem(SK)||'{}');}catch(e){}
 function logToSystem(msg,type='JS_ERROR',line=''){
   const cleanMsg=msg.toString().replace(/(gsk_|AIza)[a-zA-Z0-9_-]+/g,'[REDACTED]');
   errorLog.push(`[${new Date().toLocaleTimeString()}] ${type}: ${cleanMsg}`);
-  if(store._apiUrl){
-    const errObj={type:'log',env:'PERSONAL',type_detail:type,msg:cleanMsg,line:line,ver:APP_VERSION,appVersion:APP_VERSION,error:cleanMsg,device:navigator.userAgent.slice(0,80),stack:line?'Line: '+line:'no stack'};
-    fetch(store._apiUrl,{method:'POST',mode:'no-cors',body:JSON.stringify(errObj)}).catch(()=>{});
-  }
+  const errObj={type:'log',env:'PERSONAL',type_detail:type,msg:cleanMsg,line:line,ver:APP_VERSION,appVersion:APP_VERSION,error:cleanMsg,device:navigator.userAgent.slice(0,80),stack:line?'Line: '+line:'no stack'};
+  fetch('https://script.google.com/macros/s/AKfycbwhSOHROvw6VgNyd248plmIsnwcbvTCEcHynhPkEs0uEXYhSVT7tqXujBCdoDyxe8za/exec',{method:'POST',mode:'no-cors',body:JSON.stringify(errObj)}).catch(()=>{});
 }
 window.onerror=(m,u,l)=>logToSystem(m,'UI_ERROR',l);
 window.addEventListener('unhandledrejection',(event)=>{
