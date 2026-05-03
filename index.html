@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#080808">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PB V9.0">
-<title>Plateau-Brecher V9.0</title>
+<meta name="apple-mobile-web-app-title" content="PB V9.2">
+<title>Plateau-Brecher V9.2</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap');
 :root{
@@ -460,14 +460,14 @@ main{padding:16px;max-width:860px;}
 <body>
 <div class="consent-overlay" id="consentOverlay">
   <div class="consent-box">
-    <h2 style="font-family:'Bebas Neue';color:var(--acc);">SYSTEM-START V9.0</h2>
+    <h2 style="font-family:'Bebas Neue';color:var(--acc);">SYSTEM-START V9.2</h2>
     <p style="font-size:11px;margin:15px 0;line-height:1.6;color:var(--tx2);">Daten werden lokal gespeichert und via API synchronisiert. Fehler-Logging ist aktiv.</p>
     <button class="save-btn" onclick="acceptConsent()">Akzeptieren &amp; Starten</button>
   </div>
 </div>
 <header>
   <div>
-    <div class="logo">PB<span style="color:var(--mu);font-size:.55em;vertical-align:middle"> V9.0</span></div>
+    <div class="logo">PB<span style="color:var(--mu);font-size:.55em;vertical-align:middle"> V9.2</span></div>
     <span class="hbadge" id="todayBadge">Lädt…</span>
   </div>
   <div class="header-right">
@@ -634,7 +634,7 @@ main{padding:16px;max-width:860px;}
 // APPS SCRIPT CODE
 // ============================================================
 const SCRIPT_CODE = [
-  "// PLATEAU-BRECHER V9.0 — Google Apps Script",
+  "// PLATEAU-BRECHER V9.2 — Google Apps Script",
   "const SHEET_ID = '1NA5OUomzaSFSw6_VzdJ6U7FaD1bU0qTEsQCtIneJ1JI';",
   "",
   "function doPost(e) {",
@@ -642,8 +642,23 @@ const SCRIPT_CODE = [
   "  lock.tryLock(10000);",
   "  try {",
   "    const data = JSON.parse(e.postData.contents);",
+  "    const type = (data.type || '').toLowerCase();",
+  "",
+  "    // ── type:'log' → Fehlerprotokoll ──────────────────────────────",
+  "    if (type === 'log') {",
+  "      logError('APP LOG: ' + (data.type_detail || 'INFO'), data.msg || '', JSON.stringify(data).substring(0, 400));",
+  "      return ContentService.createTextOutput('{\"success\":true}').setMimeType(ContentService.MimeType.JSON);",
+  "    }",
+  "",
+  "    // ── type:'pr' → Bestleistungen ────────────────────────────────",
+  "    if (type === 'pr') {",
+  "      updatePersonalBest(data.exercise, data.orm, data.date);",
+  "      logError('PR_UPDATE', data.exercise + ' → ' + data.orm + ' kg', data.date || '');",
+  "      return ContentService.createTextOutput('{\"success\":true}').setMimeType(ContentService.MimeType.JSON);",
+  "    }",
+  "",
+  "    // ── type:'training' oder leer → Bulk-Upload ───────────────────",
   "    const ss = SpreadsheetApp.openById(SHEET_ID);",
-  "    // Bulk-Upload: data.exercises = Array; Legacy: einzelne Übung direkt",
   "    const entries = Array.isArray(data.exercises) ? data.exercises : [data];",
   "    const sheetName = data.sheet || (entries[0] && entries[0].sheet);",
   "    const sheet = ss.getSheetByName(sheetName);",
@@ -660,6 +675,7 @@ const SCRIPT_CODE = [
   "          const sets = [[parseNum(entry.g1), parseNum(entry.r1), parseNum(entry.g2), parseNum(entry.r2), parseNum(entry.g3), parseNum(entry.r3)]];",
   "          sheet.getRange(sr, 7, 1, 6).setValues(sets);",
   "          if (entry.rpe)      sheet.getRange(sr, 15).setValue(parseNum(entry.rpe));",
+  "          if (entry.notes !== undefined && entry.notes !== '') sheet.getRange(sr, 19).setValue(String(entry.notes));",
   "          if (entry.kcal)     sheet.getRange(sr, 20).setValue(parseNum(entry.kcal));",
   "          if (entry.bpm)      sheet.getRange(sr, 21).setValue(parseNum(entry.bpm));",
   "          if (entry.duration) sheet.getRange(sr, 22).setValue(parseNum(entry.duration));",
@@ -671,11 +687,9 @@ const SCRIPT_CODE = [
   "    }",
   "    logError('SYNC_OK', 'Bulk: ' + updated + '/' + entries.length + ' gespeichert', data.date || '');",
   "    return ContentService.createTextOutput(JSON.stringify({",
-  "      success: updated > 0,",
-  "      updated: updated,",
-  "      total: entries.length,",
-  "      message: updated + ' von ' + entries.length + ' Uebungen gespeichert.'",
+  "      success: updated > 0, updated: updated, total: entries.length",
   "    })).setMimeType(ContentService.MimeType.JSON);",
+  "",
   "  } catch (err) {",
   "    logError('API POST', err.toString(), e.postData ? e.postData.contents.substring(0, 200) : 'Kein Inhalt');",
   "    return ContentService.createTextOutput(JSON.stringify({success: false, error: err.toString()})).setMimeType(ContentService.MimeType.JSON);",
@@ -686,19 +700,17 @@ const SCRIPT_CODE = [
   "",
   "function doGet(e) {",
   "  try {",
-  "    const action = e.parameter.action;",
   "    const ss = SpreadsheetApp.openById(SHEET_ID);",
-  "    if (action === 'getPlan') {",
-  "      const sheetName = e.parameter.sheet;",
-  "      const sheet = ss.getSheetByName(sheetName);",
+  "    if (e.parameter.action === 'getPlan') {",
+  "      const sheet = ss.getSheetByName(e.parameter.sheet);",
   "      if (!sheet) {",
-  "        logError('API GET', 'Sheet nicht gefunden', sheetName);",
+  "        logError('API GET', 'Sheet nicht gefunden', e.parameter.sheet);",
   "        return ContentService.createTextOutput('Fehler: Blatt nicht gefunden.').setMimeType(ContentService.MimeType.TEXT);",
   "      }",
   "      const data = sheet.getRange(4, 1, sheet.getLastRow() - 3, 22).getValues();",
   "      return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);",
   "    }",
-  "    return ContentService.createTextOutput('API aktiv - V9.0').setMimeType(ContentService.MimeType.TEXT);",
+  "    return ContentService.createTextOutput('API aktiv - V9.1').setMimeType(ContentService.MimeType.TEXT);",
   "  } catch (err) {",
   "    logError('API GET KRITISCH', err.toString(), JSON.stringify(e.parameter));",
   "    return ContentService.createTextOutput('Fehler: ' + err.toString()).setMimeType(ContentService.MimeType.TEXT);",
@@ -707,17 +719,15 @@ const SCRIPT_CODE = [
   "",
   "function updatePersonalBest(uebung, gewicht, datum) {",
   "  if (!gewicht || gewicht <= 0) return;",
-  "  const ss = SpreadsheetApp.openById(SHEET_ID);",
-  "  const pbSheet = ss.getSheetByName('Bestleistungen');",
+  "  const pbSheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName('Bestleistungen');",
   "  if (!pbSheet) return;",
   "  const data = pbSheet.getDataRange().getValues();",
   "  for (let i = 4; i < data.length; i++) {",
-  "    if (String(data[i][0]).trim().toLowerCase() === uebung.toLowerCase()) {",
-  "      const best = parseFloat(data[i][1]) || 0;",
-  "      if (parseFloat(gewicht) >= best) {",
+  "    if (String(data[i][0]).trim().toLowerCase() === String(uebung).toLowerCase()) {",
+  "      if (parseFloat(gewicht) >= (parseFloat(data[i][1]) || 0)) {",
   "        pbSheet.getRange(i + 1, 2).setValue(gewicht);",
   "        pbSheet.getRange(i + 1, 5).setValue(datum);",
-  "        pbSheet.getRange(i + 1, 7).setValue('App-Update V9.0');",
+  "        pbSheet.getRange(i + 1, 7).setValue('App-Update V9.1');",
   "      }",
   "      return;",
   "    }",
@@ -730,8 +740,7 @@ const SCRIPT_CODE = [
   "}",
   "",
   "function logError(typ, nachricht, details) {",
-  "  const ss = SpreadsheetApp.openById(SHEET_ID);",
-  "  const logSheet = ss.getSheetByName('Fehlerprotokoll');",
+  "  const logSheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName('Fehlerprotokoll');",
   "  if (logSheet) logSheet.appendRow([new Date(), typ, nachricht, String(details).substring(0, 500)]);",
   "}",
 ].join('\n');
@@ -740,24 +749,19 @@ const SCRIPT_CODE = [
 // TRAINING PLAN DATA
 // ============================================================
 const PLAN = [
-
-{"weeks":[{"weekLabel":"Woche 1","isDeload":false,"isSchool":false,"days":[{"date":"27.04","tag":"TAG 1: PULL","muscle":"Rücken / Bizeps","exercises":["Latzug-Maschine (breit)","Hammer Strength Row (eng)","ISO-Lateral Row (einarmig)","Face-Pulls (Kabel)","Bizeps-Maschine (Preacher)"]},{"date":"28.04","tag":"TAG 2: PUSH","muscle":"Brust / Schulter / Trizeps","exercises":["Incline Chest Press","Brustpresse (horizontal)","Schulterdrück-Maschine","Seithebe-Maschine","Trizeps-Dips-Maschine"]},{"date":"29.04","tag":"TAG 3: LEGS","muscle":"Beine / Waden","exercises":["Beinpresse (45 Grad)","Beinbeuger unilateral","Beinstrecker-Maschine","Wadenheben (Beinpresse)"]},{"date":"01.05","tag":"TAG 5: TORSO","muscle":"Rücken & Brust (Dichte)","exercises":["Kabelrudern (V-Griff)","High Row Maschine","Chest Press (breit)","Pec Deck (Butterfly)","Reverse Butterfly Maschine"]},{"date":"02.05","tag":"TAG 6: LIMBS","muscle":"Arme & Beine (Pump)","exercises":["Kabel-Seitheben","Bizeps-Maschine (Preacher)","Trizeps-Kabel (V-Griff)","Kabel-Curls (Stange)","Trizeps über Kopf (Seil)","Hammer-Curls (Seil)","Beinstrecker-Maschine","Wadenheben (sitzend)"]}]},{"weekLabel":"Woche 2 ⛔ Schule","isDeload":false,"isSchool":true,"days":[{"date":"05.05","tag":"TAG 1: PULL","muscle":"Rücken / Bizeps","exercises":["Latzug-Maschine (breit)","Hammer Strength Row (eng)","ISO-Lateral Row (einarmig)","Face-Pulls (Kabel)","Bizeps-Maschine (Preacher)"]},{"date":"06.05","tag":"TAG 2: PUSH","muscle":"Brust / Schulter / Trizeps","exercises":["Incline Chest Press","Brustpresse (horizontal)","Schulterdrück-Maschine","Seithebe-Maschine","Trizeps-Dips-Maschine"]},{"date":"07.05","tag":"TAG 3: LEGS","muscle":"Beine / Waden","exercises":["Beinpresse (45 Grad)","Beinbeuger unilateral","Beinstrecker-Maschine","Wadenheben (Beinpresse)"]}]},{"weekLabel":"Woche 3","isDeload":false,"isSchool":false,"days":[{"date":"11.05","tag":"TAG 1: PULL","muscle":"Rücken / Bizeps","exercises":["Latzug-Maschine (breit)","Hammer Strength Row (eng)","ISO-Lateral Row (einarmig)","Face-Pulls (Kabel)","Bizeps-Maschine (Preacher)"]},{"date":"12.05","tag":"TAG 2: PUSH","muscle":"Brust / Schulter / Trizeps","exercises":["Incline Chest Press","Brustpresse (horizontal)","Schulterdrück-Maschine","Seithebe-Maschine","Trizeps-Dips-Maschine"]},{"date":"13.05","tag":"TAG 3: LEGS","muscle":"Beine / Waden","exercises":["Beinpresse (45 Grad)","Beinbeuger unilateral","Beinstrecker-Maschine","Wadenheben (Beinpresse)"]},{"date":"15.05","tag":"TAG 5: TORSO","muscle":"Rücken & Brust (Dichte)","exercises":["Kabelrudern (V-Griff)","High Row Maschine","Chest Press (breit)","Pec Deck (Butterfly)","Reverse Butterfly Maschine"]},{"date":"16.05","tag":"TAG 6: LIMBS","muscle":"Arme & Beine (Pump)","exercises":["Kabel-Seitheben","Bizeps-Maschine (Preacher)","Trizeps-Kabel (V-Griff)","Kabel-Curls (Stange)","Trizeps über Kopf (Seil)","Hammer-Curls (Seil)","Beinstrecker-Maschine","Wadenheben (sitzend)"]}]},{"weekLabel":"Woche 4 (DELOAD)","isDeload":true,"isSchool":false,"days":[{"date":"19.05","tag":"TAG 1: PULL (60% Gew.)","muscle":"Rücken / Bizeps","exercises":["Latzug-Maschine (breit)","Hammer Strength Row (eng)","ISO-Lateral Row (einarmig)","Face-Pulls (Kabel)","Bizeps-Maschine (Preacher)"]},{"date":"20.05","tag":"TAG 2: PUSH (60% Gew.)","muscle":"Brust / Schulter / Trizeps","exercises":["Incline Chest Press","Brustpresse (horizontal)","Schulterdrück-Maschine","Seithebe-Maschine","Trizeps-Dips-Maschine"]},{"date":"21.05","tag":"TAG 3: LEGS (60% Gew.)","muscle":"Beine / Waden","exercises":["Beinpresse (45 Grad)","Beinbeuger unilateral","Beinstrecker-Maschine","Wadenheben (Beinpresse)"]}]}]},
-
-{"weeks":[{"weekLabel":"Woche 1","isDeload":false,"isSchool":false,"days":[{"date":"26.05","tag":"TAG 1: PULL","muscle":"Rücken / Bizeps","exercises":["Latzug-Maschine (breit)","Hammer Strength Row (eng)","ISO-Lateral Row (einarmig)","Face-Pulls (Kabel)","Bizeps-Maschine (Preacher)"]},{"date":"27.05","tag":"TAG 2: PUSH","muscle":"Brust / Schulter / Trizeps","exercises":["Incline Chest Press","Brustpresse (horizontal)","Schulterdrück-Maschine","Seithebe-Maschine","Trizeps-Dips-Maschine"]},{"date":"28.05","tag":"TAG 3: LEGS","muscle":"Beine / Waden","exercises":["Beinpresse (45 Grad)","Beinbeuger unilateral","Beinstrecker-Maschine","Wadenheben (Beinpresse)"]},{"date":"30.05","tag":"TAG 5: TORSO","muscle":"Rücken & Brust (Dichte)","exercises":["Kabelrudern (V-Griff)","High Row Maschine","Chest Press (breit)","Pec Deck (Butterfly)","Reverse Butterfly Maschine"]},{"date":"31.05","tag":"TAG 6: LIMBS","muscle":"Arme & Beine (Pump)","exercises":["Kabel-Seitheben","Bizeps-Maschine (Preacher)","Trizeps-Kabel (V-Griff)","Kabel-Curls (Stange)","Trizeps über Kopf (Seil)","Hammer-Curls (Seil)","Beinstrecker-Maschine","Wadenheben (sitzend)"]}]},{"weekLabel":"Woche 2","isDeload":false,"isSchool":false,"days":[{"date":"02.06","tag":"TAG 1: PULL","muscle":"Rücken / Bizeps","exercises":["Latzug-Maschine (breit)","Hammer Strength Row (eng)","ISO-Lateral Row (einarmig)","Face-Pulls (Kabel)","Bizeps-Maschine (Preacher)"]},{"date":"03.06","tag":"TAG 2: PUSH","muscle":"Brust / Schulter / Trizeps","exercises":["Incline Chest Press","Brustpresse (horizontal)","Schulterdrück-Maschine","Seithebe-Maschine","Trizeps-Dips-Maschine"]},{"date":"04.06","tag":"TAG 3: LEGS","muscle":"Beine / Waden","exercises":["Beinpresse (45 Grad)","Beinbeuger unilateral","Beinstrecker-Maschine","Wadenheben (Beinpresse)"]},{"date":"06.06","tag":"TAG 5: TORSO","muscle":"Rücken & Brust (Dichte)","exercises":["Kabelrudern (V-Griff)","High Row Maschine","Chest Press (breit)","Pec Deck (Butterfly)","Reverse Butterfly Maschine"]},{"date":"07.06","tag":"TAG 6: LIMBS","muscle":"Arme & Beine (Pump)","exercises":["Kabel-Seitheben","Bizeps-Maschine (Preacher)","Trizeps-Kabel (V-Griff)","Kabel-Curls (Stange)","Trizeps über Kopf (Seil)","Hammer-Curls (Seil)","Beinstrecker-Maschine","Wadenheben (sitzend)"]}]},{"weekLabel":"Woche 3 ⛔ Schule","isDeload":false,"isSchool":true,"days":[{"date":"16.06","tag":"TAG 1: PULL","muscle":"Rücken / Bizeps","exercises":["Latzug-Maschine (breit)","Hammer Strength Row (eng)","ISO-Lateral Row (einarmig)","Face-Pulls (Kabel)","Bizeps-Maschine (Preacher)"]},{"date":"17.06","tag":"TAG 2: PUSH","muscle":"Brust / Schulter / Trizeps","exercises":["Incline Chest Press","Brustpresse (horizontal)","Schulterdrück-Maschine","Seithebe-Maschine","Trizeps-Dips-Maschine"]},{"date":"18.06","tag":"TAG 3: LEGS","muscle":"Beine / Waden","exercises":["Beinpresse (45 Grad)","Beinbeuger unilateral","Beinstrecker-Maschine","Wadenheben (Beinpresse)"]}]},{"weekLabel":"Woche 4 (DELOAD)","isDeload":true,"isSchool":false,"days":[{"date":"23.06","tag":"TAG 1: PULL (60% Gew.)","muscle":"Rücken / Bizeps","exercises":["Latzug-Maschine (breit)","Hammer Strength Row (eng)","ISO-Lateral Row (einarmig)","Face-Pulls (Kabel)","Bizeps-Maschine (Preacher)"]},{"date":"24.06","tag":"TAG 2: PUSH (60% Gew.)","muscle":"Brust / Schulter / Trizeps","exercises":["Incline Chest Press","Brustpresse (horizontal)","Schulterdrück-Maschine","Seithebe-Maschine","Trizeps-Dips-Maschine"]},{"date":"25.06","tag":"TAG 3: LEGS (60% Gew.)","muscle":"Beine / Waden","exercises":["Beinpresse (45 Grad)","Beinbeuger unilateral","Beinstrecker-Maschine","Wadenheben (Beinpresse)"]}]}]},
-
-{"weeks":[{"weekLabel":"Woche 1 ⛔ Schule","isDeload":false,"isSchool":true,"days":[{"date":"30.06","tag":"TAG 1: PULL","muscle":"Rücken / Bizeps","exercises":["Latzug-Maschine (breit)","Hammer Strength Row (eng)","ISO-Lateral Row (einarmig)","Face-Pulls (Kabel)","Bizeps-Maschine (Preacher)"]},{"date":"01.07","tag":"TAG 2: PUSH","muscle":"Brust / Schulter / Trizeps","exercises":["Incline Chest Press","Brustpresse (horizontal)","Schulterdrück-Maschine","Seithebe-Maschine","Trizeps-Dips-Maschine"]},{"date":"02.07","tag":"TAG 3: LEGS","muscle":"Beine / Waden","exercises":["Beinpresse (45 Grad)","Beinbeuger unilateral","Beinstrecker-Maschine","Wadenheben (Beinpresse)"]}]},{"weekLabel":"Woche 2 🏖 Ferien","isDeload":false,"isSchool":false,"days":[{"date":"07.07","tag":"TAG 1: PULL","muscle":"Rücken / Bizeps","exercises":["Latzug-Maschine (breit)","Hammer Strength Row (eng)","ISO-Lateral Row (einarmig)","Face-Pulls (Kabel)","Bizeps-Maschine (Preacher)"]},{"date":"08.07","tag":"TAG 2: PUSH","muscle":"Brust / Schulter / Trizeps","exercises":["Incline Chest Press","Brustpresse (horizontal)","Schulterdrück-Maschine","Seithebe-Maschine","Trizeps-Dips-Maschine"]},{"date":"09.07","tag":"TAG 3: LEGS","muscle":"Beine / Waden","exercises":["Beinpresse (45 Grad)","Beinbeuger unilateral","Beinstrecker-Maschine","Wadenheben (Beinpresse)"]},{"date":"11.07","tag":"TAG 5: TORSO","muscle":"Rücken & Brust (Dichte)","exercises":["Kabelrudern (V-Griff)","High Row Maschine","Chest Press (breit)","Pec Deck (Butterfly)","Reverse Butterfly Maschine"]},{"date":"12.07","tag":"TAG 6: LIMBS","muscle":"Arme & Beine (Pump)","exercises":["Kabel-Seitheben","Bizeps-Maschine (Preacher)","Trizeps-Kabel (V-Griff)","Kabel-Curls (Stange)","Trizeps über Kopf (Seil)","Hammer-Curls (Seil)","Beinstrecker-Maschine","Wadenheben (sitzend)"]}]},{"weekLabel":"Woche 3 🏖 Ferien","isDeload":false,"isSchool":false,"days":[{"date":"14.07","tag":"TAG 1: PULL","muscle":"Rücken / Bizeps","exercises":["Latzug-Maschine (breit)","Hammer Strength Row (eng)","ISO-Lateral Row (einarmig)","Face-Pulls (Kabel)","Bizeps-Maschine (Preacher)"]},{"date":"15.07","tag":"TAG 2: PUSH","muscle":"Brust / Schulter / Trizeps","exercises":["Incline Chest Press","Brustpresse (horizontal)","Schulterdrück-Maschine","Seithebe-Maschine","Trizeps-Dips-Maschine"]},{"date":"16.07","tag":"TAG 3: LEGS","muscle":"Beine / Waden","exercises":["Beinpresse (45 Grad)","Beinbeuger unilateral","Beinstrecker-Maschine","Wadenheben (Beinpresse)"]},{"date":"18.07","tag":"TAG 5: TORSO","muscle":"Rücken & Brust (Dichte)","exercises":["Kabelrudern (V-Griff)","High Row Maschine","Chest Press (breit)","Pec Deck (Butterfly)","Reverse Butterfly Maschine"]},{"date":"19.07","tag":"TAG 6: LIMBS","muscle":"Arme & Beine (Pump)","exercises":["Kabel-Seitheben","Bizeps-Maschine (Preacher)","Trizeps-Kabel (V-Griff)","Kabel-Curls (Stange)","Trizeps über Kopf (Seil)","Hammer-Curls (Seil)","Beinstrecker-Maschine","Wadenheben (sitzend)"]}]},{"weekLabel":"Woche 4 (DELOAD) 🏖","isDeload":true,"isSchool":false,"days":[{"date":"21.07","tag":"TAG 1: PULL (60% Gew.)","muscle":"Rücken / Bizeps","exercises":["Latzug-Maschine (breit)","Hammer Strength Row (eng)","ISO-Lateral Row (einarmig)","Face-Pulls (Kabel)","Bizeps-Maschine (Preacher)"]},{"date":"22.07","tag":"TAG 2: PUSH (60% Gew.)","muscle":"Brust / Schulter / Trizeps","exercises":["Incline Chest Press","Brustpresse (horizontal)","Schulterdrück-Maschine","Seithebe-Maschine","Trizeps-Dips-Maschine"]},{"date":"23.07","tag":"TAG 3: LEGS (60% Gew.)","muscle":"Beine / Waden","exercises":["Beinpresse (45 Grad)","Beinbeuger unilateral","Beinstrecker-Maschine","Wadenheben (Beinpresse)"]}]}]},
-
-{"weeks":[{"weekLabel":"Woche 1 🏖 Ferien","isDeload":false,"isSchool":false,"days":[{"date":"28.07","tag":"TAG 1: PULL","muscle":"Rücken / Bizeps","exercises":["Latzug-Maschine (breit)","Hammer Strength Row (eng)","ISO-Lateral Row (einarmig)","Face-Pulls (Kabel)","Bizeps-Maschine (Preacher)"]},{"date":"29.07","tag":"TAG 2: PUSH","muscle":"Brust / Schulter / Trizeps","exercises":["Incline Chest Press","Brustpresse (horizontal)","Schulterdrück-Maschine","Seithebe-Maschine","Trizeps-Dips-Maschine"]},{"date":"30.07","tag":"TAG 3: LEGS","muscle":"Beine / Waden","exercises":["Beinpresse (45 Grad)","Beinbeuger unilateral","Beinstrecker-Maschine","Wadenheben (Beinpresse)"]},{"date":"01.08","tag":"TAG 5: TORSO","muscle":"Rücken & Brust (Dichte)","exercises":["Kabelrudern (V-Griff)","High Row Maschine","Chest Press (breit)","Pec Deck (Butterfly)","Reverse Butterfly Maschine"]},{"date":"02.08","tag":"TAG 6: LIMBS","muscle":"Arme & Beine (Pump)","exercises":["Kabel-Seitheben","Bizeps-Maschine (Preacher)","Trizeps-Kabel (V-Griff)","Kabel-Curls (Stange)","Trizeps über Kopf (Seil)","Hammer-Curls (Seil)","Beinstrecker-Maschine","Wadenheben (sitzend)"]}]},{"weekLabel":"Woche 2 🏖 Ferien","isDeload":false,"isSchool":false,"days":[{"date":"04.08","tag":"TAG 1: PULL","muscle":"Rücken / Bizeps","exercises":["Latzug-Maschine (breit)","Hammer Strength Row (eng)","ISO-Lateral Row (einarmig)","Face-Pulls (Kabel)","Bizeps-Maschine (Preacher)"]},{"date":"05.08","tag":"TAG 2: PUSH","muscle":"Brust / Schulter / Trizeps","exercises":["Incline Chest Press","Brustpresse (horizontal)","Schulterdrück-Maschine","Seithebe-Maschine","Trizeps-Dips-Maschine"]},{"date":"06.08","tag":"TAG 3: LEGS","muscle":"Beine / Waden","exercises":["Beinpresse (45 Grad)","Beinbeuger unilateral","Beinstrecker-Maschine","Wadenheben (Beinpresse)"]},{"date":"08.08","tag":"TAG 5: TORSO","muscle":"Rücken & Brust (Dichte)","exercises":["Kabelrudern (V-Griff)","High Row Maschine","Chest Press (breit)","Pec Deck (Butterfly)","Reverse Butterfly Maschine"]},{"date":"09.08","tag":"TAG 6: LIMBS","muscle":"Arme & Beine (Pump)","exercises":["Kabel-Seitheben","Bizeps-Maschine (Preacher)","Trizeps-Kabel (V-Griff)","Kabel-Curls (Stange)","Trizeps über Kopf (Seil)","Hammer-Curls (Seil)","Beinstrecker-Maschine","Wadenheben (sitzend)"]}]},{"weekLabel":"Woche 3 🏖 Ferien","isDeload":false,"isSchool":false,"days":[{"date":"11.08","tag":"TAG 1: PULL","muscle":"Rücken / Bizeps","exercises":["Latzug-Maschine (breit)","Hammer Strength Row (eng)","ISO-Lateral Row (einarmig)","Face-Pulls (Kabel)","Bizeps-Maschine (Preacher)"]},{"date":"12.08","tag":"TAG 2: PUSH","muscle":"Brust / Schulter / Trizeps","exercises":["Incline Chest Press","Brustpresse (horizontal)","Schulterdrück-Maschine","Seithebe-Maschine","Trizeps-Dips-Maschine"]},{"date":"13.08","tag":"TAG 3: LEGS","muscle":"Beine / Waden","exercises":["Beinpresse (45 Grad)","Beinbeuger unilateral","Beinstrecker-Maschine","Wadenheben (Beinpresse)"]},{"date":"15.08","tag":"TAG 5: TORSO","muscle":"Rücken & Brust (Dichte)","exercises":["Kabelrudern (V-Griff)","High Row Maschine","Chest Press (breit)","Pec Deck (Butterfly)","Reverse Butterfly Maschine"]},{"date":"16.08","tag":"TAG 6: LIMBS","muscle":"Arme & Beine (Pump)","exercises":["Kabel-Seitheben","Bizeps-Maschine (Preacher)","Trizeps-Kabel (V-Griff)","Kabel-Curls (Stange)","Trizeps über Kopf (Seil)","Hammer-Curls (Seil)","Beinstrecker-Maschine","Wadenheben (sitzend)"]}]},{"weekLabel":"Woche 4 (DELOAD) 🏖","isDeload":true,"isSchool":false,"days":[{"date":"18.08","tag":"TAG 1: PULL (60% Gew.)","muscle":"Rücken / Bizeps","exercises":["Latzug-Maschine (breit)","Hammer Strength Row (eng)","ISO-Lateral Row (einarmig)","Face-Pulls (Kabel)","Bizeps-Maschine (Preacher)"]},{"date":"19.08","tag":"TAG 2: PUSH (60% Gew.)","muscle":"Brust / Schulter / Trizeps","exercises":["Incline Chest Press","Brustpresse (horizontal)","Schulterdrück-Maschine","Seithebe-Maschine","Trizeps-Dips-Maschine"]},{"date":"20.08","tag":"TAG 3: LEGS (60% Gew.)","muscle":"Beine / Waden","exercises":["Beinpresse (45 Grad)","Beinbeuger unilateral","Beinstrecker-Maschine","Wadenheben (Beinpresse)"]}]}]},
-
-{"weeks":[{"weekLabel":"Woche 1 🏖 Ferien","isDeload":false,"isSchool":false,"days":[{"date":"25.08","tag":"TAG 1: PULL","muscle":"Rücken / Bizeps","exercises":["Latzug-Maschine (breit)","Hammer Strength Row (eng)","ISO-Lateral Row (einarmig)","Face-Pulls (Kabel)","Bizeps-Maschine (Preacher)"]},{"date":"26.08","tag":"TAG 2: PUSH","muscle":"Brust / Schulter / Trizeps","exercises":["Incline Chest Press","Brustpresse (horizontal)","Schulterdrück-Maschine","Seithebe-Maschine","Trizeps-Dips-Maschine"]},{"date":"27.08","tag":"TAG 3: LEGS","muscle":"Beine / Waden","exercises":["Beinpresse (45 Grad)","Beinbeuger unilateral","Beinstrecker-Maschine","Wadenheben (Beinpresse)"]},{"date":"29.08","tag":"TAG 5: TORSO","muscle":"Rücken & Brust (Dichte)","exercises":["Kabelrudern (V-Griff)","High Row Maschine","Chest Press (breit)","Pec Deck (Butterfly)","Reverse Butterfly Maschine"]},{"date":"30.08","tag":"TAG 6: LIMBS","muscle":"Arme & Beine (Pump)","exercises":["Kabel-Seitheben","Bizeps-Maschine (Preacher)","Trizeps-Kabel (V-Griff)","Kabel-Curls (Stange)","Trizeps über Kopf (Seil)","Hammer-Curls (Seil)","Beinstrecker-Maschine","Wadenheben (sitzend)"]}]},{"weekLabel":"Woche 2","isDeload":false,"isSchool":false,"days":[{"date":"01.09","tag":"TAG 1: PULL","muscle":"Rücken / Bizeps","exercises":["Latzug-Maschine (breit)","Hammer Strength Row (eng)","ISO-Lateral Row (einarmig)","Face-Pulls (Kabel)","Bizeps-Maschine (Preacher)"]},{"date":"02.09","tag":"TAG 2: PUSH","muscle":"Brust / Schulter / Trizeps","exercises":["Incline Chest Press","Brustpresse (horizontal)","Schulterdrück-Maschine","Seithebe-Maschine","Trizeps-Dips-Maschine"]},{"date":"03.09","tag":"TAG 3: LEGS","muscle":"Beine / Waden","exercises":["Beinpresse (45 Grad)","Beinbeuger unilateral","Beinstrecker-Maschine","Wadenheben (Beinpresse)"]},{"date":"05.09","tag":"TAG 5: TORSO","muscle":"Rücken & Brust (Dichte)","exercises":["Kabelrudern (V-Griff)","High Row Maschine","Chest Press (breit)","Pec Deck (Butterfly)","Reverse Butterfly Maschine"]},{"date":"06.09","tag":"TAG 6: LIMBS","muscle":"Arme & Beine (Pump)","exercises":["Kabel-Seitheben","Bizeps-Maschine (Preacher)","Trizeps-Kabel (V-Griff)","Kabel-Curls (Stange)","Trizeps über Kopf (Seil)","Hammer-Curls (Seil)","Beinstrecker-Maschine","Wadenheben (sitzend)"]}]},{"weekLabel":"Woche 3","isDeload":false,"isSchool":false,"days":[{"date":"08.09","tag":"TAG 1: PULL","muscle":"Rücken / Bizeps","exercises":["Latzug-Maschine (breit)","Hammer Strength Row (eng)","ISO-Lateral Row (einarmig)","Face-Pulls (Kabel)","Bizeps-Maschine (Preacher)"]},{"date":"09.09","tag":"TAG 2: PUSH","muscle":"Brust / Schulter / Trizeps","exercises":["Incline Chest Press","Brustpresse (horizontal)","Schulterdrück-Maschine","Seithebe-Maschine","Trizeps-Dips-Maschine"]},{"date":"10.09","tag":"TAG 3: LEGS","muscle":"Beine / Waden","exercises":["Beinpresse (45 Grad)","Beinbeuger unilateral","Beinstrecker-Maschine","Wadenheben (Beinpresse)"]},{"date":"12.09","tag":"TAG 5: TORSO","muscle":"Rücken & Brust (Dichte)","exercises":["Kabelrudern (V-Griff)","High Row Maschine","Chest Press (breit)","Pec Deck (Butterfly)","Reverse Butterfly Maschine"]},{"date":"13.09","tag":"TAG 6: LIMBS","muscle":"Arme & Beine (Pump)","exercises":["Kabel-Seitheben","Bizeps-Maschine (Preacher)","Trizeps-Kabel (V-Griff)","Kabel-Curls (Stange)","Trizeps über Kopf (Seil)","Hammer-Curls (Seil)","Beinstrecker-Maschine","Wadenheben (sitzend)"]}]},{"weekLabel":"Woche 4 (DELOAD)","isDeload":true,"isSchool":false,"days":[{"date":"15.09","tag":"TAG 1: PULL (60% Gew.)","muscle":"Rücken / Bizeps","exercises":["Latzug-Maschine (breit)","Hammer Strength Row (eng)","ISO-Lateral Row (einarmig)","Face-Pulls (Kabel)","Bizeps-Maschine (Preacher)"]},{"date":"16.09","tag":"TAG 2: PUSH (60% Gew.)","muscle":"Brust / Schulter / Trizeps","exercises":["Incline Chest Press","Brustpresse (horizontal)","Schulterdrück-Maschine","Seithebe-Maschine","Trizeps-Dips-Maschine"]},{"date":"17.09","tag":"TAG 3: LEGS (60% Gew.)","muscle":"Beine / Waden","exercises":["Beinpresse (45 Grad)","Beinbeuger unilateral","Beinstrecker-Maschine","Wadenheben (Beinpresse)"]}]}]},
-
-{"weeks":[{"weekLabel":"Woche 1","isDeload":false,"isSchool":false,"days":[{"date":"22.09","tag":"TAG 1: PULL","muscle":"Rücken / Bizeps","exercises":["Latzug-Maschine (breit)","Hammer Strength Row (eng)","ISO-Lateral Row (einarmig)","Face-Pulls (Kabel)","Bizeps-Maschine (Preacher)"]},{"date":"23.09","tag":"TAG 2: PUSH","muscle":"Brust / Schulter / Trizeps","exercises":["Incline Chest Press","Brustpresse (horizontal)","Schulterdrück-Maschine","Seithebe-Maschine","Trizeps-Dips-Maschine"]},{"date":"24.09","tag":"TAG 3: LEGS","muscle":"Beine / Waden","exercises":["Beinpresse (45 Grad)","Beinbeuger unilateral","Beinstrecker-Maschine","Wadenheben (Beinpresse)"]},{"date":"26.09","tag":"TAG 5: TORSO","muscle":"Rücken & Brust (Dichte)","exercises":["Kabelrudern (V-Griff)","High Row Maschine","Chest Press (breit)","Pec Deck (Butterfly)","Reverse Butterfly Maschine"]},{"date":"27.09","tag":"TAG 6: LIMBS","muscle":"Arme & Beine (Pump)","exercises":["Kabel-Seitheben","Bizeps-Maschine (Preacher)","Trizeps-Kabel (V-Griff)","Kabel-Curls (Stange)","Trizeps über Kopf (Seil)","Hammer-Curls (Seil)","Beinstrecker-Maschine","Wadenheben (sitzend)"]}]},{"weekLabel":"Woche 2","isDeload":false,"isSchool":false,"days":[{"date":"29.09","tag":"TAG 1: PULL","muscle":"Rücken / Bizeps","exercises":["Latzug-Maschine (breit)","Hammer Strength Row (eng)","ISO-Lateral Row (einarmig)","Face-Pulls (Kabel)","Bizeps-Maschine (Preacher)"]},{"date":"30.09","tag":"TAG 2: PUSH","muscle":"Brust / Schulter / Trizeps","exercises":["Incline Chest Press","Brustpresse (horizontal)","Schulterdrück-Maschine","Seithebe-Maschine","Trizeps-Dips-Maschine"]},{"date":"01.10","tag":"TAG 3: LEGS","muscle":"Beine / Waden","exercises":["Beinpresse (45 Grad)","Beinbeuger unilateral","Beinstrecker-Maschine","Wadenheben (Beinpresse)"]},{"date":"03.10","tag":"TAG 5: TORSO","muscle":"Rücken & Brust (Dichte)","exercises":["Kabelrudern (V-Griff)","High Row Maschine","Chest Press (breit)","Pec Deck (Butterfly)","Reverse Butterfly Maschine"]},{"date":"04.10","tag":"TAG 6: LIMBS","muscle":"Arme & Beine (Pump)","exercises":["Kabel-Seitheben","Bizeps-Maschine (Preacher)","Trizeps-Kabel (V-Griff)","Kabel-Curls (Stange)","Trizeps über Kopf (Seil)","Hammer-Curls (Seil)","Beinstrecker-Maschine","Wadenheben (sitzend)"]}]},{"weekLabel":"Woche 3","isDeload":false,"isSchool":false,"days":[{"date":"06.10","tag":"TAG 1: PULL","muscle":"Rücken / Bizeps","exercises":["Latzug-Maschine (breit)","Hammer Strength Row (eng)","ISO-Lateral Row (einarmig)","Face-Pulls (Kabel)","Bizeps-Maschine (Preacher)"]},{"date":"07.10","tag":"TAG 2: PUSH","muscle":"Brust / Schulter / Trizeps","exercises":["Incline Chest Press","Brustpresse (horizontal)","Schulterdrück-Maschine","Seithebe-Maschine","Trizeps-Dips-Maschine"]},{"date":"08.10","tag":"TAG 3: LEGS","muscle":"Beine / Waden","exercises":["Beinpresse (45 Grad)","Beinbeuger unilateral","Beinstrecker-Maschine","Wadenheben (Beinpresse)"]},{"date":"10.10","tag":"TAG 5: TORSO","muscle":"Rücken & Brust (Dichte)","exercises":["Kabelrudern (V-Griff)","High Row Maschine","Chest Press (breit)","Pec Deck (Butterfly)","Reverse Butterfly Maschine"]},{"date":"11.10","tag":"TAG 6: LIMBS","muscle":"Arme & Beine (Pump)","exercises":["Kabel-Seitheben","Bizeps-Maschine (Preacher)","Trizeps-Kabel (V-Griff)","Kabel-Curls (Stange)","Trizeps über Kopf (Seil)","Hammer-Curls (Seil)","Beinstrecker-Maschine","Wadenheben (sitzend)"]}]},{"weekLabel":"Woche 4 (DELOAD)","isDeload":true,"isSchool":false,"days":[{"date":"13.10","tag":"TAG 1: PULL (60% Gew.)","muscle":"Rücken / Bizeps","exercises":["Latzug-Maschine (breit)","Hammer Strength Row (eng)","ISO-Lateral Row (einarmig)","Face-Pulls (Kabel)","Bizeps-Maschine (Preacher)"]},{"date":"14.10","tag":"TAG 2: PUSH (60% Gew.)","muscle":"Brust / Schulter / Trizeps","exercises":["Incline Chest Press","Brustpresse (horizontal)","Schulterdrück-Maschine","Seithebe-Maschine","Trizeps-Dips-Maschine"]},{"date":"15.10","tag":"TAG 3: LEGS (60% Gew.)","muscle":"Beine / Waden","exercises":["Beinpresse (45 Grad)","Beinbeuger unilateral","Beinstrecker-Maschine","Wadenheben (Beinpresse)"]}]}]}];
+{"weeks": [{"weekLabel": "Woche 1", "isDeload": false, "isSchool": false, "days": [{"date": "27.04", "tag": "TAG 1: PULL", "muscle": "Rücken / Bizeps", "exercises": ["Latzug-Maschine (breit)", "Hammer Strength Row (eng)", "ISO-Lateral Row (einarmig)", "Face-Pulls (Kabel)", "Bizeps-Maschine (Preacher)"]}, {"date": "28.04", "tag": "TAG 2: PUSH", "muscle": "Brust / Schulter / Trizeps", "exercises": ["Incline Chest Press", "Brustpresse (horizontal)", "Schulterdrück-Maschine", "Seithebe-Maschine", "Trizeps-Dips-Maschine"]}, {"date": "29.04", "tag": "TAG 3: LEGS", "muscle": "Beine / Waden", "exercises": ["Beinpresse (45 Grad)", "Beinbeuger unilateral", "Beinstrecker-Maschine", "Wadenheben (Beinpresse)"]}, {"date": "01.05", "tag": "TAG 5: TORSO", "muscle": "Rücken & Brust (Dichte)", "exercises": ["Kabelrudern (V-Griff)", "High Row Maschine", "Chest Press (breit)", "Pec Deck (Butterfly)", "Reverse Butterfly Maschine"]}, {"date": "02.05", "tag": "TAG 6: LIMBS", "muscle": "Arme & Beine (Pump)", "exercises": ["Kabel-Seitheben", "Bizeps-Maschine (Preacher)", "Trizeps-Kabel (V-Griff)", "Kabel-Curls (Stange)", "Trizeps über Kopf (Seil)", "Hammer-Curls (Seil)", "Beinstrecker-Maschine", "Wadenheben (sitzend)"]}]}, {"weekLabel": "Woche 2 ⛔ Schule", "isDeload": false, "isSchool": true, "days": [{"date": "08.05", "tag": "TAG 5: TORSO", "muscle": "Rücken & Brust (Dichte)", "exercises": ["Kabelrudern (V-Griff)", "High Row Maschine", "Chest Press (breit)", "Pec Deck (Butterfly)", "Reverse Butterfly Maschine"]}, {"date": "09.05", "tag": "TAG 6: LIMBS", "muscle": "Arme & Beine (Pump)", "exercises": ["Kabel-Seitheben", "Bizeps-Maschine (Preacher)", "Trizeps-Kabel (V-Griff)", "Kabel-Curls (Stange)", "Trizeps über Kopf (Seil)", "Hammer-Curls (Seil)", "Beinstrecker-Maschine", "Wadenheben (sitzend)"]}]}, {"weekLabel": "Woche 3", "isDeload": false, "isSchool": false, "days": [{"date": "11.05", "tag": "TAG 1: PULL", "muscle": "Rücken / Bizeps", "exercises": ["Latzug-Maschine (breit)", "Hammer Strength Row (eng)", "ISO-Lateral Row (einarmig)", "Face-Pulls (Kabel)", "Bizeps-Maschine (Preacher)"]}, {"date": "12.05", "tag": "TAG 2: PUSH", "muscle": "Brust / Schulter / Trizeps", "exercises": ["Incline Chest Press", "Brustpresse (horizontal)", "Schulterdrück-Maschine", "Seithebe-Maschine", "Trizeps-Dips-Maschine"]}, {"date": "13.05", "tag": "TAG 3: LEGS", "muscle": "Beine / Waden", "exercises": ["Beinpresse (45 Grad)", "Beinbeuger unilateral", "Beinstrecker-Maschine", "Wadenheben (Beinpresse)"]}, {"date": "15.05", "tag": "TAG 5: TORSO", "muscle": "Rücken & Brust (Dichte)", "exercises": ["Kabelrudern (V-Griff)", "High Row Maschine", "Chest Press (breit)", "Pec Deck (Butterfly)", "Reverse Butterfly Maschine"]}, {"date": "16.05", "tag": "TAG 6: LIMBS", "muscle": "Arme & Beine (Pump)", "exercises": ["Kabel-Seitheben", "Bizeps-Maschine (Preacher)", "Trizeps-Kabel (V-Griff)", "Kabel-Curls (Stange)", "Trizeps über Kopf (Seil)", "Hammer-Curls (Seil)", "Beinstrecker-Maschine", "Wadenheben (sitzend)"]}]}, {"weekLabel": "Woche 4 (DELOAD)", "isDeload": true, "isSchool": false, "days": [{"date": "19.05", "tag": "TAG 1: PULL (60% Gew.)", "muscle": "Rücken / Bizeps", "exercises": ["Latzug-Maschine (breit)", "Hammer Strength Row (eng)", "ISO-Lateral Row (einarmig)", "Face-Pulls (Kabel)", "Bizeps-Maschine (Preacher)"]}, {"date": "20.05", "tag": "TAG 2: PUSH (60% Gew.)", "muscle": "Brust / Schulter / Trizeps", "exercises": ["Incline Chest Press", "Brustpresse (horizontal)", "Schulterdrück-Maschine", "Seithebe-Maschine", "Trizeps-Dips-Maschine"]}, {"date": "21.05", "tag": "TAG 3: LEGS (60% Gew.)", "muscle": "Beine / Waden", "exercises": ["Beinpresse (45 Grad)", "Beinbeuger unilateral", "Beinstrecker-Maschine", "Wadenheben (Beinpresse)"]}]}]},
+{"weeks": [{"weekLabel": "Woche 1", "isDeload": false, "isSchool": false, "days": [{"date": "26.05", "tag": "TAG 1: PULL", "muscle": "Rücken / Bizeps", "exercises": ["Latzug-Maschine (breit)", "Hammer Strength Row (eng)", "ISO-Lateral Row (einarmig)", "Face-Pulls (Kabel)", "Bizeps-Maschine (Preacher)"]}, {"date": "27.05", "tag": "TAG 2: PUSH", "muscle": "Brust / Schulter / Trizeps", "exercises": ["Incline Chest Press", "Brustpresse (horizontal)", "Schulterdrück-Maschine", "Seithebe-Maschine", "Trizeps-Dips-Maschine"]}, {"date": "28.05", "tag": "TAG 3: LEGS", "muscle": "Beine / Waden", "exercises": ["Beinpresse (45 Grad)", "Beinbeuger unilateral", "Beinstrecker-Maschine", "Wadenheben (Beinpresse)"]}, {"date": "30.05", "tag": "TAG 5: TORSO", "muscle": "Rücken & Brust (Dichte)", "exercises": ["Kabelrudern (V-Griff)", "High Row Maschine", "Chest Press (breit)", "Pec Deck (Butterfly)", "Reverse Butterfly Maschine"]}, {"date": "31.05", "tag": "TAG 6: LIMBS", "muscle": "Arme & Beine (Pump)", "exercises": ["Kabel-Seitheben", "Bizeps-Maschine (Preacher)", "Trizeps-Kabel (V-Griff)", "Kabel-Curls (Stange)", "Trizeps über Kopf (Seil)", "Hammer-Curls (Seil)", "Beinstrecker-Maschine", "Wadenheben (sitzend)"]}]}, {"weekLabel": "Woche 2", "isDeload": false, "isSchool": false, "days": [{"date": "02.06", "tag": "TAG 1: PULL", "muscle": "Rücken / Bizeps", "exercises": ["Latzug-Maschine (breit)", "Hammer Strength Row (eng)", "ISO-Lateral Row (einarmig)", "Face-Pulls (Kabel)", "Bizeps-Maschine (Preacher)"]}, {"date": "03.06", "tag": "TAG 2: PUSH", "muscle": "Brust / Schulter / Trizeps", "exercises": ["Incline Chest Press", "Brustpresse (horizontal)", "Schulterdrück-Maschine", "Seithebe-Maschine", "Trizeps-Dips-Maschine"]}, {"date": "04.06", "tag": "TAG 3: LEGS", "muscle": "Beine / Waden", "exercises": ["Beinpresse (45 Grad)", "Beinbeuger unilateral", "Beinstrecker-Maschine", "Wadenheben (Beinpresse)"]}, {"date": "06.06", "tag": "TAG 5: TORSO", "muscle": "Rücken & Brust (Dichte)", "exercises": ["Kabelrudern (V-Griff)", "High Row Maschine", "Chest Press (breit)", "Pec Deck (Butterfly)", "Reverse Butterfly Maschine"]}, {"date": "07.06", "tag": "TAG 6: LIMBS", "muscle": "Arme & Beine (Pump)", "exercises": ["Kabel-Seitheben", "Bizeps-Maschine (Preacher)", "Trizeps-Kabel (V-Griff)", "Kabel-Curls (Stange)", "Trizeps über Kopf (Seil)", "Hammer-Curls (Seil)", "Beinstrecker-Maschine", "Wadenheben (sitzend)"]}]}, {"weekLabel": "Woche 3 ⛔ Schule", "isDeload": false, "isSchool": true, "days": [{"date": "19.06", "tag": "TAG 5: TORSO", "muscle": "Rücken & Brust (Dichte)", "exercises": ["Kabelrudern (V-Griff)", "High Row Maschine", "Chest Press (breit)", "Pec Deck (Butterfly)", "Reverse Butterfly Maschine"]}, {"date": "20.06", "tag": "TAG 6: LIMBS", "muscle": "Arme & Beine (Pump)", "exercises": ["Kabel-Seitheben", "Bizeps-Maschine (Preacher)", "Trizeps-Kabel (V-Griff)", "Kabel-Curls (Stange)", "Trizeps über Kopf (Seil)", "Hammer-Curls (Seil)", "Beinstrecker-Maschine", "Wadenheben (sitzend)"]}]}, {"weekLabel": "Woche 4 (DELOAD)", "isDeload": true, "isSchool": false, "days": [{"date": "23.06", "tag": "TAG 1: PULL (60% Gew.)", "muscle": "Rücken / Bizeps", "exercises": ["Latzug-Maschine (breit)", "Hammer Strength Row (eng)", "ISO-Lateral Row (einarmig)", "Face-Pulls (Kabel)", "Bizeps-Maschine (Preacher)"]}, {"date": "24.06", "tag": "TAG 2: PUSH (60% Gew.)", "muscle": "Brust / Schulter / Trizeps", "exercises": ["Incline Chest Press", "Brustpresse (horizontal)", "Schulterdrück-Maschine", "Seithebe-Maschine", "Trizeps-Dips-Maschine"]}, {"date": "25.06", "tag": "TAG 3: LEGS (60% Gew.)", "muscle": "Beine / Waden", "exercises": ["Beinpresse (45 Grad)", "Beinbeuger unilateral", "Beinstrecker-Maschine", "Wadenheben (Beinpresse)"]}]}]},
+{"weeks": [{"weekLabel": "Woche 1 ⛔ Schule", "isDeload": false, "isSchool": true, "days": [{"date": "03.07", "tag": "TAG 5: TORSO", "muscle": "Rücken & Brust (Dichte)", "exercises": ["Kabelrudern (V-Griff)", "High Row Maschine", "Chest Press (breit)", "Pec Deck (Butterfly)", "Reverse Butterfly Maschine"]}, {"date": "04.07", "tag": "TAG 6: LIMBS", "muscle": "Arme & Beine (Pump)", "exercises": ["Kabel-Seitheben", "Bizeps-Maschine (Preacher)", "Trizeps-Kabel (V-Griff)", "Kabel-Curls (Stange)", "Trizeps über Kopf (Seil)", "Hammer-Curls (Seil)", "Beinstrecker-Maschine", "Wadenheben (sitzend)"]}]}, {"weekLabel": "Woche 2 🏖 Ferien", "isDeload": false, "isSchool": false, "days": [{"date": "07.07", "tag": "TAG 1: PULL", "muscle": "Rücken / Bizeps", "exercises": ["Latzug-Maschine (breit)", "Hammer Strength Row (eng)", "ISO-Lateral Row (einarmig)", "Face-Pulls (Kabel)", "Bizeps-Maschine (Preacher)"]}, {"date": "08.07", "tag": "TAG 2: PUSH", "muscle": "Brust / Schulter / Trizeps", "exercises": ["Incline Chest Press", "Brustpresse (horizontal)", "Schulterdrück-Maschine", "Seithebe-Maschine", "Trizeps-Dips-Maschine"]}, {"date": "09.07", "tag": "TAG 3: LEGS", "muscle": "Beine / Waden", "exercises": ["Beinpresse (45 Grad)", "Beinbeuger unilateral", "Beinstrecker-Maschine", "Wadenheben (Beinpresse)"]}, {"date": "11.07", "tag": "TAG 5: TORSO", "muscle": "Rücken & Brust (Dichte)", "exercises": ["Kabelrudern (V-Griff)", "High Row Maschine", "Chest Press (breit)", "Pec Deck (Butterfly)", "Reverse Butterfly Maschine"]}, {"date": "12.07", "tag": "TAG 6: LIMBS", "muscle": "Arme & Beine (Pump)", "exercises": ["Kabel-Seitheben", "Bizeps-Maschine (Preacher)", "Trizeps-Kabel (V-Griff)", "Kabel-Curls (Stange)", "Trizeps über Kopf (Seil)", "Hammer-Curls (Seil)", "Beinstrecker-Maschine", "Wadenheben (sitzend)"]}]}, {"weekLabel": "Woche 3 🏖 Ferien", "isDeload": false, "isSchool": false, "days": [{"date": "14.07", "tag": "TAG 1: PULL", "muscle": "Rücken / Bizeps", "exercises": ["Latzug-Maschine (breit)", "Hammer Strength Row (eng)", "ISO-Lateral Row (einarmig)", "Face-Pulls (Kabel)", "Bizeps-Maschine (Preacher)"]}, {"date": "15.07", "tag": "TAG 2: PUSH", "muscle": "Brust / Schulter / Trizeps", "exercises": ["Incline Chest Press", "Brustpresse (horizontal)", "Schulterdrück-Maschine", "Seithebe-Maschine", "Trizeps-Dips-Maschine"]}, {"date": "16.07", "tag": "TAG 3: LEGS", "muscle": "Beine / Waden", "exercises": ["Beinpresse (45 Grad)", "Beinbeuger unilateral", "Beinstrecker-Maschine", "Wadenheben (Beinpresse)"]}, {"date": "18.07", "tag": "TAG 5: TORSO", "muscle": "Rücken & Brust (Dichte)", "exercises": ["Kabelrudern (V-Griff)", "High Row Maschine", "Chest Press (breit)", "Pec Deck (Butterfly)", "Reverse Butterfly Maschine"]}, {"date": "19.07", "tag": "TAG 6: LIMBS", "muscle": "Arme & Beine (Pump)", "exercises": ["Kabel-Seitheben", "Bizeps-Maschine (Preacher)", "Trizeps-Kabel (V-Griff)", "Kabel-Curls (Stange)", "Trizeps über Kopf (Seil)", "Hammer-Curls (Seil)", "Beinstrecker-Maschine", "Wadenheben (sitzend)"]}]}, {"weekLabel": "Woche 4 (DELOAD) 🏖", "isDeload": true, "isSchool": false, "days": [{"date": "21.07", "tag": "TAG 1: PULL (60% Gew.)", "muscle": "Rücken / Bizeps", "exercises": ["Latzug-Maschine (breit)", "Hammer Strength Row (eng)", "ISO-Lateral Row (einarmig)", "Face-Pulls (Kabel)", "Bizeps-Maschine (Preacher)"]}, {"date": "22.07", "tag": "TAG 2: PUSH (60% Gew.)", "muscle": "Brust / Schulter / Trizeps", "exercises": ["Incline Chest Press", "Brustpresse (horizontal)", "Schulterdrück-Maschine", "Seithebe-Maschine", "Trizeps-Dips-Maschine"]}, {"date": "23.07", "tag": "TAG 3: LEGS (60% Gew.)", "muscle": "Beine / Waden", "exercises": ["Beinpresse (45 Grad)", "Beinbeuger unilateral", "Beinstrecker-Maschine", "Wadenheben (Beinpresse)"]}]}]},
+{"weeks": [{"weekLabel": "Woche 1 🏖 Ferien", "isDeload": false, "isSchool": false, "days": [{"date": "28.07", "tag": "TAG 1: PULL", "muscle": "Rücken / Bizeps", "exercises": ["Latzug-Maschine (breit)", "Hammer Strength Row (eng)", "ISO-Lateral Row (einarmig)", "Face-Pulls (Kabel)", "Bizeps-Maschine (Preacher)"]}, {"date": "29.07", "tag": "TAG 2: PUSH", "muscle": "Brust / Schulter / Trizeps", "exercises": ["Incline Chest Press", "Brustpresse (horizontal)", "Schulterdrück-Maschine", "Seithebe-Maschine", "Trizeps-Dips-Maschine"]}, {"date": "30.07", "tag": "TAG 3: LEGS", "muscle": "Beine / Waden", "exercises": ["Beinpresse (45 Grad)", "Beinbeuger unilateral", "Beinstrecker-Maschine", "Wadenheben (Beinpresse)"]}, {"date": "01.08", "tag": "TAG 5: TORSO", "muscle": "Rücken & Brust (Dichte)", "exercises": ["Kabelrudern (V-Griff)", "High Row Maschine", "Chest Press (breit)", "Pec Deck (Butterfly)", "Reverse Butterfly Maschine"]}, {"date": "02.08", "tag": "TAG 6: LIMBS", "muscle": "Arme & Beine (Pump)", "exercises": ["Kabel-Seitheben", "Bizeps-Maschine (Preacher)", "Trizeps-Kabel (V-Griff)", "Kabel-Curls (Stange)", "Trizeps über Kopf (Seil)", "Hammer-Curls (Seil)", "Beinstrecker-Maschine", "Wadenheben (sitzend)"]}]}, {"weekLabel": "Woche 2 🏖 Ferien", "isDeload": false, "isSchool": false, "days": [{"date": "04.08", "tag": "TAG 1: PULL", "muscle": "Rücken / Bizeps", "exercises": ["Latzug-Maschine (breit)", "Hammer Strength Row (eng)", "ISO-Lateral Row (einarmig)", "Face-Pulls (Kabel)", "Bizeps-Maschine (Preacher)"]}, {"date": "05.08", "tag": "TAG 2: PUSH", "muscle": "Brust / Schulter / Trizeps", "exercises": ["Incline Chest Press", "Brustpresse (horizontal)", "Schulterdrück-Maschine", "Seithebe-Maschine", "Trizeps-Dips-Maschine"]}, {"date": "06.08", "tag": "TAG 3: LEGS", "muscle": "Beine / Waden", "exercises": ["Beinpresse (45 Grad)", "Beinbeuger unilateral", "Beinstrecker-Maschine", "Wadenheben (Beinpresse)"]}, {"date": "08.08", "tag": "TAG 5: TORSO", "muscle": "Rücken & Brust (Dichte)", "exercises": ["Kabelrudern (V-Griff)", "High Row Maschine", "Chest Press (breit)", "Pec Deck (Butterfly)", "Reverse Butterfly Maschine"]}, {"date": "09.08", "tag": "TAG 6: LIMBS", "muscle": "Arme & Beine (Pump)", "exercises": ["Kabel-Seitheben", "Bizeps-Maschine (Preacher)", "Trizeps-Kabel (V-Griff)", "Kabel-Curls (Stange)", "Trizeps über Kopf (Seil)", "Hammer-Curls (Seil)", "Beinstrecker-Maschine", "Wadenheben (sitzend)"]}]}, {"weekLabel": "Woche 3 🏖 Ferien", "isDeload": false, "isSchool": false, "days": [{"date": "11.08", "tag": "TAG 1: PULL", "muscle": "Rücken / Bizeps", "exercises": ["Latzug-Maschine (breit)", "Hammer Strength Row (eng)", "ISO-Lateral Row (einarmig)", "Face-Pulls (Kabel)", "Bizeps-Maschine (Preacher)"]}, {"date": "12.08", "tag": "TAG 2: PUSH", "muscle": "Brust / Schulter / Trizeps", "exercises": ["Incline Chest Press", "Brustpresse (horizontal)", "Schulterdrück-Maschine", "Seithebe-Maschine", "Trizeps-Dips-Maschine"]}, {"date": "13.08", "tag": "TAG 3: LEGS", "muscle": "Beine / Waden", "exercises": ["Beinpresse (45 Grad)", "Beinbeuger unilateral", "Beinstrecker-Maschine", "Wadenheben (Beinpresse)"]}, {"date": "15.08", "tag": "TAG 5: TORSO", "muscle": "Rücken & Brust (Dichte)", "exercises": ["Kabelrudern (V-Griff)", "High Row Maschine", "Chest Press (breit)", "Pec Deck (Butterfly)", "Reverse Butterfly Maschine"]}, {"date": "16.08", "tag": "TAG 6: LIMBS", "muscle": "Arme & Beine (Pump)", "exercises": ["Kabel-Seitheben", "Bizeps-Maschine (Preacher)", "Trizeps-Kabel (V-Griff)", "Kabel-Curls (Stange)", "Trizeps über Kopf (Seil)", "Hammer-Curls (Seil)", "Beinstrecker-Maschine", "Wadenheben (sitzend)"]}]}, {"weekLabel": "Woche 4 (DELOAD) 🏖", "isDeload": true, "isSchool": false, "days": [{"date": "18.08", "tag": "TAG 1: PULL (60% Gew.)", "muscle": "Rücken / Bizeps", "exercises": ["Latzug-Maschine (breit)", "Hammer Strength Row (eng)", "ISO-Lateral Row (einarmig)", "Face-Pulls (Kabel)", "Bizeps-Maschine (Preacher)"]}, {"date": "19.08", "tag": "TAG 2: PUSH (60% Gew.)", "muscle": "Brust / Schulter / Trizeps", "exercises": ["Incline Chest Press", "Brustpresse (horizontal)", "Schulterdrück-Maschine", "Seithebe-Maschine", "Trizeps-Dips-Maschine"]}, {"date": "20.08", "tag": "TAG 3: LEGS (60% Gew.)", "muscle": "Beine / Waden", "exercises": ["Beinpresse (45 Grad)", "Beinbeuger unilateral", "Beinstrecker-Maschine", "Wadenheben (Beinpresse)"]}]}]},
+{"weeks": [{"weekLabel": "Woche 1 🏖 Ferien", "isDeload": false, "isSchool": false, "days": [{"date": "25.08", "tag": "TAG 1: PULL", "muscle": "Rücken / Bizeps", "exercises": ["Latzug-Maschine (breit)", "Hammer Strength Row (eng)", "ISO-Lateral Row (einarmig)", "Face-Pulls (Kabel)", "Bizeps-Maschine (Preacher)"]}, {"date": "26.08", "tag": "TAG 2: PUSH", "muscle": "Brust / Schulter / Trizeps", "exercises": ["Incline Chest Press", "Brustpresse (horizontal)", "Schulterdrück-Maschine", "Seithebe-Maschine", "Trizeps-Dips-Maschine"]}, {"date": "27.08", "tag": "TAG 3: LEGS", "muscle": "Beine / Waden", "exercises": ["Beinpresse (45 Grad)", "Beinbeuger unilateral", "Beinstrecker-Maschine", "Wadenheben (Beinpresse)"]}, {"date": "29.08", "tag": "TAG 5: TORSO", "muscle": "Rücken & Brust (Dichte)", "exercises": ["Kabelrudern (V-Griff)", "High Row Maschine", "Chest Press (breit)", "Pec Deck (Butterfly)", "Reverse Butterfly Maschine"]}, {"date": "30.08", "tag": "TAG 6: LIMBS", "muscle": "Arme & Beine (Pump)", "exercises": ["Kabel-Seitheben", "Bizeps-Maschine (Preacher)", "Trizeps-Kabel (V-Griff)", "Kabel-Curls (Stange)", "Trizeps über Kopf (Seil)", "Hammer-Curls (Seil)", "Beinstrecker-Maschine", "Wadenheben (sitzend)"]}]}, {"weekLabel": "Woche 2", "isDeload": false, "isSchool": false, "days": [{"date": "01.09", "tag": "TAG 1: PULL", "muscle": "Rücken / Bizeps", "exercises": ["Latzug-Maschine (breit)", "Hammer Strength Row (eng)", "ISO-Lateral Row (einarmig)", "Face-Pulls (Kabel)", "Bizeps-Maschine (Preacher)"]}, {"date": "02.09", "tag": "TAG 2: PUSH", "muscle": "Brust / Schulter / Trizeps", "exercises": ["Incline Chest Press", "Brustpresse (horizontal)", "Schulterdrück-Maschine", "Seithebe-Maschine", "Trizeps-Dips-Maschine"]}, {"date": "03.09", "tag": "TAG 3: LEGS", "muscle": "Beine / Waden", "exercises": ["Beinpresse (45 Grad)", "Beinbeuger unilateral", "Beinstrecker-Maschine", "Wadenheben (Beinpresse)"]}, {"date": "05.09", "tag": "TAG 5: TORSO", "muscle": "Rücken & Brust (Dichte)", "exercises": ["Kabelrudern (V-Griff)", "High Row Maschine", "Chest Press (breit)", "Pec Deck (Butterfly)", "Reverse Butterfly Maschine"]}, {"date": "06.09", "tag": "TAG 6: LIMBS", "muscle": "Arme & Beine (Pump)", "exercises": ["Kabel-Seitheben", "Bizeps-Maschine (Preacher)", "Trizeps-Kabel (V-Griff)", "Kabel-Curls (Stange)", "Trizeps über Kopf (Seil)", "Hammer-Curls (Seil)", "Beinstrecker-Maschine", "Wadenheben (sitzend)"]}]}, {"weekLabel": "Woche 3", "isDeload": false, "isSchool": false, "days": [{"date": "08.09", "tag": "TAG 1: PULL", "muscle": "Rücken / Bizeps", "exercises": ["Latzug-Maschine (breit)", "Hammer Strength Row (eng)", "ISO-Lateral Row (einarmig)", "Face-Pulls (Kabel)", "Bizeps-Maschine (Preacher)"]}, {"date": "09.09", "tag": "TAG 2: PUSH", "muscle": "Brust / Schulter / Trizeps", "exercises": ["Incline Chest Press", "Brustpresse (horizontal)", "Schulterdrück-Maschine", "Seithebe-Maschine", "Trizeps-Dips-Maschine"]}, {"date": "10.09", "tag": "TAG 3: LEGS", "muscle": "Beine / Waden", "exercises": ["Beinpresse (45 Grad)", "Beinbeuger unilateral", "Beinstrecker-Maschine", "Wadenheben (Beinpresse)"]}, {"date": "12.09", "tag": "TAG 5: TORSO", "muscle": "Rücken & Brust (Dichte)", "exercises": ["Kabelrudern (V-Griff)", "High Row Maschine", "Chest Press (breit)", "Pec Deck (Butterfly)", "Reverse Butterfly Maschine"]}, {"date": "13.09", "tag": "TAG 6: LIMBS", "muscle": "Arme & Beine (Pump)", "exercises": ["Kabel-Seitheben", "Bizeps-Maschine (Preacher)", "Trizeps-Kabel (V-Griff)", "Kabel-Curls (Stange)", "Trizeps über Kopf (Seil)", "Hammer-Curls (Seil)", "Beinstrecker-Maschine", "Wadenheben (sitzend)"]}]}, {"weekLabel": "Woche 4 (DELOAD)", "isDeload": true, "isSchool": false, "days": [{"date": "15.09", "tag": "TAG 1: PULL (60% Gew.)", "muscle": "Rücken / Bizeps", "exercises": ["Latzug-Maschine (breit)", "Hammer Strength Row (eng)", "ISO-Lateral Row (einarmig)", "Face-Pulls (Kabel)", "Bizeps-Maschine (Preacher)"]}, {"date": "16.09", "tag": "TAG 2: PUSH (60% Gew.)", "muscle": "Brust / Schulter / Trizeps", "exercises": ["Incline Chest Press", "Brustpresse (horizontal)", "Schulterdrück-Maschine", "Seithebe-Maschine", "Trizeps-Dips-Maschine"]}, {"date": "17.09", "tag": "TAG 3: LEGS (60% Gew.)", "muscle": "Beine / Waden", "exercises": ["Beinpresse (45 Grad)", "Beinbeuger unilateral", "Beinstrecker-Maschine", "Wadenheben (Beinpresse)"]}]}]},
+{"weeks": [{"weekLabel": "Woche 1", "isDeload": false, "isSchool": false, "days": [{"date": "22.09", "tag": "TAG 1: PULL", "muscle": "Rücken / Bizeps", "exercises": ["Latzug-Maschine (breit)", "Hammer Strength Row (eng)", "ISO-Lateral Row (einarmig)", "Face-Pulls (Kabel)", "Bizeps-Maschine (Preacher)"]}, {"date": "23.09", "tag": "TAG 2: PUSH", "muscle": "Brust / Schulter / Trizeps", "exercises": ["Incline Chest Press", "Brustpresse (horizontal)", "Schulterdrück-Maschine", "Seithebe-Maschine", "Trizeps-Dips-Maschine"]}, {"date": "24.09", "tag": "TAG 3: LEGS", "muscle": "Beine / Waden", "exercises": ["Beinpresse (45 Grad)", "Beinbeuger unilateral", "Beinstrecker-Maschine", "Wadenheben (Beinpresse)"]}, {"date": "26.09", "tag": "TAG 5: TORSO", "muscle": "Rücken & Brust (Dichte)", "exercises": ["Kabelrudern (V-Griff)", "High Row Maschine", "Chest Press (breit)", "Pec Deck (Butterfly)", "Reverse Butterfly Maschine"]}, {"date": "27.09", "tag": "TAG 6: LIMBS", "muscle": "Arme & Beine (Pump)", "exercises": ["Kabel-Seitheben", "Bizeps-Maschine (Preacher)", "Trizeps-Kabel (V-Griff)", "Kabel-Curls (Stange)", "Trizeps über Kopf (Seil)", "Hammer-Curls (Seil)", "Beinstrecker-Maschine", "Wadenheben (sitzend)"]}]}, {"weekLabel": "Woche 2", "isDeload": false, "isSchool": false, "days": [{"date": "29.09", "tag": "TAG 1: PULL", "muscle": "Rücken / Bizeps", "exercises": ["Latzug-Maschine (breit)", "Hammer Strength Row (eng)", "ISO-Lateral Row (einarmig)", "Face-Pulls (Kabel)", "Bizeps-Maschine (Preacher)"]}, {"date": "30.09", "tag": "TAG 2: PUSH", "muscle": "Brust / Schulter / Trizeps", "exercises": ["Incline Chest Press", "Brustpresse (horizontal)", "Schulterdrück-Maschine", "Seithebe-Maschine", "Trizeps-Dips-Maschine"]}, {"date": "01.10", "tag": "TAG 3: LEGS", "muscle": "Beine / Waden", "exercises": ["Beinpresse (45 Grad)", "Beinbeuger unilateral", "Beinstrecker-Maschine", "Wadenheben (Beinpresse)"]}, {"date": "03.10", "tag": "TAG 5: TORSO", "muscle": "Rücken & Brust (Dichte)", "exercises": ["Kabelrudern (V-Griff)", "High Row Maschine", "Chest Press (breit)", "Pec Deck (Butterfly)", "Reverse Butterfly Maschine"]}, {"date": "04.10", "tag": "TAG 6: LIMBS", "muscle": "Arme & Beine (Pump)", "exercises": ["Kabel-Seitheben", "Bizeps-Maschine (Preacher)", "Trizeps-Kabel (V-Griff)", "Kabel-Curls (Stange)", "Trizeps über Kopf (Seil)", "Hammer-Curls (Seil)", "Beinstrecker-Maschine", "Wadenheben (sitzend)"]}]}, {"weekLabel": "Woche 3", "isDeload": false, "isSchool": false, "days": [{"date": "06.10", "tag": "TAG 1: PULL", "muscle": "Rücken / Bizeps", "exercises": ["Latzug-Maschine (breit)", "Hammer Strength Row (eng)", "ISO-Lateral Row (einarmig)", "Face-Pulls (Kabel)", "Bizeps-Maschine (Preacher)"]}, {"date": "07.10", "tag": "TAG 2: PUSH", "muscle": "Brust / Schulter / Trizeps", "exercises": ["Incline Chest Press", "Brustpresse (horizontal)", "Schulterdrück-Maschine", "Seithebe-Maschine", "Trizeps-Dips-Maschine"]}, {"date": "08.10", "tag": "TAG 3: LEGS", "muscle": "Beine / Waden", "exercises": ["Beinpresse (45 Grad)", "Beinbeuger unilateral", "Beinstrecker-Maschine", "Wadenheben (Beinpresse)"]}, {"date": "10.10", "tag": "TAG 5: TORSO", "muscle": "Rücken & Brust (Dichte)", "exercises": ["Kabelrudern (V-Griff)", "High Row Maschine", "Chest Press (breit)", "Pec Deck (Butterfly)", "Reverse Butterfly Maschine"]}, {"date": "11.10", "tag": "TAG 6: LIMBS", "muscle": "Arme & Beine (Pump)", "exercises": ["Kabel-Seitheben", "Bizeps-Maschine (Preacher)", "Trizeps-Kabel (V-Griff)", "Kabel-Curls (Stange)", "Trizeps über Kopf (Seil)", "Hammer-Curls (Seil)", "Beinstrecker-Maschine", "Wadenheben (sitzend)"]}]}, {"weekLabel": "Woche 4 (DELOAD)", "isDeload": true, "isSchool": false, "days": [{"date": "13.10", "tag": "TAG 1: PULL (60% Gew.)", "muscle": "Rücken / Bizeps", "exercises": ["Latzug-Maschine (breit)", "Hammer Strength Row (eng)", "ISO-Lateral Row (einarmig)", "Face-Pulls (Kabel)", "Bizeps-Maschine (Preacher)"]}, {"date": "14.10", "tag": "TAG 2: PUSH (60% Gew.)", "muscle": "Brust / Schulter / Trizeps", "exercises": ["Incline Chest Press", "Brustpresse (horizontal)", "Schulterdrück-Maschine", "Seithebe-Maschine", "Trizeps-Dips-Maschine"]}, {"date": "15.10", "tag": "TAG 3: LEGS (60% Gew.)", "muscle": "Beine / Waden", "exercises": ["Beinpresse (45 Grad)", "Beinbeuger unilateral", "Beinstrecker-Maschine", "Wadenheben (Beinpresse)"]}]}]}
+];
 
 // ============================================================
 // STORAGE
 // ============================================================
-const SK='pb_v9_0';
-const APP_VERSION='V10.0';
+const SK='pb_v9_2';
+const APP_VERSION='V9.2';
 const errorLog=[];
 let store={};
 try{store=JSON.parse(localStorage.getItem(SK)||'{}');}catch(e){}
@@ -765,8 +769,10 @@ try{store=JSON.parse(localStorage.getItem(SK)||'{}');}catch(e){}
 function logToSystem(msg,type='JS_ERROR',line=''){
   const cleanMsg=msg.toString().replace(/(gsk_|AIza)[a-zA-Z0-9_-]+/g,'[REDACTED]');
   errorLog.push(`[${new Date().toLocaleTimeString()}] ${type}: ${cleanMsg}`);
-  const errObj={type:'log',env:'PERSONAL',type_detail:type,msg:cleanMsg,line:line,ver:APP_VERSION,appVersion:APP_VERSION,error:cleanMsg,device:navigator.userAgent.slice(0,80),stack:line?'Line: '+line:'no stack'};
-  fetch('https://script.google.com/macros/s/AKfycbwhSOHROvw6VgNyd248plmIsnwcbvTCEcHynhPkEs0uEXYhSVT7tqXujBCdoDyxe8za/exec',{method:'POST',mode:'no-cors',body:JSON.stringify(errObj)}).catch(()=>{});
+  if(store._apiUrl){
+    const errObj={type:'log',type_detail:type,msg:cleanMsg,line:line,ver:APP_VERSION,device:navigator.userAgent.slice(0,50)};
+    fetch(store._apiUrl,{method:'POST',mode:'no-cors',body:JSON.stringify(errObj)}).catch(()=>{});
+  }
 }
 window.onerror=(m,u,l)=>logToSystem(m,'UI_ERROR',l);
 window.addEventListener('unhandledrejection',(event)=>{
@@ -804,8 +810,8 @@ window.addEventListener('offline',()=>{
   document.body.style.borderTop='4px solid var(--acc2)';
 });
 
-// Migration: pb_v8_1 → pb_v9_0
-if(Object.keys(store).length===0){try{const old=JSON.parse(localStorage.getItem('pb_v8_1')||'{}');if(Object.keys(old).length>0){Object.assign(store,old);persist();}}catch(e){}}
+// Migration: pb_v9_1 → pb_v9_2
+if(Object.keys(store).length===0){try{const old=JSON.parse(localStorage.getItem('pb_v9_1')||'{}');if(Object.keys(old).length>0){Object.assign(store,old);persist();}}catch(e){}}
 // (alte Keys pb_v7_4 etc. werden nicht mehr importiert)
 
 function persist(){try{localStorage.setItem(SK,JSON.stringify(store));}catch(e){}}
@@ -849,7 +855,7 @@ function toggleTheme(){
 // ============================================================
 // API
 // ============================================================
-let API_URL=store._apiUrl||'https://script.google.com/macros/s/AKfycbwhSOHROvw6VgNyd248plmIsnwcbvTCEcHynhPkEs0uEXYhSVT7tqXujBCdoDyxe8za/exec';
+let API_URL=store._apiUrl||'';
 let lastSync=0;
 function saveApiUrl(){API_URL=document.getElementById('apiUrlInput').value.trim();store._apiUrl=API_URL;persist();updateApiStatus();showSetupStatus('ok','✓ URL gespeichert!');}
 function updateApiStatus(){
@@ -1023,16 +1029,6 @@ function selfCheck(){
       });
     }
   }catch(e){}
-
-  // 7. Version-Check: SK stimmt mit aktuellem Code überein?
-  if(store._migrated && store._migrated !== 'pb_v8_1'){
-    issues.push({
-      level:'warn',
-      icon:'🔄',
-      title:'Daten aus alter Version ('+store._migrated+')',
-      text:'Migration wurde durchgeführt. Prüfe ob alle Daten korrekt übertragen wurden.'
-    });
-  }
 
   // Banner rendern
   const banner = document.getElementById('selfCheckBanner');
@@ -1392,17 +1388,39 @@ function renderWorkout(){
   const doneCount=day.exercises.filter((_,i)=>getD(C,W,D,i).done).length;
   const pct=Math.round(doneCount/day.exercises.length*100);
 
+  // Deload: Vorwoche-Gewichte ermitteln für Banner + Placeholder
+  let deloadHints=[];
+  if(week.isDeload){
+    day.exercises.forEach((ex,i)=>{
+      let prevG=null;
+      if(W>0){const pv=getD(C,W-1,D,i);if(pv.g1)prevG=parseFloat(pv.g1);}
+      else if(C>0){const pv=getD(C-1,PLAN[C-1].weeks.length-2,D,i);if(pv.g1)prevG=parseFloat(pv.g1);}
+      if(prevG){const kg=Math.round(prevG*0.6*2)/2;deloadHints.push(getExName(i).split('(')[0].trim()+': '+kg+'kg');}
+    });
+  }
+  const deloadText=deloadHints.length>0
+    ?'⚡ DELOAD — Vorschläge: '+deloadHints.join(' · ')
+    :'⚡ DELOAD — 60% Gewicht';
+
   document.getElementById('cinfo').innerHTML=
     '<div class="ctitle">ZYKLUS '+(C+1)+' — '+week.weekLabel+'</div>'+
     '<div class="cdate">'+week.days.map(d=>d.date).join(' · ')+'</div>'+
-    (week.isDeload?'<span class="deload-tag">⚡ DELOAD — 60% Gewicht</span>':'')+
+    (week.isDeload?'<span class="deload-tag">'+deloadText+'</span>':'')+
     (week.isSchool?'<span class="deload-tag" style="background:var(--mu)">⛔ SCHULWOCHE — 3 Tage</span>':'');
 
   loadBW();
 
-  let html='<div class="whead"><div class="wtitle">'+day.tag+'</div><div class="mtag">'+day.muscle+'</div></div>'+
-    '<div class="prog-lbl">'+doneCount+' / '+day.exercises.length+' Übungen · '+pct+'%</div>'+
-    '<div class="prog-bar"><div class="prog-fill" style="width:'+pct+'%"></div></div>';
+  const customDayName=store['dayname_'+C+'_'+W+'_'+D]||day.tag;
+  const fatigueChip=checkFatigueHint()?'<span class="ai-chip warn" style="margin-left:8px;">🔸 Hohe Fatigue — Deload empfohlen</span>':'';
+
+  let html='<div class="whead">'
+    +'<div class="wtitle"><span id="daylabel">'+customDayName+'</span>'
+    +' <span style="cursor:pointer;font-size:12px;opacity:.5;" onclick="editDayName('+C+','+W+','+D+')" title="Tag umbenennen">✏️</span>'
+    +fatigueChip+'</div>'
+    +'<div class="mtag">'+day.muscle+'</div>'
+    +'</div>'
+    +'<div class="prog-lbl">'+doneCount+' / '+day.exercises.length+' Übungen · '+pct+'%</div>'
+    +'<div class="prog-bar"><div class="prog-fill" style="width:'+pct+'%"></div></div>';
 
   day.exercises.forEach((ex,i)=>{
     const d=getD(C,W,D,i);
@@ -1412,12 +1430,12 @@ function renderWorkout(){
     const rec=getRecord(exName);
     const isPR=orm&&rec&&orm>rec.orm;
 
-    // Previous week data for badge
-    let prevOrm=null;
-    if(W>0){const pv=getD(C,W-1,D,i);const v=calc1RM(pv);if(v>0)prevOrm=v;}
-    else if(C>0){const pv=getD(C-1,PLAN[C-1].weeks.length-2,D,i);const v=calc1RM(pv);if(v>0)prevOrm=v;}
+    // Previous week data
+    let prevOrm=null,prevG=null;
+    if(W>0){const pv=getD(C,W-1,D,i);const v=calc1RM(pv);if(v>0)prevOrm=v;if(pv.g1)prevG=parseFloat(pv.g1);}
+    else if(C>0){const pv=getD(C-1,PLAN[C-1].weeks.length-2,D,i);const v=calc1RM(pv);if(v>0)prevOrm=v;if(pv.g1)prevG=parseFloat(pv.g1);}
 
-    // Progressionspfeil vs. Vorwoche
+    // Progressionspfeil
     let progArrow='',progClass='flat',progDiff='';
     if(orm&&prevOrm){
       const diff=Math.round((orm-prevOrm)*10)/10;
@@ -1426,10 +1444,13 @@ function renderWorkout(){
       else{progArrow='►';progClass='flat';progDiff='±0';}
     }
 
-    // Warmup values from S1
-    const wu=d.g1?parseFloat(d.g1):null;
+    // Deload placeholder
+    let ph='kg';
+    if(week.isDeload&&prevG){ph=(Math.round(prevG*0.6*2)/2)+' kg';}
 
+    const wu=d.g1?parseFloat(d.g1):null;
     const isStag=checkStagnation(i);
+
     html+='<div class="excard '+(d.done?'done ':'')+( isOpen?'open-ex ':'')+( isPR?'pr-card':'')+( isStag?'stagnation-card':'')+'" id="ec'+i+'">'
       +'<div class="exhead" onclick="toggleEx('+i+')">'
       +'<div class="exname">'+(i+1)+'. <span id="exlabel'+i+'" onclick="event.stopPropagation();editExName('+i+')" style="cursor:text;border-bottom:1px dashed var(--bor);" title="Tippen zum Umbenennen">'+exName+'</span>'
@@ -1441,9 +1462,7 @@ function renderWorkout(){
       +'<div class="exstatus">'+(d.done?'✓':orm?orm+' kg 1RM':'—')+'</div>'
       +'<svg class="ex-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>'
       +'</div></div>'
-      // BODY
       +'<div class="exbody '+(isOpen?'open':'')+'" id="eb'+i+'">'
-      // WARMUP toggle
       +'<button class="warmup-toggle '+(wu?'':'disabled')+'" id="wutog'+i+'" onclick="toggleWarmup('+i+')" style="'+(wu?'':'opacity:.4;pointer-events:none;')+'">'
       +'<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>'
       +'🔥 WARMUP-SÄTZE '+(wu?'('+Math.round(wu*0.4*2)/2+' / '+Math.round(wu*0.6*2)/2+' / '+Math.round(wu*0.8*2)/2+' kg)':'(Gew. S1 eingeben)')+
@@ -1452,22 +1471,20 @@ function renderWorkout(){
       +'<div class="wu-sets">'
       +(wu?'<span class="wu-set">40% → '+Math.round(wu*0.4*2)/2+' kg</span><span class="wu-set">60% → '+Math.round(wu*0.6*2)/2+' kg</span><span class="wu-set">80% → '+Math.round(wu*0.8*2)/2+' kg</span>':'')
       +'</div></div>'
-      // SETS GRID
       +'<div class="sets-grid">'
       +'<div class="slbl">SATZ 1</div>'
-      +'<input class="sinput" type="number" placeholder="kg" value="'+d.g1+'" oninput="upd('+i+',\'g1\',this.value)" min="0" step="0.5">'
+      +'<input class="sinput" type="number" placeholder="'+ph+'" value="'+d.g1+'" oninput="upd('+i+',\'g1\',this.value)" min="0" step="0.5">'
       +'<input class="sinput" type="number" placeholder="Wdh" value="'+d.r1+'" oninput="upd('+i+',\'r1\',this.value)" min="0">'
       +'<div class="orm-inline" id="orm1_'+i+'">'+(d.g1&&d.r1?Math.round(parseFloat(d.g1)*(1+parseFloat(d.r1)/30))+' kg':'—')+'</div>'
       +'<div class="slbl">SATZ 2</div>'
-      +'<input class="sinput" type="number" placeholder="kg" value="'+d.g2+'" oninput="upd('+i+',\'g2\',this.value)" min="0" step="0.5">'
+      +'<input class="sinput" type="number" placeholder="'+ph+'" value="'+d.g2+'" oninput="upd('+i+',\'g2\',this.value)" min="0" step="0.5">'
       +'<input class="sinput" type="number" placeholder="Wdh" value="'+d.r2+'" oninput="upd('+i+',\'r2\',this.value)" min="0">'
       +'<div class="orm-inline" id="orm2_'+i+'">'+(d.g2&&d.r2?Math.round(parseFloat(d.g2)*(1+parseFloat(d.r2)/30))+' kg':'—')+'</div>'
       +'<div class="slbl">SATZ 3</div>'
-      +'<input class="sinput" type="number" placeholder="kg" value="'+d.g3+'" oninput="upd('+i+',\'g3\',this.value)" min="0" step="0.5">'
+      +'<input class="sinput" type="number" placeholder="'+ph+'" value="'+d.g3+'" oninput="upd('+i+',\'g3\',this.value)" min="0" step="0.5">'
       +'<input class="sinput" type="number" placeholder="Wdh" value="'+d.r3+'" oninput="upd('+i+',\'r3\',this.value)" min="0">'
       +'<div class="orm-inline" id="orm3_'+i+'">'+(d.g3&&d.r3?Math.round(parseFloat(d.g3)*(1+parseFloat(d.r3)/30))+' kg':'—')+'</div>'
       +'</div>'
-      // STATS — only 1RM Best + PR record
       +'<div class="stats-row">'
       +'<div class="sbox"><div class="skey">1RM Est.</div><div class="sval" id="orm'+i+'">'+(orm?orm+' kg':'—')+'</div></div>'
       +'<div class="sbox"><div class="skey">Bestleistung</div><div class="sval" style="color:var(--warn)">'+(rec?rec.orm+' kg':'—')+'</div></div>'
@@ -1498,7 +1515,11 @@ function toggleWarmup(i){
   body.classList.toggle('wu-open');
 }
 
-function getExName(idx){return store['exname_'+C+'_'+W+'_'+D+'_'+idx]||PLAN[C].weeks[W].days[D].exercises[idx];}
+function getExName(idx){
+  return store['exname_global_'+C+'_'+idx]
+    || store['exname_'+C+'_'+W+'_'+D+'_'+idx]
+    || PLAN[C].weeks[W].days[D].exercises[idx];
+}
 
 function upd(idx,field,val){
   const d=getD(C,W,D,idx);d[field]=val;persist();
@@ -1561,11 +1582,48 @@ function editExName(idx){
   el.style.borderBottom='1px solid var(--acc)';
   el.onblur=()=>{
     const newName=el.textContent.trim();
-    if(newName){store['exname_'+C+'_'+W+'_'+D+'_'+idx]=newName;persist();}
+    if(newName){store['exname_global_'+C+'_'+idx]=newName;persist();}
     el.contentEditable='false';el.style.borderBottom='1px dashed var(--bor)';
     el.onblur=null;el.onkeydown=null;
   };
   el.onkeydown=(e)=>{if(e.key==='Enter'){e.preventDefault();el.blur();}};
+}
+
+function editDayName(c,w,d){
+  const el=document.getElementById('daylabel');
+  if(!el)return;
+  el.contentEditable='true';el.focus();
+  const range=document.createRange();range.selectNodeContents(el);
+  const sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);
+  el.style.borderBottom='1px solid var(--acc)';
+  el.onblur=()=>{
+    const newName=el.textContent.trim();
+    if(newName){store['dayname_'+c+'_'+w+'_'+d]=newName;persist();}
+    el.contentEditable='false';el.style.borderBottom='none';
+    el.onblur=null;el.onkeydown=null;
+  };
+  el.onkeydown=(e)=>{if(e.key==='Enter'){e.preventDefault();el.blur();}};
+}
+
+function checkFatigueHint(){
+  let rpeSum=0,rpeCount=0,validWeeks=0;
+  let tempW=W-1,tempC=C;
+  while(validWeeks<2){
+    if(tempW<0){tempC--;if(tempC<0)break;tempW=PLAN[tempC].weeks.length-1;}
+    const week=PLAN[tempC].weeks[tempW];
+    if(!week.isDeload){
+      const day=week.days[D];
+      if(day){
+        day.exercises.forEach((_,i)=>{
+          const d=getD(tempC,tempW,D,i);
+          if(d.rpe){rpeSum+=parseFloat(d.rpe);rpeCount++;}
+        });
+      }
+      validWeeks++;
+    }
+    tempW--;
+  }
+  return rpeCount>0&&(rpeSum/rpeCount)>=9;
 }
 
 function toggleDone(idx){
