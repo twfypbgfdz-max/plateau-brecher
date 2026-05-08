@@ -1195,13 +1195,17 @@ function selfCheck(){
 
 async function syncAllFromSheet(){
   if(!API_URL)return;
+  // Snapshot von C/W/D beim Aufruf — nicht beim async Callback
+  const snapC=C,snapW=W,snapD=D;
   try{
     showStatus('ok','↻ Lade Sheet-Daten…');
-    const sheetName='ZYKLUS '+(C+1);
-    const day=PLAN[C].weeks[W].days[D];
+    const sheetName='ZYKLUS '+(snapC+1);
+    const day=PLAN[snapC].weeks[snapW].days[snapD];
     const resp=await fetch(API_URL+'?action=getPlan&sheet='+encodeURIComponent(sheetName)+'&date='+encodeURIComponent(day.date),{method:'GET'});
     if(!resp.ok){showStatus('err','⚠ Sheet-Fehler '+resp.status);return;}
-    const data=await resp.json();
+    let data;
+    try{const text=await resp.text();if(!text||!text.trim()){showStatus('ok','✓ Keine neuen Daten');return;}data=JSON.parse(text);}
+    catch(pe){showStatus('ok','✓ Sheet nicht erreichbar');return;}
     if(!Array.isArray(data)||data.length===0){showStatus('ok','✓ Keine neuen Daten');return;}
     const normalize=s=>String(s).toLowerCase().replace(/[^a-z0-9äöüß]/g,'');
     let changed=false,lastDate='';
@@ -1215,11 +1219,11 @@ async function syncAllFromSheet(){
       const normRow=normalize(rowEx);
       const exIdx=day.exercises.findIndex((ex,ei)=>{
         if(matched.has(ei))return false;
-        return normalize(ex)===normRow;
+        return normalize(ex)===normRow||normalize(getExName(ei))===normRow;
       });
       if(exIdx<0)return;
       matched.add(exIdx);
-      const d=getD(C,W,D,exIdx);
+      const d=getD(snapC,snapW,snapD,exIdx);
       const fields={g1:row[6],r1:row[7],g2:row[8],r2:row[9],g3:row[10],r3:row[11],rpe:row[14],notes:row[18]};
       Object.entries(fields).forEach(([k,v])=>{
         const val=sanitize(String(v||'').trim());
@@ -1227,7 +1231,9 @@ async function syncAllFromSheet(){
       });
     });
     if(changed){
-      persist();renderWorkout();
+      persist();
+      // Nur neu rendern wenn C/W/D noch gleich wie beim Fetch-Start
+      if(C===snapC&&W===snapW&&D===snapD){renderWorkout();}
       showStatus('ok','✓ Sheet-Daten übernommen ('+matched.size+' Übungen)');
       addToErrorLog('SYNC_OK',''+matched.size+' Übungen geladen ('+day.date+')');
     }else{
@@ -1666,7 +1672,9 @@ function toggleDone(idx){
 }
 
 function getExName(idx){
-  return store['exname_global_'+C+'_'+idx]
+  const tag=PLAN[C].weeks[W].days[D].tag.replace(/[^a-zA-Z0-9]/g,'_');
+  return store['exname_global_'+C+'_'+tag+'_'+idx]
+    || store['exname_global_'+C+'_'+idx]  // Rückwärtskompatibilität alter Keys
     || store['exname_'+C+'_'+W+'_'+D+'_'+idx]
     || PLAN[C].weeks[W].days[D].exercises[idx];
 }
@@ -1747,7 +1755,8 @@ function editExName(idx){
         }
       }
       // Aktuellen Slot speichern
-      store['exname_global_'+C+'_'+idx]=newName;persist();
+      const tag=PLAN[C].weeks[W].days[D].tag.replace(/[^a-zA-Z0-9]/g,'_');
+      store['exname_global_'+C+'_'+tag+'_'+idx]=newName;persist();
       if(otherSlots.length>0){
         // Dialog — Sheet-Rename passiert in applyRenameGlobal
         showRenameDialog(oldName,newName,otherSlots);
@@ -1775,20 +1784,42 @@ function showRenameDialog(oldName,newName,slots){
   const dlg=document.createElement('div');
   dlg.id='renameDialog';
   dlg.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:999;background:var(--sur2);border:1px solid var(--acc);border-radius:var(--r);padding:14px 16px;width:calc(100% - 32px);max-width:420px;box-shadow:0 8px 32px rgba(0,0,0,.6);';
+  // Daten sicher als dataset speichern statt inline onclick
+  dlg.dataset.old=oldName;
+  dlg.dataset.new=newName;
+  dlg.dataset.slots=JSON.stringify(slots);
   dlg.innerHTML='<div style="font-family:\'Space Mono\',monospace;font-size:9px;color:var(--mu);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Umbenennen</div>'
     +'<div style="font-family:\'Inter\',sans-serif;font-size:13px;margin-bottom:12px;"><b style="color:var(--acc);">'+oldName+'</b> → <b>'+newName+'</b><br><span style="font-size:11px;color:var(--tx2);">'+slots.length+' weitere Einheit(en) haben diese Übung.</span></div>'
     +'<div style="display:flex;gap:8px;">'
-    +'<button onclick="applyRenameGlobal(\''+oldName.replace(/'/g,"\\'")+ '\',\''+newName.replace(/'/g,"\\'")+'\','+JSON.stringify(slots)+');document.getElementById(\'renameDialog\').remove();" style="flex:1;background:var(--acc);color:#000;border:none;font-family:\'Bebas Neue\',sans-serif;font-size:13px;letter-spacing:1px;padding:9px;border-radius:var(--r);cursor:pointer;">Überall ersetzen</button>'
+    +'<button id="renameConfirmBtn" style="flex:1;background:var(--acc);color:#000;border:none;font-family:\'Bebas Neue\',sans-serif;font-size:13px;letter-spacing:1px;padding:9px;border-radius:var(--r);cursor:pointer;">Überall ersetzen</button>'
     +'<button onclick="document.getElementById(\'renameDialog\').remove();" style="flex:1;background:var(--sur3);color:var(--tx2);border:1px solid var(--bor);font-family:\'Bebas Neue\',sans-serif;font-size:13px;letter-spacing:1px;padding:9px;border-radius:var(--r);cursor:pointer;">Nur hier</button>'
     +'</div>';
   document.body.appendChild(dlg);
-  // Auto-close nach 8s
+  document.getElementById('renameConfirmBtn').addEventListener('click',()=>{
+    const d=document.getElementById('renameDialog');
+    if(!d)return;
+    const o=d.dataset.old,n=d.dataset.new,s=JSON.parse(d.dataset.slots||'[]');
+    d.remove();
+    applyRenameGlobal(o,n,s);
+  });
   setTimeout(()=>{if(document.getElementById('renameDialog'))dlg.remove();},8000);
 }
 
 function applyRenameGlobal(oldName,newName,slots){
-  // 1. Lokal speichern — alle Slots inkl. aktueller
-  slots.forEach(({c,i})=>{store['exname_global_'+c+'_'+i]=newName;});
+  // 1. Lokal speichern — alle Slots mit tag-spezifischem Key
+  slots.forEach(({c,i})=>{
+    // Alle Tage aller Wochen dieses Zyklus durchsuchen die diese Übung haben
+    for(let w=0;w<PLAN[c].weeks.length;w++){
+      for(let d=0;d<PLAN[c].weeks[w].days.length;d++){
+        const ex=PLAN[c].weeks[w].days[d].exercises[i];
+        const cur=store['exname_global_'+c+'_'+PLAN[c].weeks[w].days[d].tag.replace(/[^a-zA-Z0-9]/g,'_')+'_'+i]||ex||'';
+        if(cur===oldName||ex===oldName){
+          const tag=PLAN[c].weeks[w].days[d].tag.replace(/[^a-zA-Z0-9]/g,'_');
+          store['exname_global_'+c+'_'+tag+'_'+i]=newName;
+        }
+      }
+    }
+  });
   persist();
   renderWorkout();
 
@@ -1902,7 +1933,8 @@ function closeSwap(){
 
 function confirmSwap(name){
   if(_swapIdx===null)return;
-  store['exname_global_'+C+'_'+_swapIdx]=name;
+  const tag=PLAN[C].weeks[W].days[D].tag.replace(/[^a-zA-Z0-9]/g,'_');
+  store['exname_global_'+C+'_'+tag+'_'+_swapIdx]=name;
   persist();
   closeSwap();
   renderWorkout();
