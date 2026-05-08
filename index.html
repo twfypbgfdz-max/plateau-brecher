@@ -1778,14 +1778,28 @@ function showRenameDialog(oldName,newName,slots){
 }
 
 function applyRenameGlobal(oldName,newName,slots){
-  slots.forEach(({c,i})=>{
-    const cur=store['exname_global_'+c+'_'+i]||'';
-    if(cur===oldName||(!cur&&PLAN[c])){
-      store['exname_global_'+c+'_'+i]=newName;
-    }
-  });
+  // 1. Lokal speichern
+  slots.forEach(({c,i})=>{store['exname_global_'+c+'_'+i]=newName;});
   persist();
   renderWorkout();
+
+  // 2. Alle betroffenen Zyklus-Sheets ermitteln
+  if(!API_URL){addToErrorLog('INFO','Rename lokal gespeichert (kein API)');return;}
+  const sheetSet=new Set(slots.map(({c})=>'ZYKLUS '+(c+1)));
+  sheetSet.add('ZYKLUS '+(C+1)); // immer aktuellen Zyklus mitschicken
+  const sheets=[...sheetSet];
+
+  const payload=JSON.stringify({type:'rename',oldName,newName,sheets});
+  showStatus('loading','⏳ Name im Sheet wird aktualisiert…');
+  fetch(API_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:payload})
+    .then(()=>{
+      showStatus('ok','✓ Übung überall umbenannt: '+newName);
+      addToErrorLog('INFO','Rename: '+oldName+' → '+newName+' ('+sheets.join(', ')+')');
+    })
+    .catch(e=>{
+      showStatus('err','⚠ Sheet-Rename fehlgeschlagen');
+      logToSystem(e,'RENAME_SYNC_ERROR');
+    });
 }
 
 function editDayName(c,w,d){
