@@ -1765,10 +1765,12 @@ function editExName(idx){
       const sheetSet=new Set(["ZYKLUS "+(C+1)]);
       otherSlots.forEach(({c})=>sheetSet.add("ZYKLUS "+(c+1)));
       if(otherSlots.length>0){
-        showRenameDialog(oldName,newName,otherSlots,[...sheetSet]);
+        const originalName=PLAN[C].weeks[W].days[D].exercises[idx];
+        showRenameDialog(oldName,newName,otherSlots,[...sheetSet],originalName);
       } else {
         if(API_URL){
-          const payload=JSON.stringify({type:"rename",oldName,newName,sheets:[...sheetSet]});
+          const originalName=PLAN[C].weeks[W].days[D].exercises[idx];
+          const payload=JSON.stringify({type:"rename",oldName,newName,originalName,sheets:[...sheetSet]});
           showStatus("loading","⏳ Name im Sheet wird aktualisiert…");
           fetch(API_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:payload})
             .then(()=>{showStatus("ok","✓ Übungsname aktualisiert");addToErrorLog("RENAME",""+oldName+" → "+newName);})
@@ -1783,7 +1785,7 @@ function editExName(idx){
   el.onkeydown=(e)=>{if(e.key==='Enter'){e.preventDefault();el.blur();}};
 }
 
-function showRenameDialog(oldName,newName,slots,sheets){
+function showRenameDialog(oldName,newName,slots,sheets,originalName){
   const existing=document.getElementById('renameDialog');
   if(existing)existing.remove();
   const dlg=document.createElement('div');
@@ -1791,6 +1793,7 @@ function showRenameDialog(oldName,newName,slots,sheets){
   dlg.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:999;background:var(--sur2);border:1px solid var(--acc);border-radius:var(--r);padding:14px 16px;width:calc(100% - 32px);max-width:420px;box-shadow:0 8px 32px rgba(0,0,0,.6);';
   dlg.dataset.old=oldName;
   dlg.dataset.new=newName;
+  dlg.dataset.orig=originalName||oldName;
   dlg.dataset.slots=JSON.stringify(slots);
   dlg.dataset.sheets=JSON.stringify(sheets||['ZYKLUS '+(C+1)]);
   dlg.innerHTML='<div style="font-family:\'Space Mono\',monospace;font-size:9px;color:var(--mu);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Umbenennen</div>'
@@ -1803,16 +1806,16 @@ function showRenameDialog(oldName,newName,slots,sheets){
   document.getElementById('renameConfirmBtn').addEventListener('click',()=>{
     const d=document.getElementById('renameDialog');
     if(!d)return;
-    const o=d.dataset.old,n=d.dataset.new;
+    const o=d.dataset.old,n=d.dataset.new,orig=d.dataset.orig||o;
     const s=JSON.parse(d.dataset.slots||'[]');
     const sh=JSON.parse(d.dataset.sheets||'[]');
     d.remove();
-    applyRenameGlobal(o,n,s,sh);
+    applyRenameGlobal(o,n,s,sh,orig);
   });
   setTimeout(()=>{if(document.getElementById('renameDialog'))dlg.remove();},8000);
 }
 
-function applyRenameGlobal(oldName,newName,slots,sheets){
+function applyRenameGlobal(oldName,newName,slots,sheets,originalName){
   // 1. Lokal speichern — alle Slots mit tag-spezifischem Key
   slots.forEach(({c,w,d,i})=>{
     if(w!==undefined&&d!==undefined){
@@ -1822,7 +1825,6 @@ function applyRenameGlobal(oldName,newName,slots,sheets){
         store['exname_global_'+c+'_'+tag+'_'+i]=newName;
       }
     } else {
-      // Fallback: alle Tage durchsuchen
       for(let ww=0;ww<PLAN[c].weeks.length;ww++){
         for(let dd=0;dd<PLAN[c].weeks[ww].days.length;dd++){
           const ex=PLAN[c].weeks[ww].days[dd].exercises[i];
@@ -1836,10 +1838,11 @@ function applyRenameGlobal(oldName,newName,slots,sheets){
   persist();
   renderWorkout();
 
-  // 2. Sheet updaten
+  // 2. Sheet updaten — mit originalName als Fallback
   if(!API_URL){addToErrorLog('INFO','Rename lokal gespeichert (kein API)');return;}
   const finalSheets=sheets&&sheets.length?sheets:['ZYKLUS '+(C+1)];
-  const payload=JSON.stringify({type:'rename',oldName,newName,sheets:finalSheets});
+  const orig=originalName||oldName;
+  const payload=JSON.stringify({type:'rename',oldName,newName,originalName:orig,sheets:finalSheets});
   showStatus('loading','⏳ Name im Sheet wird aktualisiert…');
   fetch(API_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:payload})
     .then(()=>{
