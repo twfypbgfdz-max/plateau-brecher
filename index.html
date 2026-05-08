@@ -148,6 +148,9 @@ main{padding:16px;max-width:860px;}
 .excard.done{border-color:rgba(0,230,118,.2);}
 .excard.stagnation-card{border-color:#ff4444;box-shadow:0 0 8px rgba(255,68,68,.3);}
 .excard.stagnation-card .exname::after{content:' ⚠';color:#ff4444;font-size:11px;}
+.load-suggest{font-family:'Space Mono',monospace;font-size:9px;color:var(--acc3);background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.2);border-radius:var(--r);padding:6px 10px;margin-bottom:8px;}
+.load-suggest b{color:var(--acc3);}
+.load-hint{color:var(--mu);font-size:8px;}
 .hist-btn{background:none;border:none;color:var(--mu);font-size:12px;cursor:pointer;padding:0 4px;margin-left:4px;vertical-align:middle;opacity:.7;}
 .hist-btn:hover{opacity:1;}
 #histOverlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center;}
@@ -1594,6 +1597,20 @@ function renderWorkout(){
     let ph='kg';
     if(week.isDeload&&prevG){ph=(Math.round(prevG*0.6*2)/2)+' kg';}
 
+    // Load Suggestion — nur wenn Vorwoche-Daten vorhanden und noch kein Gewicht eingetragen
+    let loadSuggest='';
+    if(!week.isDeload&&prevG&&prevOrm&&!d.g1){
+      const prevData=W>0?getD(C,W-1,D,i):getD(C-1,PLAN[C-1].weeks.length-2,D,i);
+      const prevRpe=parseFloat(prevData.rpe)||0;
+      // Zielgewicht für 8 Wdh aus 1RM (Epley umgekehrt): g = 1RM / (1 + 8/30)
+      let suggestG=Math.round(prevOrm/(1+8/30)*2)/2;
+      let hint='';
+      if(prevRpe>0&&prevRpe<7){suggestG=Math.round((suggestG+2.5)*2)/2;hint='RPE '+prevRpe+' → +2.5 kg';}
+      else if(prevRpe>=9){hint='RPE '+prevRpe+' → gleiches Gewicht';}
+      else if(prevRpe>0){hint='RPE '+prevRpe;}
+      loadSuggest='<div class="load-suggest">💡 Vorschlag: <b>'+suggestG+' kg</b>'+(hint?' <span class="load-hint">'+hint+'</span>':'')+'</div>';
+    }
+
     const wu=d.g1?parseFloat(d.g1):null;
     const isStag=checkStagnation(i);
 
@@ -1618,6 +1635,7 @@ function renderWorkout(){
       +'<div class="wu-sets">'
       +(wu?'<span class="wu-set">40% → '+Math.round(wu*0.4*2)/2+' kg</span><span class="wu-set">60% → '+Math.round(wu*0.6*2)/2+' kg</span><span class="wu-set">80% → '+Math.round(wu*0.8*2)/2+' kg</span>':'')
       +'</div></div>'
+      +loadSuggest
       +'<div class="sets-grid">'
       +'<div class="slbl">SATZ 1</div>'
       +'<input class="sinput" type="number" placeholder="'+ph+'" value="'+d.g1+'" oninput="upd('+i+',\'g1\',this.value)" min="0" step="0.5">'
