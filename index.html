@@ -1746,11 +1746,20 @@ function editExName(idx){
           }
         }
       }
-      // Aktuellen Slot immer speichern
+      // Aktuellen Slot speichern
       store['exname_global_'+C+'_'+idx]=newName;persist();
       if(otherSlots.length>0){
-        // Dialog anzeigen
+        // Dialog — Sheet-Rename passiert in applyRenameGlobal
         showRenameDialog(oldName,newName,otherSlots);
+      } else {
+        // Kein Dialog — Sheet direkt updaten
+        if(API_URL){
+          const payload=JSON.stringify({type:'rename',oldName,newName,sheets:['ZYKLUS '+(C+1)]});
+          showStatus('loading','⏳ Name im Sheet wird aktualisiert…');
+          fetch(API_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:payload})
+            .then(()=>{showStatus('ok','✓ Übungsname aktualisiert');addToErrorLog('RENAME',''+oldName+' → '+newName);})
+            .catch(e=>logToSystem(e,'RENAME_SYNC_ERROR'));
+        }
       }
     }
     el.contentEditable='false';el.style.borderBottom='1px dashed var(--bor)';
@@ -1778,7 +1787,7 @@ function showRenameDialog(oldName,newName,slots){
 }
 
 function applyRenameGlobal(oldName,newName,slots){
-  // 1. Lokal speichern
+  // 1. Lokal speichern — alle Slots inkl. aktueller
   slots.forEach(({c,i})=>{store['exname_global_'+c+'_'+i]=newName;});
   persist();
   renderWorkout();
@@ -1786,7 +1795,7 @@ function applyRenameGlobal(oldName,newName,slots){
   // 2. Alle betroffenen Zyklus-Sheets ermitteln
   if(!API_URL){addToErrorLog('INFO','Rename lokal gespeichert (kein API)');return;}
   const sheetSet=new Set(slots.map(({c})=>'ZYKLUS '+(c+1)));
-  sheetSet.add('ZYKLUS '+(C+1)); // immer aktuellen Zyklus mitschicken
+  sheetSet.add('ZYKLUS '+(C+1));
   const sheets=[...sheetSet];
 
   const payload=JSON.stringify({type:'rename',oldName,newName,sheets});
@@ -1794,7 +1803,7 @@ function applyRenameGlobal(oldName,newName,slots){
   fetch(API_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:payload})
     .then(()=>{
       showStatus('ok','✓ Übung überall umbenannt: '+newName);
-      addToErrorLog('INFO','Rename: '+oldName+' → '+newName+' ('+sheets.join(', ')+')');
+      addToErrorLog('RENAME',''+oldName+' → '+newName+' ('+sheets.join(', ')+')');
     })
     .catch(e=>{
       showStatus('err','⚠ Sheet-Rename fehlgeschlagen');
