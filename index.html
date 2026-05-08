@@ -1602,13 +1602,18 @@ function renderWorkout(){
     if(!week.isDeload&&prevG&&prevOrm&&!d.g1){
       const prevData=W>0?getD(C,W-1,D,i):getD(C-1,PLAN[C-1].weeks.length-2,D,i);
       const prevRpe=parseFloat(prevData.rpe)||0;
-      // Zielgewicht für 8 Wdh aus 1RM (Epley umgekehrt): g = 1RM / (1 + 8/30)
-      let suggestG=Math.round(prevOrm/(1+8/30)*2)/2;
+      // Basis: letztes eingetragenes Gewicht (S1), nicht 1RM — robuster gegen Datenfehler
+      let suggestG=prevG;
       let hint='';
-      if(prevRpe>0&&prevRpe<7){suggestG=Math.round((suggestG+2.5)*2)/2;hint='RPE '+prevRpe+' → +2.5 kg';}
-      else if(prevRpe>=9){hint='RPE '+prevRpe+' → gleiches Gewicht';}
+      if(prevRpe>0&&prevRpe<7){suggestG=Math.round((prevG+2.5)*2)/2;hint='RPE '+prevRpe+' → +2.5 kg';}
+      else if(prevRpe>=9){suggestG=prevG;hint='RPE '+prevRpe+' → gleiches Gewicht';}
       else if(prevRpe>0){hint='RPE '+prevRpe;}
-      loadSuggest='<div class="load-suggest">💡 Vorschlag: <b>'+suggestG+' kg</b>'+(hint?' <span class="load-hint">'+hint+'</span>':'')+'</div>';
+      // Sanity-Check: Vorschlag darf max 20% über letztem Gewicht liegen
+      if(suggestG>prevG*1.2) suggestG=prevG;
+      // Nur anzeigen wenn Wert plausibel (> 0, < 500 kg)
+      if(suggestG>0&&suggestG<500){
+        loadSuggest='<div class="load-suggest">💡 Vorschlag: <b>'+suggestG+' kg</b>'+(hint?' <span class="load-hint">'+hint+'</span>':'')+'</div>';
+      }
     }
 
     const wu=d.g1?parseFloat(d.g1):null;
