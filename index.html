@@ -550,6 +550,7 @@ main{padding:16px;max-width:860px;}
   <div>
     <div class="logo">PB<span style="color:var(--mu);font-size:.55em;vertical-align:middle"> V9.2</span></div>
     <span class="hbadge" id="todayBadge">Lädt…</span>
+    <div style="font-family:'Space Mono',monospace;font-size:7px;color:var(--mu);margin-top:1px;">Build: <span id="buildDateTxt"></span></div>
   </div>
   <div class="header-right">
     <span style="font-family:'Space Mono',monospace;font-size:9px;color:var(--mu);" id="hdate"></span>
@@ -736,7 +737,7 @@ main{padding:16px;max-width:860px;}
     <span id="saveBtnTxt">In Google Sheet speichern</span>
     <span id="saveSpin" style="display:none;"><div class="spinner"></div></span>
   </button>
-  <div class="api-status" id="apiStatus"><div class="api-dot" id="apiDot"></div><span id="apiStatusTxt">API nicht verbunden — gehe zu Setup</span></div>
+  <div class="api-status" id="apiStatus"><div class="api-dot" id="apiDot"></div><span id="apiStatusTxt">API nicht verbunden — gehe zu Setup</span><span id="lastSyncTxt" style="margin-left:8px;font-size:8px;color:var(--mu);"></span></div>
 </div>
 
 <!-- SWAP MODAL -->
@@ -897,6 +898,7 @@ const PLAN = [
 // ============================================================
 const SK='pb_v9_2';
 const APP_VERSION='V9.2';
+const BUILD_DATE='09.05.2026';
 const errorLog=[];
 let store={};
 try{store=JSON.parse(localStorage.getItem(SK)||'{}');}catch(e){}
@@ -1074,6 +1076,8 @@ function init(){
   if(!store._consent){document.getElementById('consentOverlay').style.display='flex';}
   updateApiStatus();
   document.getElementById('scriptCodeBox').textContent=SCRIPT_CODE;
+  const bdt=document.getElementById('buildDateTxt');if(bdt)bdt.textContent=BUILD_DATE;
+  if(store._lastSync){const el=document.getElementById('lastSyncTxt');if(el)el.textContent='Sync: '+store._lastSync;}
   renderCycleRow();renderWeekRow();renderDayRow();renderWorkout();
   selfCheck();
   // Auto-Sync beim Start: Sheet-Daten laden
@@ -1236,6 +1240,7 @@ async function syncAllFromSheet(){
       if(C===snapC&&W===snapW&&D===snapD){renderWorkout();}
       showStatus('ok','✓ Sheet-Daten übernommen ('+matched.size+' Übungen)');
       addToErrorLog('SYNC_OK',''+matched.size+' Übungen geladen ('+day.date+')');
+      updateLastSync();
     }else{
       showStatus('ok','✓ Alles aktuell');
       addToErrorLog('INFO','Sync: Alles aktuell ('+day.date+')');
@@ -1742,32 +1747,32 @@ function editExName(idx){
   el.onblur=()=>{
     const newName=el.textContent.trim();
     if(newName&&newName!==oldName){
-      // Zähle wie viele andere Slots denselben Namen haben
+      // Andere Slots suchen — tag-spezifischer Key
       let otherSlots=[];
       for(let c=0;c<PLAN.length;c++){
         for(let w=0;w<PLAN[c].weeks.length;w++){
           for(let d=0;d<PLAN[c].weeks[w].days.length;d++){
-            PLAN[c].weeks[w].days[d].exercises.forEach((_,i)=>{
-              const n=store['exname_global_'+c+'_'+i]||PLAN[c].weeks[w].days[d].exercises[i];
-              if(n===oldName&&!(c===C&&i===idx)) otherSlots.push({c,i});
+            const t=PLAN[c].weeks[w].days[d].tag.replace(/[^a-zA-Z0-9]/g,"_");
+            PLAN[c].weeks[w].days[d].exercises.forEach((ex,i)=>{
+              const n=store["exname_global_"+c+"_"+t+"_"+i]||store["exname_global_"+c+"_"+i]||ex;
+              if(n===oldName&&!(c===C&&d===D&&i===idx)) otherSlots.push({c,w,d,i});
             });
           }
         }
       }
-      // Aktuellen Slot speichern
-      const tag=PLAN[C].weeks[W].days[D].tag.replace(/[^a-zA-Z0-9]/g,'_');
-      store['exname_global_'+C+'_'+tag+'_'+idx]=newName;persist();
+      const tag=PLAN[C].weeks[W].days[D].tag.replace(/[^a-zA-Z0-9]/g,"_");
+      store["exname_global_"+C+"_"+tag+"_"+idx]=newName;persist();
+      const sheetSet=new Set(["ZYKLUS "+(C+1)]);
+      otherSlots.forEach(({c})=>sheetSet.add("ZYKLUS "+(c+1)));
       if(otherSlots.length>0){
-        // Dialog — Sheet-Rename passiert in applyRenameGlobal
-        showRenameDialog(oldName,newName,otherSlots);
+        showRenameDialog(oldName,newName,otherSlots,[...sheetSet]);
       } else {
-        // Kein Dialog — Sheet direkt updaten
         if(API_URL){
-          const payload=JSON.stringify({type:'rename',oldName,newName,sheets:['ZYKLUS '+(C+1)]});
-          showStatus('loading','⏳ Name im Sheet wird aktualisiert…');
-          fetch(API_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:payload})
-            .then(()=>{showStatus('ok','✓ Übungsname aktualisiert');addToErrorLog('RENAME',''+oldName+' → '+newName);})
-            .catch(e=>logToSystem(e,'RENAME_SYNC_ERROR'));
+          const payload=JSON.stringify({type:"rename",oldName,newName,sheets:[...sheetSet]});
+          showStatus("loading","⏳ Name im Sheet wird aktualisiert…");
+          fetch(API_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:payload})
+            .then(()=>{showStatus("ok","✓ Übungsname aktualisiert");addToErrorLog("RENAME",""+oldName+" → "+newName);})
+            .catch(e=>logToSystem(e,"RENAME_SYNC_ERROR"));
         }
       }
     }
@@ -1778,16 +1783,16 @@ function editExName(idx){
   el.onkeydown=(e)=>{if(e.key==='Enter'){e.preventDefault();el.blur();}};
 }
 
-function showRenameDialog(oldName,newName,slots){
+function showRenameDialog(oldName,newName,slots,sheets){
   const existing=document.getElementById('renameDialog');
   if(existing)existing.remove();
   const dlg=document.createElement('div');
   dlg.id='renameDialog';
   dlg.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:999;background:var(--sur2);border:1px solid var(--acc);border-radius:var(--r);padding:14px 16px;width:calc(100% - 32px);max-width:420px;box-shadow:0 8px 32px rgba(0,0,0,.6);';
-  // Daten sicher als dataset speichern statt inline onclick
   dlg.dataset.old=oldName;
   dlg.dataset.new=newName;
   dlg.dataset.slots=JSON.stringify(slots);
+  dlg.dataset.sheets=JSON.stringify(sheets||['ZYKLUS '+(C+1)]);
   dlg.innerHTML='<div style="font-family:\'Space Mono\',monospace;font-size:9px;color:var(--mu);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Umbenennen</div>'
     +'<div style="font-family:\'Inter\',sans-serif;font-size:13px;margin-bottom:12px;"><b style="color:var(--acc);">'+oldName+'</b> → <b>'+newName+'</b><br><span style="font-size:11px;color:var(--tx2);">'+slots.length+' weitere Einheit(en) haben diese Übung.</span></div>'
     +'<div style="display:flex;gap:8px;">'
@@ -1798,24 +1803,32 @@ function showRenameDialog(oldName,newName,slots){
   document.getElementById('renameConfirmBtn').addEventListener('click',()=>{
     const d=document.getElementById('renameDialog');
     if(!d)return;
-    const o=d.dataset.old,n=d.dataset.new,s=JSON.parse(d.dataset.slots||'[]');
+    const o=d.dataset.old,n=d.dataset.new;
+    const s=JSON.parse(d.dataset.slots||'[]');
+    const sh=JSON.parse(d.dataset.sheets||'[]');
     d.remove();
-    applyRenameGlobal(o,n,s);
+    applyRenameGlobal(o,n,s,sh);
   });
   setTimeout(()=>{if(document.getElementById('renameDialog'))dlg.remove();},8000);
 }
 
-function applyRenameGlobal(oldName,newName,slots){
+function applyRenameGlobal(oldName,newName,slots,sheets){
   // 1. Lokal speichern — alle Slots mit tag-spezifischem Key
-  slots.forEach(({c,i})=>{
-    // Alle Tage aller Wochen dieses Zyklus durchsuchen die diese Übung haben
-    for(let w=0;w<PLAN[c].weeks.length;w++){
-      for(let d=0;d<PLAN[c].weeks[w].days.length;d++){
-        const ex=PLAN[c].weeks[w].days[d].exercises[i];
-        const cur=store['exname_global_'+c+'_'+PLAN[c].weeks[w].days[d].tag.replace(/[^a-zA-Z0-9]/g,'_')+'_'+i]||ex||'';
-        if(cur===oldName||ex===oldName){
-          const tag=PLAN[c].weeks[w].days[d].tag.replace(/[^a-zA-Z0-9]/g,'_');
-          store['exname_global_'+c+'_'+tag+'_'+i]=newName;
+  slots.forEach(({c,w,d,i})=>{
+    if(w!==undefined&&d!==undefined){
+      const tag=PLAN[c].weeks[w].days[d].tag.replace(/[^a-zA-Z0-9]/g,'_');
+      const cur=store['exname_global_'+c+'_'+tag+'_'+i]||store['exname_global_'+c+'_'+i]||PLAN[c].weeks[w].days[d].exercises[i]||'';
+      if(cur===oldName||PLAN[c].weeks[w].days[d].exercises[i]===oldName){
+        store['exname_global_'+c+'_'+tag+'_'+i]=newName;
+      }
+    } else {
+      // Fallback: alle Tage durchsuchen
+      for(let ww=0;ww<PLAN[c].weeks.length;ww++){
+        for(let dd=0;dd<PLAN[c].weeks[ww].days.length;dd++){
+          const ex=PLAN[c].weeks[ww].days[dd].exercises[i];
+          const tag=PLAN[c].weeks[ww].days[dd].tag.replace(/[^a-zA-Z0-9]/g,'_');
+          const cur=store['exname_global_'+c+'_'+tag+'_'+i]||store['exname_global_'+c+'_'+i]||ex||'';
+          if(cur===oldName||ex===oldName) store['exname_global_'+c+'_'+tag+'_'+i]=newName;
         }
       }
     }
@@ -1823,13 +1836,10 @@ function applyRenameGlobal(oldName,newName,slots){
   persist();
   renderWorkout();
 
-  // 2. Alle betroffenen Zyklus-Sheets ermitteln
+  // 2. Sheet updaten
   if(!API_URL){addToErrorLog('INFO','Rename lokal gespeichert (kein API)');return;}
-  const sheetSet=new Set(slots.map(({c})=>'ZYKLUS '+(c+1)));
-  sheetSet.add('ZYKLUS '+(C+1));
-  const sheets=[...sheetSet];
-
-  const payload=JSON.stringify({type:'rename',oldName,newName,sheets});
+  const finalSheets=sheets&&sheets.length?sheets:['ZYKLUS '+(C+1)];
+  const payload=JSON.stringify({type:'rename',oldName,newName,sheets:finalSheets});
   showStatus('loading','⏳ Name im Sheet wird aktualisiert…');
   fetch(API_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:payload})
     .then(()=>{
@@ -2374,6 +2384,7 @@ async function saveToSheet(){
     });
     showStatus('ok','✓ '+toSend.length+' Übung(en) gesendet! ('+day.date+')');
     addToErrorLog('SYNC_OK','Bulk: '+toSend.length+' Übungen ('+day.date+')');
+    updateLastSync();
   }catch(e){
     bufferOffline(payload);
     showStatus('err','⚠ Offline — lokal gespeichert');
@@ -2388,6 +2399,13 @@ function setBtnLoading(on){
   document.getElementById('saveSpin').style.display=on?'inline-block':'none';
   const dot=document.getElementById('apiDot');
   if(dot){dot.className='api-dot '+(on?'syncing':API_URL?'connected':'error');}
+}
+function updateLastSync(){
+  const now=new Date();
+  const ts=now.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})+' '+now.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+  store._lastSync=ts;persist();
+  const el=document.getElementById('lastSyncTxt');
+  if(el)el.textContent='Sync: '+ts;
 }
 function showStatus(t,m){const e=document.getElementById('status');e.className='status vis '+t;e.textContent=m;}
 function showSetupStatus(t,m){const e=document.getElementById('setupStatus');e.className='status vis '+t;e.textContent=m;e.style.display='block';}
