@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="theme-color" content="#080808">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="PB V10.9">
@@ -1195,6 +1198,39 @@ function init(){
   selfCheck();
   // Auto-Sync beim Start: Sheet-Daten laden
   if(API_URL) syncAllFromSheet();
+  // Version-Check: neue Version auf GitHub?
+  setTimeout(checkForUpdate, 3000);
+}
+
+// ============================================================
+// VERSION CHECK — prüft ob neue Version auf GitHub verfügbar
+// ============================================================
+async function checkForUpdate(){
+  try{
+    // Eigene URL fetchen mit Cache-Bypass
+    const url=location.href.split('?')[0]+'?v='+Date.now();
+    const resp=await fetch(url,{cache:'no-store',headers:{'Accept':'text/html'}});
+    if(!resp.ok)return;
+    const text=await resp.text();
+    // APP_VERSION aus geladener Datei extrahieren
+    const match=text.match(/const APP_VERSION='([^']+)'/);
+    if(!match)return;
+    const remoteVersion=match[1];
+    if(remoteVersion!==APP_VERSION){
+      showUpdateBanner(remoteVersion);
+    }
+  }catch(e){/* kein Netz oder anderer Fehler — still ignorieren */}
+}
+
+function showUpdateBanner(newVersion){
+  const existing=document.getElementById('updateBanner');
+  if(existing)return;
+  const banner=document.createElement('div');
+  banner.id='updateBanner';
+  banner.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9998;background:var(--acc);color:#000;font-family:\'Space Mono\',monospace;font-size:11px;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,.4);';
+  banner.innerHTML='<span>🔄 Update verfügbar: <b>'+newVersion+'</b></span>'
+    +'<button onclick="location.reload(true)" style="background:#000;color:var(--acc);border:none;font-family:\'Bebas Neue\',sans-serif;font-size:13px;letter-spacing:1px;padding:5px 12px;border-radius:4px;cursor:pointer;">Jetzt laden</button>';
+  document.body.prepend(banner);
 }
 
 // ============================================================
