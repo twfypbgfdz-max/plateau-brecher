@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="PB V11.0">
-<title>Plateau-Brecher V10.9</title>
+<title>Plateau-Brecher V11.0</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -451,6 +451,24 @@ main{padding:16px;max-width:860px;}
 .pr-list{margin:10px 0;}
 .pr-item{background:rgba(200,255,0,.04);border:1px solid rgba(200,255,0,.15);padding:6px 10px;margin-bottom:4px;font-family:'DM Mono',monospace;font-size:9px;display:flex;align-items:center;gap:8px;border-radius:4px;}
 [data-theme="light"] .pr-item{background:rgba(0,0,0,.03);border-color:rgba(0,0,0,.12);}
+/* PR FILTER */
+.pr-filter-row{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.pr-filter-chip{
+  font-family:'DM Mono',monospace;font-size:8px;letter-spacing:1px;text-transform:uppercase;
+  padding:5px 10px;border-radius:var(--r);border:1px solid var(--bor);
+  background:var(--sur2);color:var(--mu);cursor:pointer;transition:all .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.pr-filter-chip.active{background:var(--acc);border-color:var(--acc);color:#000;font-weight:700;}
+[data-theme="light"] .pr-filter-chip.active{background:#111;border-color:#111;color:#fff;}
+.pr-filter-chip:active{opacity:.7;}
+/* PR Sparkline toggle */
+.pr-spark-toggle{background:none;border:none;color:var(--mu);font-size:10px;cursor:pointer;padding:0;flex-shrink:0;opacity:.7;}
+.pr-spark-toggle:hover{opacity:1;}
+.pr-spark-wrap{overflow:hidden;max-height:0;transition:max-height .3s cubic-bezier(.4,0,.2,1);}
+.pr-spark-wrap.open{max-height:60px;}
+.pr-card-top{display:flex;align-items:center;gap:8px;}
+.pr-card-meta-row{display:flex;align-items:center;gap:6px;margin:3px 0 6px;flex-wrap:wrap;}
 
 /* LEGEND */
 .ltable{width:100%;border-collapse:collapse;font-family:'DM Mono',monospace;font-size:10px;}
@@ -651,19 +669,29 @@ main{padding:16px;max-width:860px;}
 .muscle-bars-wrap{margin-top:10px;}
 .muscle-bars-hd{margin-bottom:8px;}
 .pr-list-wrap{margin-bottom:10px;}
+/* MUSCLE HEATMAP */
+.mheat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:4px;}
+.mheat-card{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);padding:10px 12px;position:relative;overflow:hidden;transition:border-color .2s;}
+.mheat-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--tx2);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;line-height:1.3;}
+.mheat-bar{height:4px;background:var(--bor);border-radius:2px;margin-bottom:5px;overflow:hidden;}
+.mheat-fill{height:100%;border-radius:2px;transition:width .6s cubic-bezier(.4,0,.2,1);}
+.mheat-val{font-family:'Barlow Condensed',sans-serif;font-size:18px;letter-spacing:1px;}
+.mheat-sub{font-family:'DM Mono',monospace;font-size:7px;color:var(--mu);margin-top:2px;}
+.mheat-disbalance{background:rgba(255,61,0,.08);border:1px solid rgba(255,61,0,.25);border-radius:var(--r);padding:8px 12px;margin-top:8px;font-family:'DM Mono',monospace;font-size:9px;color:var(--acc2);display:none;}
+.mheat-disbalance.show{display:block;}
 </style>
 </head>
 <body>
 <div class="consent-overlay" id="consentOverlay">
   <div class="consent-box">
-    <h2 class="splash-h2">SYSTEM-START V10.9</h2>
+    <h2 class="splash-h2">SYSTEM-START V11.0</h2>
     <p class="splash-p">Daten werden lokal gespeichert und via API synchronisiert. Fehler-Logging ist aktiv.</p>
     <button class="save-btn" onclick="acceptConsent()">Akzeptieren &amp; Starten</button>
   </div>
 </div>
 <header>
   <div>
-    <div class="logo">PB<span class="splash-logo-ver"> V10.9</span></div>
+    <div class="logo">PB<span class="splash-logo-ver"> V11.0</span></div>
     <span class="hbadge" id="todayBadge">Lädt…</span>
     <div class="splash-build">Build: <span id="buildDateTxt"></span></div>
   </div>
@@ -765,6 +793,12 @@ main{padding:16px;max-width:860px;}
     <h2 class="tab-h2">Bestleistungen</h2>
     <span class="pr-summary" id="prSummary"></span>
   </div>
+  <!-- Filter-Chips -->
+  <div class="pr-filter-row" id="prFilterRow">
+    <button class="pr-filter-chip active" onclick="setPRFilter('all',this)">Alle</button>
+    <button class="pr-filter-chip" onclick="setPRFilter('has_pr',this)">✓ Mit PR</button>
+    <button class="pr-filter-chip" onclick="setPRFilter('no_pr',this)">✗ Ohne PR</button>
+  </div>
   <div id="recordsList"></div>
 </div>
 
@@ -802,6 +836,15 @@ main{padding:16px;max-width:860px;}
     <div class="prog-chart-wrap" id="progBwWrap">
       <div class="prog-no-data">Noch keine KG-Daten</div>
     </div>
+  </div>
+
+  <!-- MUSKEL HEATMAP -->
+  <div class="prog-tab-section">
+    <div class="prog-section-hd"><span>Muskel-Heatmap</span><span style="font-family:'DM Mono',monospace;font-size:8px;color:var(--mu);">Letzte 7 Tage</span></div>
+    <div id="muscleHeatWrap">
+      <div class="prog-no-data">Noch keine Daten der letzten 7 Tage</div>
+    </div>
+    <div class="mheat-disbalance" id="mheatDisbalance"></div>
   </div>
 </div>
 
@@ -1802,6 +1845,7 @@ function toggleWarmup(i){
 
 function toggleDone(idx){
   const d=getD(C,W,D,idx);d.done=!d.done;persist();
+  haptic(d.done?20:10);
   if(d.done){
     const orm=calc1RM(d);
     if(orm){const exName=getExName(idx);const isPR=checkPR(exName,orm);if(isPR&&API_URL)savePRToSheet(exName,orm);}
@@ -2133,6 +2177,94 @@ function renderProgress(){
   renderProgressChart();
   renderVolChart();
   renderBwChart();
+  renderMuscleHeatmap();
+}
+
+function renderMuscleHeatmap(){
+  const wrap=document.getElementById('muscleHeatWrap');
+  const disEl=document.getElementById('mheatDisbalance');
+  if(!wrap)return;
+
+  // Letzte 7 Tage: alle Trainingstage mit Daten sammeln
+  const now=new Date();
+  const muscleVol={};
+  let totalPull=0,totalPush=0;
+
+  for(let c=0;c<PLAN.length;c++){
+    for(let w=0;w<PLAN[c].weeks.length;w++){
+      for(let d=0;d<PLAN[c].weeks[w].days.length;d++){
+        const day=PLAN[c].weeks[w].days[d];
+        if(!day.date)continue;
+        // Datum parsen DD.MM
+        const [dd,mm]=day.date.split('.').map(Number);
+        const dayDate=new Date(now.getFullYear(),mm-1,dd);
+        const diffDays=(now-dayDate)/(1000*60*60*24);
+        if(diffDays<0||diffDays>7)continue;
+
+        const muscle=(day.muscle||'Sonstige').split('/')[0].trim();
+        if(!muscleVol[muscle])muscleVol[muscle]=0;
+
+        day.exercises.forEach((ex,i)=>{
+          const data=getD(c,w,d,i);
+          const vol=calcTotal(data)||0;
+          muscleVol[muscle]+=vol;
+          // Push/Pull tracking
+          const m=(day.muscle||'').toLowerCase();
+          if(m.includes('rücken')||m.includes('bizeps'))totalPull+=vol;
+          if(m.includes('brust')||m.includes('trizeps')||m.includes('schulter'))totalPush+=vol;
+        });
+      }
+    }
+  }
+
+  const entries=Object.entries(muscleVol).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  if(!entries.length){
+    wrap.innerHTML='<div class="prog-no-data">Noch keine Daten der letzten 7 Tage</div>';
+    if(disEl)disEl.classList.remove('show');
+    return;
+  }
+
+  const maxVol=entries[0][1];
+  // Farbskala: 0→grau / 50%→grün / 90%→neon / >110%→orange
+  function heatColor(pct){
+    if(pct===0)return'var(--bor)';
+    if(pct>=110)return'#ff8800';
+    if(pct>=90)return'var(--acc)';
+    if(pct>=50)return'var(--ok)';
+    return'var(--acc3)';
+  }
+
+  const TARGETS={
+    'Rücken':4500,'Brust':3500,'Arme':3000,
+    'Beine':6000,'Schultern':2500,'Sonstige':2000
+  };
+
+  wrap.innerHTML='<div class="mheat-grid">'+entries.map(([m,v])=>{
+    const target=TARGETS[m]||3000;
+    const pct=Math.round(v/target*100);
+    const col=heatColor(pct);
+    const fillW=Math.min(100,pct);
+    const vK=v>=1000?Math.round(v/100)/10+'k':Math.round(v)+'';
+    return '<div class="mheat-card" style="border-color:'+(pct>=90?col:'var(--bor)')+';">'
+      +'<div class="mheat-label">'+m+'</div>'
+      +'<div class="mheat-bar"><div class="mheat-fill" style="width:'+fillW+'%;background:'+col+';"></div></div>'
+      +'<div class="mheat-val" style="color:'+col+';">'+vK+' <span style="font-size:11px;font-weight:400;color:var(--mu);">kg</span></div>'
+      +'<div class="mheat-sub">'+pct+'% von Ziel</div>'
+      +'</div>';
+  }).join('')+'</div>';
+
+  // Push/Pull Disbalance
+  if(disEl&&totalPull>0&&totalPush>0){
+    const ratio=totalPull/totalPush;
+    if(ratio>1.4||ratio<0.7){
+      const more=ratio>1?'Pull':'Push';
+      const less=ratio>1?'Push':'Pull';
+      disEl.textContent='⚠ Push/Pull-Disbalance: '+more+' dominiert — mehr '+less+'-Volumen empfohlen';
+      disEl.classList.add('show');
+    }else{
+      disEl.classList.remove('show');
+    }
+  }
 }
 
 function renderProgressChart(){
@@ -2524,6 +2656,7 @@ async function saveToSheet(){
       body:payload
     });
     showStatus('ok','✓ '+toSend.length+' Übung(en) gesendet! ('+day.date+')');
+    haptic(30);
     addToErrorLog('SYNC_OK','Bulk: '+toSend.length+' Übungen ('+day.date+')');
     updateLastSync();
   }catch(e){
@@ -2690,16 +2823,22 @@ const PR_GROUPS = [
   ]},
 ];
 
+let prFilter='all';
+function setPRFilter(f,btn){
+  prFilter=f;
+  document.querySelectorAll('.pr-filter-chip').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  renderRecords();
+}
+
 function renderRecords() {
   const list = document.getElementById('recordsList');
   const summary = document.getElementById('prSummary');
   if (!list) return;
 
-  // Letztes bekanntes Körpergewicht holen
   let bwVal=0;
   Object.keys(store).forEach(k=>{if(k.startsWith('bw_')&&!k.startsWith('bw_date_')){const v=parseFloat(store[k]);if(v>0)bwVal=v;}});
 
-  // Relative Kraft Level (nach Ratio)
   function getRelLevel(ratio){
     if(ratio>=2.0) return {label:'PLATIN',cls:'platin'};
     if(ratio>=1.5) return {label:'GOLD',cls:'gold'};
@@ -2708,12 +2847,11 @@ function renderRecords() {
     return null;
   }
 
-  // Alle PRs sammeln + Ratio berechnen
   const allPRs = Object.keys(store).filter(k => k.startsWith('rec_'));
   const prCount = allPRs.length;
   if (summary) summary.textContent = prCount + ' PR' + (prCount !== 1 ? 's' : '') + ' gesetzt';
 
-  // Top 3 nach Ratio bauen (nur wenn BW bekannt)
+  // Hall of Fame Podium
   let hofHtml='';
   if(bwVal>0&&prCount>0){
     const ranked=allPRs.map(k=>{
@@ -2726,7 +2864,6 @@ function renderRecords() {
     if(ranked.length>0){
       const medals=['🥇','🥈','🥉'];
       const rankCls=['rank-1','rank-2','rank-3'];
-      // Podium-Reihenfolge: Silber(1) | Gold(0) | Bronze(2)
       const podiumOrder=[1,0,2];
       hofHtml='<div class="hof-podium">'
         +podiumOrder.map(i=>{
@@ -2745,14 +2882,12 @@ function renderRecords() {
     }
   }
 
-  // Sparkline-Daten
   function getOrmHistoryByName(exName) {
     const results = [];
     outer:
     for (let ci = PLAN.length - 1; ci >= 0; ci--) {
-      const cyc = PLAN[ci];
-      for (let wi = cyc.weeks.length - 1; wi >= 0; wi--) {
-        const week = cyc.weeks[wi];
+      for (let wi = PLAN[ci].weeks.length - 1; wi >= 0; wi--) {
+        const week = PLAN[ci].weeks[wi];
         if (week.isDeload) continue;
         for (let di = 0; di < week.days.length; di++) {
           const exIdx = week.days[di].exercises.indexOf(exName);
@@ -2778,8 +2913,7 @@ function renderRecords() {
     const toY  = v => PY + (1 - (v - minO) / rng) * (H - PY * 2);
     const last = hist[hist.length - 1].orm;
     const prev = hist[hist.length - 2].orm;
-    const up   = last >= prev;
-    const col  = up ? 'var(--ok)' : 'var(--acc2)';
+    const col  = last >= prev ? 'var(--ok)' : 'var(--acc2)';
     const pts  = hist.map((p,i) => toX(i).toFixed(1)+','+toY(p.orm).toFixed(1)).join(' ');
     const lx   = toX(hist.length-1), ly = toY(last);
     return '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block;overflow:visible;" shape-rendering="geometricPrecision">'
@@ -2794,48 +2928,65 @@ function renderRecords() {
   let html = hofHtml;
 
   PR_GROUPS.forEach((group, gi) => {
+    // Filter anwenden
+    const filteredEx = group.exercises.filter(e => {
+      const has = !!getRecord(e);
+      if(prFilter==='has_pr') return has;
+      if(prFilter==='no_pr') return !has;
+      return true;
+    });
+    if(filteredEx.length===0) return;
+
     const groupPRCount = group.exercises.filter(e => !!getRecord(e)).length;
     const gid = 'prg_' + gi;
     const badge = groupPRCount > 0
-      ? '<span class="pr-count-badge">' + groupPRCount + '/' + group.exercises.length + ' PRs</span>'
-      : '<span>' + group.exercises.length + ' Übungen</span>';
-    html += '<div class="pr-group-title" id="' + gid + '_hdr" onclick="togglePRGroup(\'' + gid + '\')">'
-      + '<span>' + group.label + '</span>'
-      + '<span class="pr-group-meta">' + badge
+      ? '<span class="pr-count-badge">'+groupPRCount+'/'+group.exercises.length+'</span>'
+      : '<span style="color:var(--mu)">'+group.exercises.length+'</span>';
+
+    html += '<div class="pr-group-title" id="'+gid+'_hdr" onclick="togglePRGroup(\''+gid+'\')">'
+      + '<span>'+group.label+'</span>'
+      + '<span class="pr-group-meta">'+badge
       + '<svg class="pr-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>'
       + '</span></div>';
-    html += '<div class="pr-group-body" id="' + gid + '_body">';
+    html += '<div class="pr-group-body" id="'+gid+'_body">';
 
-    group.exercises.forEach(exName => {
+    filteredEx.forEach(exName => {
       const rec  = getRecord(exName);
       const hist = getOrmHistoryByName(exName);
       const hasPR = !!rec;
       const safeId = exName.replace(/[^a-z0-9]/gi, '_');
 
-      // Relative Kraft Badge
       let relBadge='';
       if(hasPR&&bwVal>0){
         const ratio=Math.round(rec.orm/bwVal*100)/100;
         const lv=getRelLevel(ratio);
-        if(lv) relBadge='<span class="rel-badge '+lv.cls+'">'+ratio+'× '+lv.label+'</span>';
+        if(lv) relBadge=' <span class="rel-badge '+lv.cls+'">'+ratio+'× '+lv.label+'</span>';
       }
 
+      const sparkId='spark_'+safeId;
       html += '<div class="pr-card '+(hasPR?'has-pr':'no-pr')+'" id="prc_'+safeId+'">';
-      html += '<div class="pr-card-head">';
-      html += '<div class="pr-ex-name">'+exName+relBadge+'</div>';
+      // Obere Zeile: Name + PR-Wert
+      html += '<div class="pr-card-top">';
+      html += '<div class="pr-ex-name">'+exName+'</div>';
       if (hasPR) {
         html += '<div class="pr-badge">'+rec.orm+' kg</div>';
       } else {
-        html += '<div class="pr-badge no-pr">Noch kein PR</div>';
+        html += '<div class="pr-badge no-pr">Kein PR</div>';
       }
       html += '</div>';
-      if (hasPR) {
-        html += '<div class="pr-meta">Gesetzt am '+rec.date+' · 1RM Epley-Formel</div>';
-        if (hist.length >= 2) html += buildPRSparkline(hist);
+      // Meta-Zeile: Datum + Badge + Sparkline-Toggle
+      if(hasPR){
+        html += '<div class="pr-card-meta-row">'
+          +'<span class="pr-meta">'+rec.date+'</span>'
+          +relBadge
+          +(hist.length>=2?'<button class="pr-spark-toggle" onclick="event.stopPropagation();document.getElementById(\''+sparkId+'\').classList.toggle(\'open\')">📈</button>':'')
+          +'</div>';
+        html += '<div class="pr-spark-wrap" id="'+sparkId+'">'+buildPRSparkline(hist)+'</div>';
       }
+      // Edit-Zeile
       html += '<div class="pr-edit-row">'
         +'<input class="pr-edit-inp" type="number" id="pr_inp_'+safeId+'" placeholder="kg" step="0.5" min="0" value="'+(hasPR?rec.orm:'')+'">'
-        +'<button class="pr-edit-btn" onclick="savePRManual(\''+exName.replace(/'/g,"\\'")+'\')" >Speichern</button>'
+        +'<button class="pr-edit-btn" onclick="savePRManual(\''+exName.replace(/'/g,"\\'")+'\')">Speichern</button>'
         +(hasPR?'<button class="pr-del-btn" onclick="deletePR(\''+exName.replace(/'/g,"\\'")+'\')">✕</button>':'')
         +'</div>';
       html += '</div>';
@@ -2845,6 +2996,7 @@ function renderRecords() {
 
   list.innerHTML = html;
 }
+
 
 function togglePRGroup(groupId) {
   const hdr  = document.getElementById(groupId+'_hdr');
@@ -3110,6 +3262,35 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+// ── Swipe-Geste: Links/Rechts → Tag wechseln ──────────────────
+(function(){
+  let tx=0,ty=0,swiping=false;
+  document.addEventListener('touchstart',e=>{
+    if(e.touches.length!==1)return;
+    tx=e.touches[0].clientX;
+    ty=e.touches[0].clientY;
+    swiping=true;
+  },{passive:true});
+  document.addEventListener('touchend',e=>{
+    if(!swiping)return;
+    swiping=false;
+    // Nur auf Training-Tab reagieren
+    if(!document.getElementById('tab-workout')?.classList.contains('active'))return;
+    const dx=e.changedTouches[0].clientX-tx;
+    const dy=e.changedTouches[0].clientY-ty;
+    if(Math.abs(dx)<50||Math.abs(dy)>Math.abs(dx)*0.8)return; // zu kurz oder diagonal
+    const day=PLAN[C].weeks[W];
+    if(dx<0){// Swipe links → nächster Tag
+      if(D<day.days.length-1){D++;persist();haptic();renderWorkout();}
+    }else{// Swipe rechts → vorheriger Tag
+      if(D>0){D--;persist();haptic();renderWorkout();}
+    }
+  },{passive:true});
+})();
+
+// ── Haptic Feedback ───────────────────────────────────────────
+function haptic(ms=10){try{navigator.vibrate&&navigator.vibrate(ms);}catch(e){}}
 
 document.addEventListener('visibilitychange', () => { if (!document.hidden) syncFromSheet(); });
 window.addEventListener('focus', () => syncFromSheet());
