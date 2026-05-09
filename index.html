@@ -176,6 +176,24 @@ main{padding:16px;max-width:860px;}
 .rel-badge.silver{background:rgba(192,192,192,.2);color:#C0C0C0;}
 .rel-badge.gold{background:rgba(255,215,0,.2);color:#FFD700;}
 .rel-badge.platin{background:rgba(200,255,0,.2);color:var(--acc);}
+/* ── Muscle Card Grid ─────────────────────────────── */
+.muscle-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+.muscle-card{background:var(--sur);border-radius:var(--r);padding:10px 8px;text-align:center;border:1px solid var(--bor);position:relative;overflow:hidden;transition:border-color .3s;}
+.muscle-card::before{content:'';position:absolute;inset:0;opacity:.12;transition:opacity .3s;}
+.muscle-card.vol-0::before{background:#1f1f1f;opacity:0;}
+.muscle-card.vol-low::before{background:#2d4a2d;}
+.muscle-card.vol-mid::before{background:#3a6b2a;}
+.muscle-card.vol-good{border-color:rgba(200,255,0,.4);}
+.muscle-card.vol-good::before{background:var(--acc);opacity:.15;}
+.muscle-card.vol-over{border-color:rgba(255,140,0,.5);}
+.muscle-card.vol-over::before{background:#ff8c00;opacity:.15;}
+.muscle-card-name{font-family:'DM Mono',monospace;font-size:8px;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.muscle-card-vol{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;color:var(--tx);line-height:1;}
+.muscle-card-unit{font-family:'DM Mono',monospace;font-size:7px;color:var(--mu);}
+.muscle-card-bar{height:3px;background:var(--sur3);border-radius:2px;margin-top:6px;overflow:hidden;}
+.muscle-card-bar-fill{height:100%;border-radius:2px;transition:width .4s;}
+.muscle-card.vol-0 .muscle-card-vol{color:var(--mu);}
+.muscle-disbalance{font-family:'DM Mono',monospace;font-size:10px;padding:10px 12px;background:rgba(255,140,0,.08);border:1px solid rgba(255,140,0,.3);border-radius:var(--r);margin-top:4px;line-height:1.6;}
 .load-hint{color:var(--mu);font-size:8px;}
 .hist-btn{background:none;border:none;color:var(--mu);font-size:12px;cursor:pointer;padding:0 4px;margin-left:4px;vertical-align:middle;opacity:.7;}
 .hist-btn:hover{opacity:1;}
@@ -805,6 +823,13 @@ main{padding:16px;max-width:860px;}
     <div class="prog-chart-wrap" id="progBwWrap">
       <div class="prog-no-data">Noch keine KG-Daten</div>
     </div>
+  </div>
+
+  <!-- MUSCLE CARD GRID -->
+  <div class="prog-tab-section">
+    <div class="prog-section-hd"><span>Muskel-Heatmap</span><span class="vol-label-sm" id="muscleHeatLabel">letzte 7 Tage</span></div>
+    <div id="muscleCardGrid"></div>
+    <div id="muscleDisbalance"></div>
   </div>
 </div>
 
@@ -2169,6 +2194,106 @@ function renderProgress(){
   renderProgressChart();
   renderVolChart();
   renderBwChart();
+  renderMuscleCards();
+}
+
+function renderMuscleCards(){
+  const grid=document.getElementById('muscleCardGrid');
+  const disb=document.getElementById('muscleDisbalance');
+  if(!grid)return;
+
+  // Zieldefinition: optimales Wochenvolumen pro Muskel (kg × Wdh)
+  const TARGETS={
+    'Rücken':8000,'Brust':6000,'Beine':12000,
+    'Schultern':4000,'Arme':3000,'Bauch':2000,'Sonstige':3000
+  };
+
+  // Letzte 7 Tage: welche Tage fallen in diesen Zeitraum?
+  const now=new Date();
+  const cutoff=new Date(now.getTime()-7*24*60*60*1000);
+  function parseDate(str){// DD.MM
+    const [d,m]=str.split('.');
+    const yr=now.getFullYear();
+    return new Date(yr,parseInt(m)-1,parseInt(d));
+  }
+
+  // Volumen pro Muskelgruppe summieren
+  const muscleVol={};
+  const pushVol={push:0,pull:0};
+
+  for(let c=0;c<PLAN.length;c++){
+    for(let w=0;w<PLAN[c].weeks.length;w++){
+      const week=PLAN[c].weeks[w];
+      if(week.isDeload)continue;
+      for(let d=0;d<week.days.length;d++){
+        const day=week.days[d];
+        const dayDate=parseDate(day.date);
+        if(dayDate<cutoff||dayDate>now)continue;
+        const muscle=(day.muscle||'Sonstige').split('/')[0].trim();
+        if(!muscleVol[muscle])muscleVol[muscle]=0;
+        // Push/Pull erkennen
+        const isPush=/(brust|push|schulter|trizeps)/i.test(day.muscle||'');
+        const isPull=/(rücken|pull|bizeps|row|lat)/i.test(day.muscle||'');
+        (day.exercises||[]).forEach((_,i)=>{
+          const data=getD(c,w,d,i);
+          [[data.g1,data.r1],[data.g2,data.r2],[data.g3,data.r3]].forEach(([g,r])=>{
+            const v=(parseFloat(g)||0)*(parseFloat(r)||0);
+            muscleVol[muscle]+=v;
+            if(isPush)pushVol.push+=v;
+            if(isPull)pushVol.pull+=v;
+          });
+        });
+      }
+    }
+  }
+
+  // Alle Muskelgruppen aus TARGETS anzeigen
+  const muscles=Object.keys(TARGETS);
+  const hasAnyData=muscles.some(m=>muscleVol[m]>0);
+
+  if(!hasAnyData){
+    grid.innerHTML='<div class="prog-no-data">Noch keine Daten der letzten 7 Tage</div>';
+    if(disb)disb.innerHTML='';
+    return;
+  }
+
+  const colors={
+    'Rücken':'var(--acc3)','Brust':'var(--acc2)','Beine':'var(--ok)',
+    'Schultern':'var(--warn)','Arme':'var(--acc)','Bauch':'var(--mu)','Sonstige':'var(--mu)'
+  };
+
+  const cards=muscles.map(m=>{
+    const vol=muscleVol[m]||0;
+    const target=TARGETS[m];
+    const pct=Math.min(Math.round(vol/target*100),120);
+    const volK=vol>=1000?Math.round(vol/100)/10+'k':Math.round(vol)+'';
+    let cls='vol-0';
+    if(pct>0&&pct<50)cls='vol-low';
+    else if(pct>=50&&pct<90)cls='vol-mid';
+    else if(pct>=90&&pct<=110)cls='vol-good';
+    else if(pct>110)cls='vol-over';
+    const fillCol=pct>110?'#ff8c00':pct>=90?'var(--acc)':colors[m]||'var(--mu)';
+    return '<div class="muscle-card '+cls+'">'
+      +'<div class="muscle-card-name">'+m+'</div>'
+      +'<div class="muscle-card-vol">'+(vol>0?volK:'—')+'</div>'
+      +'<div class="muscle-card-unit">'+(vol>0?'kg · '+pct+'% Ziel':'0 diese Woche')+'</div>'
+      +'<div class="muscle-card-bar"><div class="muscle-card-bar-fill" style="width:'+Math.min(pct,100)+'%;background:'+fillCol+'"></div></div>'
+      +'</div>';
+  }).join('');
+
+  grid.innerHTML='<div class="muscle-grid">'+cards+'</div>';
+
+  // Disbalance-Warnung Push/Pull
+  let disbHtml='';
+  if(pushVol.push>0&&pushVol.pull>0){
+    const ratio=Math.round(pushVol.push/pushVol.pull*10)/10;
+    if(ratio>1.8){
+      disbHtml='<div class="muscle-disbalance">⚠️ <b>Disbalance erkannt:</b> Push-Volumen ist '+ratio+'× höher als Pull. Erhöhe Zug-Volumen für Schulter-Gesundheit.</div>';
+    } else if(ratio<0.6){
+      disbHtml='<div class="muscle-disbalance">⚠️ <b>Disbalance erkannt:</b> Pull-Volumen ist '+(Math.round(1/ratio*10)/10)+'× höher als Push. Balance überprüfen.</div>';
+    }
+  }
+  if(disb)disb.innerHTML=disbHtml;
 }
 
 function renderProgressChart(){
