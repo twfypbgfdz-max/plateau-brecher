@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#080808">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PB V11.2">
-<title>Plateau-Brecher V11.2</title>
+<meta name="apple-mobile-web-app-title" content="PB V11.6">
+<title>Plateau-Brecher V11.6</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -727,14 +727,14 @@ main{padding:16px;max-width:860px;}
 <body>
 <div class="consent-overlay" id="consentOverlay">
   <div class="consent-box">
-    <h2 class="splash-h2">SYSTEM-START V11.2</h2>
+    <h2 class="splash-h2">SYSTEM-START V11.6</h2>
     <p class="splash-p">Daten werden lokal gespeichert und via API synchronisiert. Fehler-Logging ist aktiv.</p>
     <button class="save-btn" onclick="acceptConsent()">Akzeptieren &amp; Starten</button>
   </div>
 </div>
 <header>
   <div>
-    <div class="logo">PB<span class="splash-logo-ver"> V11.2</span></div>
+    <div class="logo">PB<span class="splash-logo-ver"> V11.6</span></div>
     <span class="hbadge" id="todayBadge">Lädt…</span>
     <div class="splash-build">Build: <span id="buildDateTxt"></span></div>
   </div>
@@ -1106,9 +1106,9 @@ const PLAN = [
 // ============================================================
 // STORAGE
 // ============================================================
-const SK='pb_v11_2';
-const APP_VERSION='V11.2';
-const BUILD_DATE='09.05.2026';
+const SK='pb_v11_6';
+const APP_VERSION='V11.6';
+const BUILD_DATE='10.05.2026';
 const GITHUB_RAW_URL='https://raw.githubusercontent.com/twfypbgfdz-max/Plateaubrecher/main/index.html';
 const errorLog=[];
 let store={};
@@ -1159,14 +1159,20 @@ window.addEventListener('offline',()=>{
 });
 
 // Migration: pb_v10_9 / pb_v10_8_1 / pb_v9_2 → pb_v11_0
-if(Object.keys(store).length===0){try{const old=JSON.parse(localStorage.getItem('pb_v11_1')||localStorage.getItem('pb_v11_0')||localStorage.getItem('pb_v10_9')||localStorage.getItem('pb_v10_8_1')||localStorage.getItem('pb_v9_2')||'{}');if(Object.keys(old).length>0){Object.assign(store,old);persist();}}catch(e){}}
+if(Object.keys(store).length===0){try{const old=JSON.parse(localStorage.getItem('pb_v11_2')||localStorage.getItem('pb_v11_1')||localStorage.getItem('pb_v11_0')||localStorage.getItem('pb_v10_9')||localStorage.getItem('pb_v10_8_1')||localStorage.getItem('pb_v9_2')||'{}');if(Object.keys(old).length>0){Object.assign(store,old);persist();}}catch(e){}}
 // (alte Keys pb_v7_4 etc. werden nicht mehr importiert)
 
 function persist(){try{localStorage.setItem(SK,JSON.stringify(store));}catch(e){}}
 function getD(c,w,d,e){const k=c+'_'+w+'_'+d+'_'+e;if(!store[k])store[k]={g1:'',r1:'',g2:'',r2:'',g3:'',r3:'',notes:'',done:false};return store[k];}
 function getRecord(n){return store['rec_'+n]||null;}
-function setRecord(n,o,d){store['rec_'+n]={orm:o,date:d};persist();}
-function checkPR(n,o){const r=getRecord(n);if(!r||o>r.orm){setRecord(n,o,getCurrentDateStr());return true;}return false;}
+function setRecord(n,o,d,w){store['rec_'+n]={orm:Math.round(o*10)/10,date:d,weight:w||null};persist();}
+function checkPR(n,o,rawWeight){
+  const r=getRecord(n);
+  if(!r||o>r.orm){setRecord(n,o,getCurrentDateStr(),rawWeight||null);return true;}
+  // Bestes Rohgewicht auch ohne 1RM-PR aktualisieren
+  if(rawWeight&&(!r.weight||rawWeight>r.weight)){r.weight=rawWeight;persist();}
+  return false;
+}
 
 // ── PR Auto-Rebuild aus gespeicherter Trainingshistorie ───────
 function rebuildPRsFromHistory(silent=true) {
@@ -1183,9 +1189,9 @@ function rebuildPRsFromHistory(silent=true) {
     if(!orm || orm <= 0) continue;
     const rec = getRecord(exName);
     if(!rec || orm > rec.orm){
-      // Datum aus PLAN ermitteln
       const date = PLAN[c].weeks[w].days[d].date || getCurrentDateStr();
-      setRecord(exName, Math.round(orm*10)/10, date);
+      const rawWeight = parseFloat(data.g1)||null;
+      setRecord(exName, Math.round(orm*10)/10, date, rawWeight);
       updated++;
     }
   }
@@ -1221,39 +1227,46 @@ function loadTrainingStats(){
 // ── Update-Check ─────────────────────────────────────────────
 async function checkForUpdate(btn) {
   if(btn){ btn.textContent='Suche…'; btn.disabled=true; }
+  const statusEl = document.getElementById('setupStatus');
   try {
     const resp = await fetch(GITHUB_RAW_URL+'?cb='+Date.now(), {cache:'no-store'});
     if(!resp.ok) throw new Error('HTTP '+resp.status);
     const html = await resp.text();
-    const m = html.match(/APP_VERSION=['"]([^'"]+)['"]/);
-    const remote = m ? m[1] : null;
-    if(!remote){ showSetupStatus('warn','⚠ Version nicht lesbar'); return; }
-    if(remote === APP_VERSION){
-      showSetupStatus('ok','✓ Aktuell — '+APP_VERSION);
+    const mVer = html.match(/APP_VERSION=['"]([^'"]+)['"]/);
+    const mDate = html.match(/BUILD_DATE=['"]([^'"]+)['"]/);
+    const remoteVer = mVer ? mVer[1] : '?';
+    const remoteDate = mDate ? mDate[1] : '?';
+
+    const localLine  = 'Installiert: '+APP_VERSION+' ('+BUILD_DATE+')';
+    const remoteLine = 'Neueste:     '+remoteVer+' ('+remoteDate+')';
+
+    if(remoteVer === APP_VERSION){
+      showSetupStatus('ok', '✓ Aktuell\n'+localLine);
     } else {
-      showSetupStatus('warn','🔄 Update verfügbar: '+remote);
-      showUpdateBanner(remote);
+      showSetupStatus('warn', '🔄 Update verfügbar\n'+localLine+'\n'+remoteLine);
+      showUpdateBanner(remoteVer, remoteDate);
     }
   } catch(e) {
-    showSetupStatus('warn','⚠ Nicht erreichbar');
+    showSetupStatus('warn','⚠ Nicht erreichbar — '+e.message);
   }
-  if(btn){ btn.textContent='Auf Update prüfen'; btn.disabled=false; }
+  if(btn){ btn.textContent='🔄 Auf Update prüfen'; btn.disabled=false; }
 }
 
-function showUpdateBanner(newVer) {
+function showUpdateBanner(newVer, newDate) {
   let banner = document.getElementById('updateBanner');
-  if(!banner){
-    banner = document.createElement('div');
-    banner.id = 'updateBanner';
-    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:var(--acc);color:#000;font-family:"Barlow Condensed",sans-serif;font-size:14px;letter-spacing:1px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;';
-    banner.innerHTML = '<span>🔄 UPDATE VERFÜGBAR — '+newVer+'</span>'
-      +'<button onclick="doUpdate()" style="background:#000;color:var(--acc);border:none;padding:5px 12px;border-radius:4px;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">JETZT LADEN</button>';
-    document.body.prepend(banner);
-  }
+  if(banner) banner.remove();
+  banner = document.createElement('div');
+  banner.id = 'updateBanner';
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:var(--acc);color:#000;font-family:"Barlow Condensed",sans-serif;font-size:13px;letter-spacing:1px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;';
+  banner.innerHTML = '<div><div style="font-weight:700;font-size:15px;">🔄 UPDATE: '+newVer+'</div>'
+    +'<div style="font-size:10px;opacity:.7;">Installiert: '+APP_VERSION+' · Neu: '+newVer+' ('+newDate+')</div>'
+    +'</div>'
+    +'<button onclick="doUpdate()" style="background:#000;color:var(--acc);border:none;padding:6px 14px;border-radius:4px;font-family:\'Barlow Condensed\',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;white-space:nowrap;">LADEN</button>';
+  document.body.prepend(banner);
 }
 
 function doUpdate() {
-  // Hard-Reload ohne Cache — localStorage bleibt erhalten
+  // Hard-Reload von GitHub — localStorage bleibt erhalten
   window.location.href = GITHUB_RAW_URL + '?cb=' + Date.now();
 }
 
@@ -1970,7 +1983,7 @@ function toggleDone(idx){
   haptic(d.done?20:10);
   if(d.done){
     const orm=calc1RM(d);
-    if(orm){const exName=getExName(idx);const isPR=checkPR(exName,orm);if(isPR&&API_URL)savePRToSheet(exName,orm);}
+    if(orm){const exName=getExName(idx);const rawW=parseFloat(d.g1)||null;const isPR=checkPR(exName,orm,rawW);if(isPR&&API_URL)savePRToSheet(exName,orm);}
   }
   renderWorkout();
   if(d.done){
@@ -2176,25 +2189,108 @@ function editDayName(c,w,d){
 }
 
 function checkFatigueHint(){
-  let rpeSum=0,rpeCount=0,validWeeks=0;
-  let tempW=W-1,tempC=C;
-  while(validWeeks<2){
-    if(tempW<0){tempC--;if(tempC<0)break;tempW=PLAN[tempC].weeks.length-1;}
-    const week=PLAN[tempC].weeks[tempW];
+  // Regel 1: RPE ≥9 über 2 Wochen (bestehend)
+  const m = computeLocalMetrics();
+  if(m.avgRpe >= 9) return true;
+  // Regel 2: Durchschnittlicher 1RM fällt über 2+ Wochen
+  if(m.ormTrend === 'falling' && m.avgRpe >= 8) return true;
+  // Regel 3: Mehr als 3 stagnierende Übungen
+  if(m.stagnatingCount >= 3) return true;
+  return false;
+}
+
+// ── Lokale Metriken — zentral berechnet, von KI + Fatigue genutzt ──
+function computeLocalMetrics() {
+  const result = {
+    avgRpe: 0,
+    rpeCount: 0,
+    rpeTrend: 'stable',   // 'rising' | 'falling' | 'stable'
+    ormTrend: 'stable',   // 'rising' | 'falling' | 'stable'
+    stagnatingCount: 0,   // Übungen ohne 1RM-Fortschritt seit 2+ Wochen
+    pushVol: 0,
+    pullVol: 0,
+    pushPullRatio: null,  // pull/push
+    volTrend: 'stable',
+  };
+
+  // RPE der letzten 2 Nicht-Deload-Wochen
+  let rpeW1=[], rpeW2=[];
+  let tempW=W, tempC=C, weeksFound=0;
+  while(weeksFound<2){
+    if(tempW<0){tempC--;if(tempC<0)break;tempW=PLAN[tempC]?.weeks.length-1||0;}
+    const week=PLAN[tempC]?.weeks[tempW];
+    if(!week){tempW--;continue;}
     if(!week.isDeload){
-      const day=week.days[D];
-      if(day){
-        day.exercises.forEach((_,i)=>{
-          const d=getD(tempC,tempW,D,i);
-          if(d.rpe){rpeSum+=parseFloat(d.rpe);rpeCount++;}
+      week.days.forEach((day,di)=>{
+        day.exercises.forEach((_,ei)=>{
+          const d=getD(tempC,tempW,di,ei);
+          if(d.rpe){
+            const v=parseFloat(d.rpe);
+            if(weeksFound===0) rpeW1.push(v);
+            else rpeW2.push(v);
+          }
         });
-      }
-      validWeeks++;
+      });
+      weeksFound++;
     }
     tempW--;
   }
-  return rpeCount>0&&(rpeSum/rpeCount)>=9;
+  const avgW1=rpeW1.length?rpeW1.reduce((a,b)=>a+b,0)/rpeW1.length:0;
+  const avgW2=rpeW2.length?rpeW2.reduce((a,b)=>a+b,0)/rpeW2.length:0;
+  result.avgRpe=avgW1;
+  result.rpeCount=rpeW1.length;
+  if(avgW1>0&&avgW2>0){
+    result.rpeTrend=avgW1>avgW2+0.5?'rising':avgW1<avgW2-0.5?'falling':'stable';
+  }
+
+  // Stagnations-Score: Übungen ohne 1RM-Verbesserung über 2 Wochen
+  let stagCount=0;
+  const day=PLAN[C]?.weeks[W]?.days[D];
+  if(day){
+    day.exercises.forEach((ex,i)=>{
+      const curr=calc1RM(getD(C,W,D,i));
+      if(!curr) return;
+      let prevOrm=0;
+      if(W>1){prevOrm=calc1RM(getD(C,W-2,D,i))||0;}
+      else if(C>0){prevOrm=calc1RM(getD(C-1,PLAN[C-1].weeks.length-2,D,i))||0;}
+      if(prevOrm>0&&curr<=prevOrm) stagCount++;
+    });
+  }
+  result.stagnatingCount=stagCount;
+
+  // ORM-Trend: Vergleich aktuell vs. vor 2 Wochen (gesamt)
+  let ormNow=0,ormOld=0,ormCount=0;
+  if(day){
+    day.exercises.forEach((ex,i)=>{
+      const c1=calc1RM(getD(C,W,D,i));
+      let c2=0;
+      if(W>=2) c2=calc1RM(getD(C,W-2,D,i))||0;
+      else if(C>0) c2=calc1RM(getD(C-1,PLAN[C-1].weeks.length-2,D,i))||0;
+      if(c1&&c2){ormNow+=c1;ormOld+=c2;ormCount++;}
+    });
+  }
+  if(ormCount>0){
+    result.ormTrend=ormNow/ormCount>ormOld/ormCount+1?'rising':ormNow/ormCount<ormOld/ormCount-1?'falling':'stable';
+  }
+
+  // Push/Pull Volumen (letzte Woche)
+  for(let c2=0;c2<PLAN.length;c2++){
+    for(let w2=0;w2<PLAN[c2].weeks.length;w2++){
+      PLAN[c2].weeks[w2].days.forEach((d2,di)=>{
+        const m2=(d2.muscle||'').toLowerCase();
+        d2.exercises.forEach((_,ei)=>{
+          const vol=calcTotal(getD(c2,w2,di,ei))||0;
+          if(m2.includes('rücken')||m2.includes('bizeps'))result.pullVol+=vol;
+          if(m2.includes('brust')||m2.includes('trizeps')||m2.includes('schulter'))result.pushVol+=vol;
+        });
+      });
+    }
+  }
+  if(result.pushVol>0)result.pushPullRatio=Math.round(result.pullVol/result.pushVol*100)/100;
+
+  return result;
 }
+
 
 // ============================================================
 // ÜBUNGS-SWAP
@@ -3271,13 +3367,24 @@ function renderKiChat() {
 // Baut Trainingskontext aus aktuellem Stand für KI-System-Prompt
 function buildKiContext() {
   const day = PLAN[C].weeks[W].days[D];
+  const m = computeLocalMetrics();
+
   const lines = [
     '=== TRAININGSDATEN FELIX ===',
     'Zyklus '+(C+1)+' | '+PLAN[C].weeks[W].weekLabel+' | '+day.tag+' ('+day.date+')',
     'Muskelgruppe: '+day.muscle,
     '',
-    '--- Heutiges Training ---',
+    '--- VORBERECHNETE KENNZAHLEN ---',
+    'Ø RPE letzte Woche: '+(m.avgRpe?m.avgRpe.toFixed(1):'keine Daten'),
+    'RPE-Trend: '+m.rpeTrend,
+    '1RM-Trend: '+m.ormTrend,
+    'Stagnierende Übungen: '+m.stagnatingCount,
+    'Push/Pull-Ratio: '+(m.pushPullRatio?m.pushPullRatio+'× ('+
+      (m.pushPullRatio>1.4?'Pull dominiert':m.pushPullRatio<0.7?'Push dominiert':'ausgeglichen')+')':'keine Daten'),
+    '',
+    '--- HEUTIGES TRAINING ---',
   ];
+
   day.exercises.forEach((ex, i) => {
     const d = getD(C, W, D, i);
     const orm = calc1RM(d);
@@ -3286,39 +3393,41 @@ function buildKiContext() {
       lines.push(ex + ': S1='+d.g1+'kg×'+d.r1+' S2='+d.g2+'kg×'+d.r2+' S3='+d.g3+'kg×'+d.r3
         + (d.rpe?' RPE='+d.rpe:'')
         + (orm?' 1RM≈'+orm+'kg':'')
-        + (rec?' PR='+rec.orm+'kg':''));
+        + (rec?' PR='+rec.orm+'kg ('+rec.date+')':''));
     } else {
       lines.push(ex + ': (keine Daten)');
     }
   });
-  // Letzte 2 Wochen Volumen
+
+  // Volumen-Trend letzte 4 Wochen
   const volByWeek = {};
   for(let c2=0;c2<PLAN.length;c2++){
     for(let w2=0;w2<PLAN[c2].weeks.length;w2++){
       const wk=PLAN[c2].weeks[w2];
+      if(wk.isDeload) continue;
       let wVol=0;
       for(let d2=0;d2<wk.days.length;d2++){
-        wk.days[d2].exercises.forEach((_,i2)=>{
-          wVol+=calcTotal(getD(c2,w2,d2,i2))||0;
-        });
+        wk.days[d2].exercises.forEach((_,i2)=>{ wVol+=calcTotal(getD(c2,w2,d2,i2))||0; });
       }
       if(wVol>0) volByWeek['Z'+(c2+1)+' '+wk.weekLabel]=Math.round(wVol);
     }
   }
   const volEntries=Object.entries(volByWeek).slice(-4);
   if(volEntries.length>0){
-    lines.push('','--- Volumen letzte Wochen (kg) ---');
+    lines.push('','--- VOLUMEN-TREND ---');
     volEntries.forEach(([wl,v])=>lines.push(wl+': '+v+' kg'));
   }
-  // PRs
-  const prs = Object.keys(store).filter(k => k.startsWith('rec_'));
-  if (prs.length > 0) {
-    lines.push('', '--- Bestleistungen ---');
-    prs.forEach(k => {
-      const rec = store[k];
-      lines.push(k.replace('rec_','') + ': ' + rec.orm + ' kg (' + rec.date + ')');
-    });
+
+  // Top-PRs
+  const prs = Object.keys(store).filter(k=>k.startsWith('rec_'))
+    .map(k=>({name:k.replace('rec_',''),...store[k]}))
+    .filter(r=>r.orm>0)
+    .sort((a,b)=>b.orm-a.orm).slice(0,8);
+  if(prs.length>0){
+    lines.push('','--- TOP BESTLEISTUNGEN ---');
+    prs.forEach(r=>lines.push(r.name+': '+r.orm+'kg 1RM'+(r.weight?' ('+r.weight+'kg roh)':'')+(r.date?' · '+r.date:'')));
   }
+
   lines.push('','=== ENDE ===');
   return lines.join('\n');
 }
