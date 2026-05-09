@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="theme-color" content="#080808">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="PB V11.0">
@@ -151,28 +154,69 @@ main{padding:16px;max-width:860px;}
 .load-suggest{font-family:'DM Mono',monospace;font-size:9px;color:var(--acc3);background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.2);border-radius:var(--r);padding:6px 10px;margin-bottom:8px;}
 .load-suggest b{color:var(--acc3);}
 /* ── Hall of Fame ─────────────────────────────────── */
-.hof-podium{display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:auto auto;gap:6px;margin-bottom:16px;align-items:end;}
+.hof-banner{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;}
 .hof-card{background:var(--sur);border-radius:var(--r);padding:10px 8px;text-align:center;position:relative;overflow:hidden;border:1px solid var(--bor);}
-.hof-card.rank-1{grid-column:2;grid-row:1/3;border-color:#FFD700;box-shadow:0 0 18px rgba(255,215,0,.25);background:linear-gradient(180deg,var(--sur2) 0%,var(--sur) 100%);}
-.hof-card.rank-2{grid-column:1;grid-row:2;border-color:#C0C0C0;box-shadow:0 0 10px rgba(192,192,192,.15);}
-.hof-card.rank-3{grid-column:3;grid-row:2;border-color:#CD7F32;box-shadow:0 0 10px rgba(205,127,50,.15);}
-.hof-medal{font-size:2rem;line-height:1;display:block;margin-bottom:4px;}
-.hof-card.rank-1 .hof-medal{font-size:3rem;margin-bottom:8px;}
-.hof-name{font-family:'DM Mono',monospace;font-size:7.5px;color:var(--mu);margin:4px 0 2px;line-height:1.3;word-break:break-word;}
-.hof-orm{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;color:var(--tx);line-height:1;}
-.hof-card.rank-1 .hof-orm{font-size:30px;color:#FFD700;}
-.hof-ratio{font-family:'DM Mono',monospace;font-size:9px;color:var(--acc);margin-top:3px;font-weight:700;}
-/* Metallische Badges */
-.hof-badge{display:inline-block;font-family:'DM Mono',monospace;font-size:7px;padding:3px 7px;border-radius:3px;margin-top:6px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;}
-.hof-badge.bronze{background:linear-gradient(135deg,#cd7f32,#8b4513);color:#fff;border:1px solid #d2a679;box-shadow:inset 0 1px 0 rgba(255,255,255,.2);}
-.hof-badge.silver{background:linear-gradient(135deg,#c0c0c0,#808080);color:#111;border:1px solid #dcdcdc;box-shadow:inset 0 1px 0 rgba(255,255,255,.4);}
-.hof-badge.gold{background:linear-gradient(135deg,#ffd700,#b8860b);color:#111;border:1px solid #ffe566;box-shadow:inset 0 1px 0 rgba(255,255,255,.4);}
-.hof-badge.platin{background:linear-gradient(135deg,#e5e4e2,#a9a9a9);color:#111;border:1px solid #fff;box-shadow:0 0 8px rgba(255,255,255,.25),inset 0 1px 0 rgba(255,255,255,.5);}
-.rel-badge{display:inline-block;font-family:'DM Mono',monospace;font-size:7px;padding:1px 4px;border-radius:3px;margin-left:4px;vertical-align:middle;}
-.rel-badge.bronze{background:linear-gradient(135deg,#cd7f32,#8b4513);color:#fff;}
-.rel-badge.silver{background:linear-gradient(135deg,#c0c0c0,#808080);color:#111;}
-.rel-badge.gold{background:linear-gradient(135deg,#ffd700,#b8860b);color:#111;}
-.rel-badge.platin{background:linear-gradient(135deg,#e5e4e2,#a9a9a9);color:#111;box-shadow:0 0 6px rgba(255,255,255,.2);}
+.hof-card.rank-1{border-color:#FFD700;box-shadow:0 0 12px rgba(255,215,0,.2);}
+.hof-card.rank-2{border-color:#C0C0C0;box-shadow:0 0 8px rgba(192,192,192,.15);}
+.hof-card.rank-3{border-color:#CD7F32;box-shadow:0 0 8px rgba(205,127,50,.15);}
+.hof-rank{font-family:'Bebas Neue',sans-serif;font-size:22px;line-height:1;}
+.hof-card.rank-1 .hof-rank{color:#FFD700;}
+.hof-card.rank-2 .hof-rank{color:#C0C0C0;}
+.hof-card.rank-3 .hof-rank{color:#CD7F32;}
+.hof-name{font-family:'Space Mono',monospace;font-size:7px;color:var(--mu);margin:3px 0;line-height:1.3;word-break:break-word;}
+.hof-orm{font-family:'Bebas Neue',sans-serif;font-size:16px;color:var(--tx);}
+.hof-ratio{font-family:'Space Mono',monospace;font-size:9px;color:var(--acc);margin-top:2px;}
+.hof-badge{display:inline-block;font-family:'Space Mono',monospace;font-size:7px;padding:2px 5px;border-radius:3px;margin-top:4px;}
+.hof-badge.bronze{background:rgba(205,127,50,.2);color:#CD7F32;}
+.hof-badge.silver{background:rgba(192,192,192,.2);color:#C0C0C0;}
+.hof-badge.gold{background:rgba(255,215,0,.2);color:#FFD700;}
+.hof-badge.platin{background:rgba(200,255,0,.2);color:var(--acc);}
+/* V11.0 — Podium Upgrades */
+.hof-banner{align-items:flex-end;}
+.hof-card.rank-1{min-height:148px;}
+.hof-card.rank-2{min-height:124px;}
+.hof-card.rank-3{min-height:108px;}
+.hof-new-badge{
+  position:absolute;top:-6px;right:-6px;
+  background:#ff3d00;color:#fff;
+  font-family:'DM Mono',monospace;font-size:7px;font-weight:500;
+  padding:2px 5px;border-radius:2px;
+  transform:rotate(12deg);
+  box-shadow:0 2px 6px rgba(255,61,0,.5);
+  z-index:2;pointer-events:none;
+}
+.hof-raw{font-family:'DM Mono',monospace;font-size:7px;color:var(--tx2);margin-top:1px;}
+.hof-next{font-family:'DM Mono',monospace;font-size:7px;color:var(--acc3);margin-top:4px;line-height:1.4;}
+@keyframes podiumRise{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.hof-card.rank-3{animation:podiumRise .35s ease both;animation-delay:.05s;}
+.hof-card.rank-2{animation:podiumRise .35s ease both;animation-delay:.2s;}
+.hof-card.rank-1{animation:podiumRise .4s cubic-bezier(.175,.885,.32,1.275) both;animation-delay:.38s;}
+.rel-badge{display:inline-block;font-family:'Space Mono',monospace;font-size:7px;padding:1px 4px;border-radius:3px;margin-left:4px;vertical-align:middle;}
+.rel-badge.bronze{background:rgba(205,127,50,.2);color:#CD7F32;}
+.rel-badge.silver{background:rgba(192,192,192,.2);color:#C0C0C0;}
+.rel-badge.gold{background:rgba(255,215,0,.2);color:#FFD700;}
+.rel-badge.platin{background:rgba(200,255,0,.2);color:var(--acc);}
+/* ── Muscle Card Grid ─────────────────────────────── */
+.muscle-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+.muscle-card{background:var(--sur);border-radius:var(--r);padding:10px 8px;text-align:center;border:1px solid var(--bor);position:relative;overflow:hidden;transition:border-color .3s;}
+.muscle-card::before{content:'';position:absolute;inset:0;opacity:.12;transition:opacity .3s;}
+.muscle-card.vol-0::before{background:#1f1f1f;opacity:0;}
+.muscle-card.vol-low::before{background:#2d4a2d;}
+.muscle-card.vol-mid::before{background:#3a6b2a;}
+.muscle-card.vol-good{border-color:rgba(200,255,0,.4);}
+.muscle-card.vol-good::before{background:var(--acc);opacity:.15;}
+.muscle-card.vol-over{border-color:rgba(255,140,0,.5);}
+.muscle-card.vol-over::before{background:#ff8c00;opacity:.15;}
+.muscle-card-name{font-family:'DM Mono',monospace;font-size:8px;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.muscle-card-vol{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;color:var(--tx);line-height:1;}
+.muscle-card-unit{font-family:'DM Mono',monospace;font-size:7px;color:var(--mu);}
+.muscle-card-bar{height:3px;background:var(--sur3);border-radius:2px;margin-top:6px;overflow:hidden;}
+.muscle-card-bar-fill{height:100%;border-radius:2px;transition:width .4s;}
+.muscle-card.vol-0 .muscle-card-vol{color:var(--mu);}
+.muscle-disbalance{font-family:'DM Mono',monospace;font-size:10px;padding:10px 12px;background:rgba(255,140,0,.08);border:1px solid rgba(255,140,0,.3);border-radius:var(--r);margin-top:4px;line-height:1.6;}
+.reactive-deload-btn{width:100%;margin:8px 0 4px;padding:10px;background:rgba(255,140,0,.1);border:1px solid rgba(255,140,0,.5);border-radius:var(--r);color:#ff8c00;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.5px;cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px;}
+.reactive-deload-btn:active{opacity:.7;}
+.reactive-deload-btn.activated{background:rgba(255,140,0,.2);border-color:#ff8c00;}
 .load-hint{color:var(--mu);font-size:8px;}
 .hist-btn{background:none;border:none;color:var(--mu);font-size:12px;cursor:pointer;padding:0 4px;margin-left:4px;vertical-align:middle;opacity:.7;}
 .hist-btn:hover{opacity:1;}
@@ -451,24 +495,6 @@ main{padding:16px;max-width:860px;}
 .pr-list{margin:10px 0;}
 .pr-item{background:rgba(200,255,0,.04);border:1px solid rgba(200,255,0,.15);padding:6px 10px;margin-bottom:4px;font-family:'DM Mono',monospace;font-size:9px;display:flex;align-items:center;gap:8px;border-radius:4px;}
 [data-theme="light"] .pr-item{background:rgba(0,0,0,.03);border-color:rgba(0,0,0,.12);}
-/* PR FILTER */
-.pr-filter-row{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
-.pr-filter-chip{
-  font-family:'DM Mono',monospace;font-size:8px;letter-spacing:1px;text-transform:uppercase;
-  padding:5px 10px;border-radius:var(--r);border:1px solid var(--bor);
-  background:var(--sur2);color:var(--mu);cursor:pointer;transition:all .15s;
-  -webkit-tap-highlight-color:transparent;
-}
-.pr-filter-chip.active{background:var(--acc);border-color:var(--acc);color:#000;font-weight:700;}
-[data-theme="light"] .pr-filter-chip.active{background:#111;border-color:#111;color:#fff;}
-.pr-filter-chip:active{opacity:.7;}
-/* PR Sparkline toggle */
-.pr-spark-toggle{background:none;border:none;color:var(--mu);font-size:10px;cursor:pointer;padding:0;flex-shrink:0;opacity:.7;}
-.pr-spark-toggle:hover{opacity:1;}
-.pr-spark-wrap{overflow:hidden;max-height:0;transition:max-height .3s cubic-bezier(.4,0,.2,1);}
-.pr-spark-wrap.open{max-height:60px;}
-.pr-card-top{display:flex;align-items:center;gap:8px;}
-.pr-card-meta-row{display:flex;align-items:center;gap:6px;margin:3px 0 6px;flex-wrap:wrap;}
 
 /* LEGEND */
 .ltable{width:100%;border-collapse:collapse;font-family:'DM Mono',monospace;font-size:10px;}
@@ -669,16 +695,6 @@ main{padding:16px;max-width:860px;}
 .muscle-bars-wrap{margin-top:10px;}
 .muscle-bars-hd{margin-bottom:8px;}
 .pr-list-wrap{margin-bottom:10px;}
-/* MUSCLE HEATMAP */
-.mheat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:4px;}
-.mheat-card{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);padding:10px 12px;position:relative;overflow:hidden;transition:border-color .2s;}
-.mheat-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--tx2);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;line-height:1.3;}
-.mheat-bar{height:4px;background:var(--bor);border-radius:2px;margin-bottom:5px;overflow:hidden;}
-.mheat-fill{height:100%;border-radius:2px;transition:width .6s cubic-bezier(.4,0,.2,1);}
-.mheat-val{font-family:'Barlow Condensed',sans-serif;font-size:18px;letter-spacing:1px;}
-.mheat-sub{font-family:'DM Mono',monospace;font-size:7px;color:var(--mu);margin-top:2px;}
-.mheat-disbalance{background:rgba(255,61,0,.08);border:1px solid rgba(255,61,0,.25);border-radius:var(--r);padding:8px 12px;margin-top:8px;font-family:'DM Mono',monospace;font-size:9px;color:var(--acc2);display:none;}
-.mheat-disbalance.show{display:block;}
 </style>
 </head>
 <body>
@@ -793,12 +809,6 @@ main{padding:16px;max-width:860px;}
     <h2 class="tab-h2">Bestleistungen</h2>
     <span class="pr-summary" id="prSummary"></span>
   </div>
-  <!-- Filter-Chips -->
-  <div class="pr-filter-row" id="prFilterRow">
-    <button class="pr-filter-chip active" onclick="setPRFilter('all',this)">Alle</button>
-    <button class="pr-filter-chip" onclick="setPRFilter('has_pr',this)">✓ Mit PR</button>
-    <button class="pr-filter-chip" onclick="setPRFilter('no_pr',this)">✗ Ohne PR</button>
-  </div>
   <div id="recordsList"></div>
 </div>
 
@@ -838,13 +848,11 @@ main{padding:16px;max-width:860px;}
     </div>
   </div>
 
-  <!-- MUSKEL HEATMAP -->
+  <!-- MUSCLE CARD GRID -->
   <div class="prog-tab-section">
-    <div class="prog-section-hd"><span>Muskel-Heatmap</span><span style="font-family:'DM Mono',monospace;font-size:8px;color:var(--mu);">Letzte 7 Tage</span></div>
-    <div id="muscleHeatWrap">
-      <div class="prog-no-data">Noch keine Daten der letzten 7 Tage</div>
-    </div>
-    <div class="mheat-disbalance" id="mheatDisbalance"></div>
+    <div class="prog-section-hd"><span>Muskel-Heatmap</span><span class="vol-label-sm" id="muscleHeatLabel">letzte 7 Tage</span></div>
+    <div id="muscleCardGrid"></div>
+    <div id="muscleDisbalance"></div>
   </div>
 </div>
 
@@ -1052,7 +1060,7 @@ const PLAN = [
 // ============================================================
 // STORAGE
 // ============================================================
-const SK='pb_v11_0';
+const SK='pb_v10_9';
 const APP_VERSION='V11.0';
 const BUILD_DATE='09.05.2026';
 const errorLog=[];
@@ -1103,8 +1111,8 @@ window.addEventListener('offline',()=>{
   document.body.style.borderTop='4px solid var(--acc2)';
 });
 
-// Migration: pb_v10_9 / pb_v10_8_1 / pb_v9_2 → pb_v11_0
-if(Object.keys(store).length===0){try{const old=JSON.parse(localStorage.getItem('pb_v10_9')||localStorage.getItem('pb_v10_8_1')||localStorage.getItem('pb_v9_2')||'{}');if(Object.keys(old).length>0){Object.assign(store,old);persist();}}catch(e){}}
+// Migration: pb_v10_8_1 → pb_v10_9
+if(Object.keys(store).length===0){try{const old=JSON.parse(localStorage.getItem('pb_v10_8_1')||localStorage.getItem('pb_v9_2')||'{}');if(Object.keys(old).length>0){Object.assign(store,old);persist();}}catch(e){}}
 // (alte Keys pb_v7_4 etc. werden nicht mehr importiert)
 
 function persist(){try{localStorage.setItem(SK,JSON.stringify(store));}catch(e){}}
@@ -1238,6 +1246,39 @@ function init(){
   selfCheck();
   // Auto-Sync beim Start: Sheet-Daten laden
   if(API_URL) syncAllFromSheet();
+  // Version-Check: neue Version auf GitHub?
+  setTimeout(checkForUpdate, 3000);
+}
+
+// ============================================================
+// VERSION CHECK — prüft ob neue Version auf GitHub verfügbar
+// ============================================================
+async function checkForUpdate(){
+  try{
+    // Eigene URL fetchen mit Cache-Bypass
+    const url=location.href.split('?')[0]+'?v='+Date.now();
+    const resp=await fetch(url,{cache:'no-store',headers:{'Accept':'text/html'}});
+    if(!resp.ok)return;
+    const text=await resp.text();
+    // APP_VERSION aus geladener Datei extrahieren
+    const match=text.match(/const APP_VERSION='([^']+)'/);
+    if(!match)return;
+    const remoteVersion=match[1];
+    if(remoteVersion!==APP_VERSION){
+      showUpdateBanner(remoteVersion);
+    }
+  }catch(e){/* kein Netz oder anderer Fehler — still ignorieren */}
+}
+
+function showUpdateBanner(newVersion){
+  const existing=document.getElementById('updateBanner');
+  if(existing)return;
+  const banner=document.createElement('div');
+  banner.id='updateBanner';
+  banner.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9998;background:var(--acc);color:#000;font-family:\'Space Mono\',monospace;font-size:11px;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,.4);';
+  banner.innerHTML='<span>🔄 Update verfügbar: <b>'+newVersion+'</b></span>'
+    +'<button onclick="location.reload(true)" style="background:#000;color:var(--acc);border:none;font-family:\'Bebas Neue\',sans-serif;font-size:13px;letter-spacing:1px;padding:5px 12px;border-radius:4px;cursor:pointer;">Jetzt laden</button>';
+  document.body.prepend(banner);
 }
 
 // ============================================================
@@ -1713,7 +1754,10 @@ function renderWorkout(){
   loadBW();
 
   const customDayName=store['dayname_'+C+'_'+W+'_'+D]||day.tag;
-  const fatigueChip=checkFatigueHint()?'<span class="ai-chip warn fatigue-chip">🔸 Hohe Fatigue — Deload empfohlen</span>':'';
+  const hasFatigue=checkFatigueHint();
+  const fatigueChip=hasFatigue?'<span class="ai-chip warn fatigue-chip">🔸 Hohe Fatigue — Deload empfohlen</span>':'';
+  const deloadKey='reactive_deload_'+C+'_'+W+'_'+D;
+  const isReactiveDeload=!!store[deloadKey];
 
   let html='<div class="whead">'
     +'<div class="wtitle"><span id="daylabel">'+customDayName+'</span>'
@@ -1721,6 +1765,10 @@ function renderWorkout(){
     +fatigueChip+'</div>'
     +'<div class="mtag">'+day.muscle+'</div>'
     +'</div>'
+    +(hasFatigue&&!week.isDeload?
+      '<button class="reactive-deload-btn'+(isReactiveDeload?' activated':'')+'" onclick="activateReactiveDeload()">'
+      +'⚡ '+(isReactiveDeload?'Reaktiver Deload aktiv — 60% Gewicht eingestellt':'ZNS-Limit erkannt — Deload-Session starten?')
+      +'</button>':'')
     +'<div class="prog-lbl">'+doneCount+' / '+day.exercises.length+' Übungen · '+pct+'%</div>'
     +'<div class="prog-bar"><div class="prog-fill" style="width:'+pct+'%"></div></div>';
 
@@ -1737,18 +1785,19 @@ function renderWorkout(){
     if(W>0){const pv=getD(C,W-1,D,i);const v=calc1RM(pv);if(v>0)prevOrm=v;if(pv.g1)prevG=parseFloat(pv.g1);}
     else if(C>0){const pv=getD(C-1,PLAN[C-1].weeks.length-2,D,i);const v=calc1RM(pv);if(v>0)prevOrm=v;if(pv.g1)prevG=parseFloat(pv.g1);}
 
-    // Progressionspfeil — nur wenn aktuelle Session Daten hat UND Vorwoche vorhanden
+    // Progressionspfeil
     let progArrow='',progClass='flat',progDiff='';
-    if(orm&&prevOrm&&d.g1){
+    if(orm&&prevOrm){
       const diff=Math.round((orm-prevOrm)*10)/10;
-      if(diff>0.5){progArrow='▲';progClass='up';progDiff='+'+Math.round(diff);}
-      else if(diff<-0.5){progArrow='▼';progClass='down';progDiff=''+Math.round(diff);}
+      if(diff>0){progArrow='▲';progClass='up';progDiff='+'+diff;}
+      else if(diff<0){progArrow='▼';progClass='down';progDiff=''+diff;}
       else{progArrow='►';progClass='flat';progDiff='±0';}
     }
 
-    // Deload placeholder
+    // Deload placeholder — plan-deload oder reaktiv
     let ph='kg';
-    if(week.isDeload&&prevG){ph=(Math.round(prevG*0.6*2)/2)+' kg';}
+    const rdKey='reactive_deload_'+C+'_'+W+'_'+D;
+    if((week.isDeload||store[rdKey])&&prevG){ph=(Math.round(prevG*0.6*2)/2)+' kg';}
 
     // Load Suggestion — nur wenn Vorwoche-Daten vorhanden und noch kein Gewicht eingetragen
     let loadSuggest='';
@@ -1845,7 +1894,6 @@ function toggleWarmup(i){
 
 function toggleDone(idx){
   const d=getD(C,W,D,idx);d.done=!d.done;persist();
-  haptic(d.done?20:10);
   if(d.done){
     const orm=calc1RM(d);
     if(orm){const exName=getExName(idx);const isPR=checkPR(exName,orm);if(isPR&&API_URL)savePRToSheet(exName,orm);}
@@ -2074,6 +2122,36 @@ function checkFatigueHint(){
   return rpeCount>0&&(rpeSum/rpeCount)>=9;
 }
 
+function activateReactiveDeload(){
+  const deloadKey='reactive_deload_'+C+'_'+W+'_'+D;
+  if(store[deloadKey]){
+    // Bereits aktiv — deaktivieren
+    delete store[deloadKey];
+    persist();
+    renderWorkout();
+    return;
+  }
+  // 60% Gewichte aus Vorwoche als Placeholder setzen
+  const day=PLAN[C].weeks[W].days[D];
+  day.exercises.forEach((_,i)=>{
+    let prevG=null;
+    if(W>0){const pv=getD(C,W-1,D,i);if(pv.g1)prevG=parseFloat(pv.g1);}
+    else if(C>0){const pv=getD(C-1,PLAN[C-1].weeks.length-2,D,i);if(pv.g1)prevG=parseFloat(pv.g1);}
+    if(prevG){
+      const d=getD(C,W,D,i);
+      // Nur setzen wenn noch kein Gewicht eingetragen
+      if(!d.g1){
+        const kg60=Math.round(prevG*0.6*2)/2;
+        d.g1=kg60;d.g2=kg60;d.g3=kg60;
+      }
+    }
+  });
+  store[deloadKey]=true;
+  persist();
+  renderWorkout();
+  showStatus('ok','⚡ Reaktiver Deload aktiviert — 60% Gewichte eingetragen');
+}
+
 // ============================================================
 // ÜBUNGS-SWAP
 // ============================================================
@@ -2177,94 +2255,106 @@ function renderProgress(){
   renderProgressChart();
   renderVolChart();
   renderBwChart();
-  renderMuscleHeatmap();
+  renderMuscleCards();
 }
 
-function renderMuscleHeatmap(){
-  const wrap=document.getElementById('muscleHeatWrap');
-  const disEl=document.getElementById('mheatDisbalance');
-  if(!wrap)return;
+function renderMuscleCards(){
+  const grid=document.getElementById('muscleCardGrid');
+  const disb=document.getElementById('muscleDisbalance');
+  if(!grid)return;
 
-  // Letzte 7 Tage: alle Trainingstage mit Daten sammeln
+  // Zieldefinition: optimales Wochenvolumen pro Muskel (kg × Wdh)
+  const TARGETS={
+    'Rücken':8000,'Brust':6000,'Beine':12000,
+    'Schultern':4000,'Arme':3000,'Bauch':2000,'Sonstige':3000
+  };
+
+  // Letzte 7 Tage: welche Tage fallen in diesen Zeitraum?
   const now=new Date();
+  const cutoff=new Date(now.getTime()-7*24*60*60*1000);
+  function parseDate(str){// DD.MM
+    const [d,m]=str.split('.');
+    const yr=now.getFullYear();
+    return new Date(yr,parseInt(m)-1,parseInt(d));
+  }
+
+  // Volumen pro Muskelgruppe summieren
   const muscleVol={};
-  let totalPull=0,totalPush=0;
+  const pushVol={push:0,pull:0};
 
   for(let c=0;c<PLAN.length;c++){
     for(let w=0;w<PLAN[c].weeks.length;w++){
-      for(let d=0;d<PLAN[c].weeks[w].days.length;d++){
-        const day=PLAN[c].weeks[w].days[d];
-        if(!day.date)continue;
-        // Datum parsen DD.MM
-        const [dd,mm]=day.date.split('.').map(Number);
-        const dayDate=new Date(now.getFullYear(),mm-1,dd);
-        const diffDays=(now-dayDate)/(1000*60*60*24);
-        if(diffDays<0||diffDays>7)continue;
-
+      const week=PLAN[c].weeks[w];
+      if(week.isDeload)continue;
+      for(let d=0;d<week.days.length;d++){
+        const day=week.days[d];
+        const dayDate=parseDate(day.date);
+        if(dayDate<cutoff||dayDate>now)continue;
         const muscle=(day.muscle||'Sonstige').split('/')[0].trim();
         if(!muscleVol[muscle])muscleVol[muscle]=0;
-
-        day.exercises.forEach((ex,i)=>{
+        // Push/Pull erkennen
+        const isPush=/(brust|push|schulter|trizeps)/i.test(day.muscle||'');
+        const isPull=/(rücken|pull|bizeps|row|lat)/i.test(day.muscle||'');
+        (day.exercises||[]).forEach((_,i)=>{
           const data=getD(c,w,d,i);
-          const vol=calcTotal(data)||0;
-          muscleVol[muscle]+=vol;
-          // Push/Pull tracking
-          const m=(day.muscle||'').toLowerCase();
-          if(m.includes('rücken')||m.includes('bizeps'))totalPull+=vol;
-          if(m.includes('brust')||m.includes('trizeps')||m.includes('schulter'))totalPush+=vol;
+          [[data.g1,data.r1],[data.g2,data.r2],[data.g3,data.r3]].forEach(([g,r])=>{
+            const v=(parseFloat(g)||0)*(parseFloat(r)||0);
+            muscleVol[muscle]+=v;
+            if(isPush)pushVol.push+=v;
+            if(isPull)pushVol.pull+=v;
+          });
         });
       }
     }
   }
 
-  const entries=Object.entries(muscleVol).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
-  if(!entries.length){
-    wrap.innerHTML='<div class="prog-no-data">Noch keine Daten der letzten 7 Tage</div>';
-    if(disEl)disEl.classList.remove('show');
+  // Alle Muskelgruppen aus TARGETS anzeigen
+  const muscles=Object.keys(TARGETS);
+  const hasAnyData=muscles.some(m=>muscleVol[m]>0);
+
+  if(!hasAnyData){
+    grid.innerHTML='<div class="prog-no-data">Noch keine Daten der letzten 7 Tage</div>';
+    if(disb)disb.innerHTML='';
     return;
   }
 
-  const maxVol=entries[0][1];
-  // Farbskala: 0→grau / 50%→grün / 90%→neon / >110%→orange
-  function heatColor(pct){
-    if(pct===0)return'var(--bor)';
-    if(pct>=110)return'#ff8800';
-    if(pct>=90)return'var(--acc)';
-    if(pct>=50)return'var(--ok)';
-    return'var(--acc3)';
-  }
-
-  const TARGETS={
-    'Rücken':4500,'Brust':3500,'Arme':3000,
-    'Beine':6000,'Schultern':2500,'Sonstige':2000
+  const colors={
+    'Rücken':'var(--acc3)','Brust':'var(--acc2)','Beine':'var(--ok)',
+    'Schultern':'var(--warn)','Arme':'var(--acc)','Bauch':'var(--mu)','Sonstige':'var(--mu)'
   };
 
-  wrap.innerHTML='<div class="mheat-grid">'+entries.map(([m,v])=>{
-    const target=TARGETS[m]||3000;
-    const pct=Math.round(v/target*100);
-    const col=heatColor(pct);
-    const fillW=Math.min(100,pct);
-    const vK=v>=1000?Math.round(v/100)/10+'k':Math.round(v)+'';
-    return '<div class="mheat-card" style="border-color:'+(pct>=90?col:'var(--bor)')+';">'
-      +'<div class="mheat-label">'+m+'</div>'
-      +'<div class="mheat-bar"><div class="mheat-fill" style="width:'+fillW+'%;background:'+col+';"></div></div>'
-      +'<div class="mheat-val" style="color:'+col+';">'+vK+' <span style="font-size:11px;font-weight:400;color:var(--mu);">kg</span></div>'
-      +'<div class="mheat-sub">'+pct+'% von Ziel</div>'
+  const cards=muscles.map(m=>{
+    const vol=muscleVol[m]||0;
+    const target=TARGETS[m];
+    const pct=Math.min(Math.round(vol/target*100),120);
+    const volK=vol>=1000?Math.round(vol/100)/10+'k':Math.round(vol)+'';
+    let cls='vol-0';
+    if(pct>0&&pct<50)cls='vol-low';
+    else if(pct>=50&&pct<90)cls='vol-mid';
+    else if(pct>=90&&pct<=110)cls='vol-good';
+    else if(pct>110)cls='vol-over';
+    const fillCol=pct>110?'#ff8c00':pct>=90?'var(--acc)':colors[m]||'var(--mu)';
+    return '<div class="muscle-card '+cls+'">'
+      +'<div class="muscle-card-name">'+m+'</div>'
+      +'<div class="muscle-card-vol">'+(vol>0?volK:'—')+'</div>'
+      +'<div class="muscle-card-unit">'+(vol>0?'kg · '+pct+'% Ziel':'0 diese Woche')+'</div>'
+      +'<div class="muscle-card-bar"><div class="muscle-card-bar-fill" style="width:'+Math.min(pct,100)+'%;background:'+fillCol+'"></div></div>'
       +'</div>';
-  }).join('')+'</div>';
+  }).join('');
 
-  // Push/Pull Disbalance
-  if(disEl&&totalPull>0&&totalPush>0){
-    const ratio=totalPull/totalPush;
-    if(ratio>1.4||ratio<0.7){
-      const more=ratio>1?'Pull':'Push';
-      const less=ratio>1?'Push':'Pull';
-      disEl.textContent='⚠ Push/Pull-Disbalance: '+more+' dominiert — mehr '+less+'-Volumen empfohlen';
-      disEl.classList.add('show');
-    }else{
-      disEl.classList.remove('show');
+  grid.innerHTML='<div class="muscle-grid">'+cards+'</div>';
+
+  // Disbalance-Warnung Push/Pull
+  let disbHtml='';
+  if(pushVol.push>0&&pushVol.pull>0){
+    const ratio=Math.round(pushVol.push/pushVol.pull*10)/10;
+    if(ratio>1.8){
+      disbHtml='<div class="muscle-disbalance">⚠️ <b>Disbalance erkannt:</b> Push-Volumen ist '+ratio+'× höher als Pull. Erhöhe Zug-Volumen für Schulter-Gesundheit.</div>';
+    } else if(ratio<0.6){
+      disbHtml='<div class="muscle-disbalance">⚠️ <b>Disbalance erkannt:</b> Pull-Volumen ist '+(Math.round(1/ratio*10)/10)+'× höher als Push. Balance überprüfen.</div>';
     }
   }
+  if(disb)disb.innerHTML=disbHtml;
 }
 
 function renderProgressChart(){
@@ -2523,7 +2613,12 @@ function showTab(id,btn){
   if(btn)btn.classList.add('active');
   document.getElementById('saveFooter').style.display=(id==='workout')?'block':'none';
   if(id==='progress'){initProgressTab();}
-  if(id==='records'){renderRecords();}
+  if(id==='records'){
+    renderRecords();
+    // V11.0: Auto-Sync wenn noch keine PRs lokal vorhanden
+    const hasPRs=Object.keys(store).some(k=>k.startsWith('rec_'));
+    if(!hasPRs&&API_URL)syncAllFromSheet();
+  }
   if(id==='ki'){initKiTab();}
 }
 
@@ -2656,7 +2751,6 @@ async function saveToSheet(){
       body:payload
     });
     showStatus('ok','✓ '+toSend.length+' Übung(en) gesendet! ('+day.date+')');
-    haptic(30);
     addToErrorLog('SYNC_OK','Bulk: '+toSend.length+' Übungen ('+day.date+')');
     updateLastSync();
   }catch(e){
@@ -2802,6 +2896,15 @@ function buildSparkline(exIdx, currentOrm) {
 // Zeigt alle 25 Übungen gruppiert nach Muskelgruppe
 // mit aktuellem PR, Sparkline und Edit-Möglichkeit
 // ============================================================
+// V11.0 — Nur echte Verbundübungen im Podium
+const PODIUM_COMPOUND = [
+  'Latzug-Maschine (breit)','Hammer Strength Row (eng)','ISO-Lateral Row (einarmig)',
+  'Prime Row seated','High Row Maschine',
+  'Incline Chest Press','Brustpresse (horizontal)','Chest Press (breit)',
+  'Schulterdrück-Maschine',
+  'Beinpresse (45 Grad)','Beinbeuger unilateral','Beinbeuger uni','Beinstrecker-Maschine',
+];
+
 const PR_GROUPS = [
   { label: 'Rücken / Bizeps', exercises: [
     'Latzug-Maschine (breit)', 'Hammer Strength Row (eng)', 'ISO-Lateral Row (einarmig)',
@@ -2815,30 +2918,21 @@ const PR_GROUPS = [
     'Trizeps-Dips-Maschine', 'Trizepsstrecken', 'Trizeps über Kopf (Seil)',
   ]},
   { label: 'Beine / Waden', exercises: [
-    'Beinpresse (45 Grad)', 'Beinbeuger unilateral', 'Beinstrecker-Maschine',
-    'Wadenheben stehend', 'Wadenheben (sitzend)',
-  ]},
-  { label: 'Arme / Pump', exercises: [
-    'Beinbeuger uni', 'Kabel-Seitheben',
+    'Beinpresse (45 Grad)', 'Beinbeuger unilateral', 'Beinbeuger uni',
+    'Beinstrecker-Maschine', 'Wadenheben stehend', 'Wadenheben (sitzend)',
   ]},
 ];
-
-let prFilter='all';
-function setPRFilter(f,btn){
-  prFilter=f;
-  document.querySelectorAll('.pr-filter-chip').forEach(b=>b.classList.remove('active'));
-  if(btn)btn.classList.add('active');
-  renderRecords();
-}
 
 function renderRecords() {
   const list = document.getElementById('recordsList');
   const summary = document.getElementById('prSummary');
   if (!list) return;
 
+  // Letztes bekanntes Körpergewicht holen
   let bwVal=0;
   Object.keys(store).forEach(k=>{if(k.startsWith('bw_')&&!k.startsWith('bw_date_')){const v=parseFloat(store[k]);if(v>0)bwVal=v;}});
 
+  // Relative Kraft Level (nach Ratio)
   function getRelLevel(ratio){
     if(ratio>=2.0) return {label:'PLATIN',cls:'platin'};
     if(ratio>=1.5) return {label:'GOLD',cls:'gold'};
@@ -2847,47 +2941,116 @@ function renderRecords() {
     return null;
   }
 
+  // Alle PRs sammeln + Ratio berechnen
   const allPRs = Object.keys(store).filter(k => k.startsWith('rec_'));
   const prCount = allPRs.length;
   if (summary) summary.textContent = prCount + ' PR' + (prCount !== 1 ? 's' : '') + ' gesetzt';
 
-  // Hall of Fame Podium
+  // V11.0 — Top 3 Podium (nur Compound, klassische Anordnung: Silber-Gold-Bronze)
   let hofHtml='';
   if(bwVal>0&&prCount>0){
-    const ranked=allPRs.map(k=>{
-      const name=k.replace('rec_','');
-      const rec=getRecord(name);
-      const ratio=rec?Math.round(rec.orm/bwVal*100)/100:0;
-      return{name,orm:rec?rec.orm:0,ratio};
-    }).filter(r=>r.orm>0).sort((a,b)=>b.ratio-a.ratio).slice(0,3);
+
+    // Hilfsfunktion: letztes Rohgewicht + Reps aus Trainingsdaten holen
+    function getRawSet(name){
+      for(let ci=PLAN.length-1;ci>=0;ci--){
+        for(let wi=PLAN[ci].weeks.length-1;wi>=0;wi--){
+          for(let di=0;di<PLAN[ci].weeks[wi].days.length;di++){
+            const exIdx=PLAN[ci].weeks[wi].days[di].exercises.indexOf(name);
+            if(exIdx<0)continue;
+            const d2=getD(ci,wi,di,exIdx);
+            const sets=[[d2.g1,d2.r1],[d2.g2,d2.r2],[d2.g3,d2.r3]].filter(s=>s[0]&&s[1]);
+            if(sets.length){
+              const best=sets.reduce((a,s)=>parseFloat(s[0])>parseFloat(a[0])?s:a,sets[0]);
+              return{kg:best[0],reps:best[1]};
+            }
+          }
+        }
+      }
+      return null;
+    }
+
+    const ranked=allPRs
+      .filter(k=>PODIUM_COMPOUND.includes(k.replace('rec_','')))
+      .map(k=>{
+        const name=k.replace('rec_','');
+        const rec=getRecord(name);
+        const ratio=rec?Math.round(rec.orm/bwVal*100)/100:0;
+        const raw=getRawSet(name);
+        return{name,orm:rec?rec.orm:0,ratio,date:rec?rec.date:'',raw};
+      })
+      .filter(r=>r.orm>0)
+      .sort((a,b)=>b.ratio-a.ratio)
+      .slice(0,3);
 
     if(ranked.length>0){
+      // Klassisches Podium: [Silber(1), Gold(0), Bronze(2)] — visuell höher in der Mitte
+      const podiumOrder=ranked.length===3?[ranked[1],ranked[0],ranked[2]]:ranked;
+      const podiumRank =ranked.length===3?[1,0,2]:ranked.map((_,i)=>i);
       const medals=['🥇','🥈','🥉'];
       const rankCls=['rank-1','rank-2','rank-3'];
-      const podiumOrder=[1,0,2];
-      hofHtml='<div class="hof-podium">'
-        +podiumOrder.map(i=>{
-          const r=ranked[i];
-          if(!r) return '<div></div>';
+      const levelOrder=['bronze','silver','gold','platin'];
+
+      hofHtml='<div class="hof-banner">'
+        +podiumOrder.map((r,pi)=>{
+          const origRank=podiumRank[pi];
           const lv=getRelLevel(r.ratio);
-          return '<div class="hof-card '+rankCls[i]+'">'
-            +'<span class="hof-medal">'+medals[i]+'</span>'
+
+          // 🔥 NEU Badge — PR jünger als 7 Tage
+          let isNew=false;
+          if(r.date){
+            const p=r.date.split('.');
+            if(p.length===3){
+              const prTs=new Date(+p[2],+p[1]-1,+p[0]).getTime();
+              isNew=(Date.now()-prTs)<7*24*60*60*1000;
+            }
+          }
+          const newBadge=isNew?'<span class="hof-new-badge">🔥 NEU</span>':'';
+
+          // Next-Level Tracker
+          let nextTxt='';
+          if(lv&&bwVal>0){
+            const levels=[
+              {key:'bronze',min:1.0,label:'Bronze'},
+              {key:'silver',min:1.25,label:'Silber'},
+              {key:'gold',min:1.5,label:'Gold'},
+              {key:'platin',min:2.0,label:'Platin'},
+            ];
+            const curIdx=levels.findIndex(l=>l.key===lv.cls);
+            const next=levels[curIdx+1];
+            if(next){
+              const needed=Math.ceil(next.min*bwVal*10)/10;
+              const diff=(needed-r.orm).toFixed(1);
+              if(parseFloat(diff)>0)nextTxt='<div class="hof-next">+'+diff+' kg → '+next.label+'</div>';
+            }
+          }
+
+          // Epley-Transparenz
+          const rawLine=r.raw
+            ?'<div class="hof-raw">aus '+r.raw.kg+' kg × '+r.raw.reps+'</div>'
+            :'';
+
+          return '<div class="hof-card '+rankCls[origRank]+'">'
+            +newBadge
+            +'<div class="hof-rank">'+medals[origRank]+'</div>'
             +'<div class="hof-name">'+r.name.split('(')[0].trim()+'</div>'
-            +'<div class="hof-orm">'+r.orm+'<span style="font-size:11px;font-weight:400;color:var(--mu);"> kg</span></div>'
+            +'<div class="hof-orm">'+r.orm+' kg</div>'
+            +rawLine
             +'<div class="hof-ratio">'+r.ratio+'× BW</div>'
-            +(lv?'<div class="hof-badge '+lv.cls+'">'+lv.label+'</div>':'')
+            +(lv?'<div class="hof-badge '+lv.cls+'">'+lv.label+'</div>'+nextTxt:'')
             +'</div>';
         }).join('')
         +'</div>';
     }
   }
 
+  // Sparkline-Daten
   function getOrmHistoryByName(exName) {
     const results = [];
     outer:
     for (let ci = PLAN.length - 1; ci >= 0; ci--) {
-      for (let wi = PLAN[ci].weeks.length - 1; wi >= 0; wi--) {
-        const week = PLAN[ci].weeks[wi];
+      const cyc = PLAN[ci];
+      for (let wi = cyc.weeks.length - 1; wi >= 0; wi--) {
+        const week = cyc.weeks[wi];
         if (week.isDeload) continue;
         for (let di = 0; di < week.days.length; di++) {
           const exIdx = week.days[di].exercises.indexOf(exName);
@@ -2913,7 +3076,8 @@ function renderRecords() {
     const toY  = v => PY + (1 - (v - minO) / rng) * (H - PY * 2);
     const last = hist[hist.length - 1].orm;
     const prev = hist[hist.length - 2].orm;
-    const col  = last >= prev ? 'var(--ok)' : 'var(--acc2)';
+    const up   = last >= prev;
+    const col  = up ? 'var(--ok)' : 'var(--acc2)';
     const pts  = hist.map((p,i) => toX(i).toFixed(1)+','+toY(p.orm).toFixed(1)).join(' ');
     const lx   = toX(hist.length-1), ly = toY(last);
     return '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block;overflow:visible;" shape-rendering="geometricPrecision">'
@@ -2928,65 +3092,48 @@ function renderRecords() {
   let html = hofHtml;
 
   PR_GROUPS.forEach((group, gi) => {
-    // Filter anwenden
-    const filteredEx = group.exercises.filter(e => {
-      const has = !!getRecord(e);
-      if(prFilter==='has_pr') return has;
-      if(prFilter==='no_pr') return !has;
-      return true;
-    });
-    if(filteredEx.length===0) return;
-
     const groupPRCount = group.exercises.filter(e => !!getRecord(e)).length;
     const gid = 'prg_' + gi;
     const badge = groupPRCount > 0
-      ? '<span class="pr-count-badge">'+groupPRCount+'/'+group.exercises.length+'</span>'
-      : '<span style="color:var(--mu)">'+group.exercises.length+'</span>';
-
-    html += '<div class="pr-group-title" id="'+gid+'_hdr" onclick="togglePRGroup(\''+gid+'\')">'
-      + '<span>'+group.label+'</span>'
-      + '<span class="pr-group-meta">'+badge
+      ? '<span class="pr-count-badge">' + groupPRCount + '/' + group.exercises.length + ' PRs</span>'
+      : '<span>' + group.exercises.length + ' Übungen</span>';
+    html += '<div class="pr-group-title" id="' + gid + '_hdr" onclick="togglePRGroup(\'' + gid + '\')">'
+      + '<span>' + group.label + '</span>'
+      + '<span class="pr-group-meta">' + badge
       + '<svg class="pr-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>'
       + '</span></div>';
-    html += '<div class="pr-group-body" id="'+gid+'_body">';
+    html += '<div class="pr-group-body" id="' + gid + '_body">';
 
-    filteredEx.forEach(exName => {
+    group.exercises.forEach(exName => {
       const rec  = getRecord(exName);
       const hist = getOrmHistoryByName(exName);
       const hasPR = !!rec;
       const safeId = exName.replace(/[^a-z0-9]/gi, '_');
 
+      // Relative Kraft Badge
       let relBadge='';
       if(hasPR&&bwVal>0){
         const ratio=Math.round(rec.orm/bwVal*100)/100;
         const lv=getRelLevel(ratio);
-        if(lv) relBadge=' <span class="rel-badge '+lv.cls+'">'+ratio+'× '+lv.label+'</span>';
+        if(lv) relBadge='<span class="rel-badge '+lv.cls+'">'+ratio+'× '+lv.label+'</span>';
       }
 
-      const sparkId='spark_'+safeId;
       html += '<div class="pr-card '+(hasPR?'has-pr':'no-pr')+'" id="prc_'+safeId+'">';
-      // Obere Zeile: Name + PR-Wert
-      html += '<div class="pr-card-top">';
-      html += '<div class="pr-ex-name">'+exName+'</div>';
+      html += '<div class="pr-card-head">';
+      html += '<div class="pr-ex-name">'+exName+relBadge+'</div>';
       if (hasPR) {
         html += '<div class="pr-badge">'+rec.orm+' kg</div>';
       } else {
-        html += '<div class="pr-badge no-pr">Kein PR</div>';
+        html += '<div class="pr-badge no-pr">Noch kein PR</div>';
       }
       html += '</div>';
-      // Meta-Zeile: Datum + Badge + Sparkline-Toggle
-      if(hasPR){
-        html += '<div class="pr-card-meta-row">'
-          +'<span class="pr-meta">'+rec.date+'</span>'
-          +relBadge
-          +(hist.length>=2?'<button class="pr-spark-toggle" onclick="event.stopPropagation();document.getElementById(\''+sparkId+'\').classList.toggle(\'open\')">📈</button>':'')
-          +'</div>';
-        html += '<div class="pr-spark-wrap" id="'+sparkId+'">'+buildPRSparkline(hist)+'</div>';
+      if (hasPR) {
+        html += '<div class="pr-meta">Gesetzt am '+rec.date+' · 1RM Epley-Formel</div>';
+        if (hist.length >= 2) html += buildPRSparkline(hist);
       }
-      // Edit-Zeile
       html += '<div class="pr-edit-row">'
         +'<input class="pr-edit-inp" type="number" id="pr_inp_'+safeId+'" placeholder="kg" step="0.5" min="0" value="'+(hasPR?rec.orm:'')+'">'
-        +'<button class="pr-edit-btn" onclick="savePRManual(\''+exName.replace(/'/g,"\\'")+'\')">Speichern</button>'
+        +'<button class="pr-edit-btn" onclick="savePRManual(\''+exName.replace(/'/g,"\\'")+'\')" >Speichern</button>'
         +(hasPR?'<button class="pr-del-btn" onclick="deletePR(\''+exName.replace(/'/g,"\\'")+'\')">✕</button>':'')
         +'</div>';
       html += '</div>';
@@ -2996,7 +3143,6 @@ function renderRecords() {
 
   list.innerHTML = html;
 }
-
 
 function togglePRGroup(groupId) {
   const hdr  = document.getElementById(groupId+'_hdr');
@@ -3262,35 +3408,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
-
-// ── Swipe-Geste: Links/Rechts → Tag wechseln ──────────────────
-(function(){
-  let tx=0,ty=0,swiping=false;
-  document.addEventListener('touchstart',e=>{
-    if(e.touches.length!==1)return;
-    tx=e.touches[0].clientX;
-    ty=e.touches[0].clientY;
-    swiping=true;
-  },{passive:true});
-  document.addEventListener('touchend',e=>{
-    if(!swiping)return;
-    swiping=false;
-    // Nur auf Training-Tab reagieren
-    if(!document.getElementById('tab-workout')?.classList.contains('active'))return;
-    const dx=e.changedTouches[0].clientX-tx;
-    const dy=e.changedTouches[0].clientY-ty;
-    if(Math.abs(dx)<50||Math.abs(dy)>Math.abs(dx)*0.8)return; // zu kurz oder diagonal
-    const day=PLAN[C].weeks[W];
-    if(dx<0){// Swipe links → nächster Tag
-      if(D<day.days.length-1){D++;persist();haptic();renderWorkout();}
-    }else{// Swipe rechts → vorheriger Tag
-      if(D>0){D--;persist();haptic();renderWorkout();}
-    }
-  },{passive:true});
-})();
-
-// ── Haptic Feedback ───────────────────────────────────────────
-function haptic(ms=10){try{navigator.vibrate&&navigator.vibrate(ms);}catch(e){}}
 
 document.addEventListener('visibilitychange', () => { if (!document.hidden) syncFromSheet(); });
 window.addEventListener('focus', () => syncFromSheet());
