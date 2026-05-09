@@ -1694,12 +1694,12 @@ function renderWorkout(){
     if(W>0){const pv=getD(C,W-1,D,i);const v=calc1RM(pv);if(v>0)prevOrm=v;if(pv.g1)prevG=parseFloat(pv.g1);}
     else if(C>0){const pv=getD(C-1,PLAN[C-1].weeks.length-2,D,i);const v=calc1RM(pv);if(v>0)prevOrm=v;if(pv.g1)prevG=parseFloat(pv.g1);}
 
-    // Progressionspfeil
+    // Progressionspfeil — nur wenn aktuelle Session Daten hat UND Vorwoche vorhanden
     let progArrow='',progClass='flat',progDiff='';
-    if(orm&&prevOrm){
+    if(orm&&prevOrm&&d.g1){
       const diff=Math.round((orm-prevOrm)*10)/10;
-      if(diff>0){progArrow='▲';progClass='up';progDiff='+'+diff;}
-      else if(diff<0){progArrow='▼';progClass='down';progDiff=''+diff;}
+      if(diff>0.5){progArrow='▲';progClass='up';progDiff='+'+Math.round(diff);}
+      else if(diff<-0.5){progArrow='▼';progClass='down';progDiff=''+Math.round(diff);}
       else{progArrow='►';progClass='flat';progDiff='±0';}
     }
 
