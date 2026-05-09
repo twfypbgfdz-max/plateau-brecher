@@ -194,6 +194,9 @@ main{padding:16px;max-width:860px;}
 .muscle-card-bar-fill{height:100%;border-radius:2px;transition:width .4s;}
 .muscle-card.vol-0 .muscle-card-vol{color:var(--mu);}
 .muscle-disbalance{font-family:'DM Mono',monospace;font-size:10px;padding:10px 12px;background:rgba(255,140,0,.08);border:1px solid rgba(255,140,0,.3);border-radius:var(--r);margin-top:4px;line-height:1.6;}
+.reactive-deload-btn{width:100%;margin:8px 0 4px;padding:10px;background:rgba(255,140,0,.1);border:1px solid rgba(255,140,0,.5);border-radius:var(--r);color:#ff8c00;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.5px;cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px;}
+.reactive-deload-btn:active{opacity:.7;}
+.reactive-deload-btn.activated{background:rgba(255,140,0,.2);border-color:#ff8c00;}
 .load-hint{color:var(--mu);font-size:8px;}
 .hist-btn{background:none;border:none;color:var(--mu);font-size:12px;cursor:pointer;padding:0 4px;margin-left:4px;vertical-align:middle;opacity:.7;}
 .hist-btn:hover{opacity:1;}
@@ -1731,7 +1734,10 @@ function renderWorkout(){
   loadBW();
 
   const customDayName=store['dayname_'+C+'_'+W+'_'+D]||day.tag;
-  const fatigueChip=checkFatigueHint()?'<span class="ai-chip warn fatigue-chip">🔸 Hohe Fatigue — Deload empfohlen</span>':'';
+  const hasFatigue=checkFatigueHint();
+  const fatigueChip=hasFatigue?'<span class="ai-chip warn fatigue-chip">🔸 Hohe Fatigue — Deload empfohlen</span>':'';
+  const deloadKey='reactive_deload_'+C+'_'+W+'_'+D;
+  const isReactiveDeload=!!store[deloadKey];
 
   let html='<div class="whead">'
     +'<div class="wtitle"><span id="daylabel">'+customDayName+'</span>'
@@ -1739,6 +1745,10 @@ function renderWorkout(){
     +fatigueChip+'</div>'
     +'<div class="mtag">'+day.muscle+'</div>'
     +'</div>'
+    +(hasFatigue&&!week.isDeload?
+      '<button class="reactive-deload-btn'+(isReactiveDeload?' activated':'')+'" onclick="activateReactiveDeload()">'
+      +'⚡ '+(isReactiveDeload?'Reaktiver Deload aktiv — 60% Gewicht eingestellt':'ZNS-Limit erkannt — Deload-Session starten?')
+      +'</button>':'')
     +'<div class="prog-lbl">'+doneCount+' / '+day.exercises.length+' Übungen · '+pct+'%</div>'
     +'<div class="prog-bar"><div class="prog-fill" style="width:'+pct+'%"></div></div>';
 
@@ -1764,9 +1774,10 @@ function renderWorkout(){
       else{progArrow='►';progClass='flat';progDiff='±0';}
     }
 
-    // Deload placeholder
+    // Deload placeholder — plan-deload oder reaktiv
     let ph='kg';
-    if(week.isDeload&&prevG){ph=(Math.round(prevG*0.6*2)/2)+' kg';}
+    const rdKey='reactive_deload_'+C+'_'+W+'_'+D;
+    if((week.isDeload||store[rdKey])&&prevG){ph=(Math.round(prevG*0.6*2)/2)+' kg';}
 
     // Load Suggestion — nur wenn Vorwoche-Daten vorhanden und noch kein Gewicht eingetragen
     let loadSuggest='';
@@ -2089,6 +2100,36 @@ function checkFatigueHint(){
     tempW--;
   }
   return rpeCount>0&&(rpeSum/rpeCount)>=9;
+}
+
+function activateReactiveDeload(){
+  const deloadKey='reactive_deload_'+C+'_'+W+'_'+D;
+  if(store[deloadKey]){
+    // Bereits aktiv — deaktivieren
+    delete store[deloadKey];
+    persist();
+    renderWorkout();
+    return;
+  }
+  // 60% Gewichte aus Vorwoche als Placeholder setzen
+  const day=PLAN[C].weeks[W].days[D];
+  day.exercises.forEach((_,i)=>{
+    let prevG=null;
+    if(W>0){const pv=getD(C,W-1,D,i);if(pv.g1)prevG=parseFloat(pv.g1);}
+    else if(C>0){const pv=getD(C-1,PLAN[C-1].weeks.length-2,D,i);if(pv.g1)prevG=parseFloat(pv.g1);}
+    if(prevG){
+      const d=getD(C,W,D,i);
+      // Nur setzen wenn noch kein Gewicht eingetragen
+      if(!d.g1){
+        const kg60=Math.round(prevG*0.6*2)/2;
+        d.g1=kg60;d.g2=kg60;d.g3=kg60;
+      }
+    }
+  });
+  store[deloadKey]=true;
+  persist();
+  renderWorkout();
+  showStatus('ok','⚡ Reaktiver Deload aktiviert — 60% Gewichte eingetragen');
 }
 
 // ============================================================
