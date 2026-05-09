@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#080808">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PB V11.1">
-<title>Plateau-Brecher V11.1</title>
+<meta name="apple-mobile-web-app-title" content="PB V11.2">
+<title>Plateau-Brecher V11.2</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -727,14 +727,14 @@ main{padding:16px;max-width:860px;}
 <body>
 <div class="consent-overlay" id="consentOverlay">
   <div class="consent-box">
-    <h2 class="splash-h2">SYSTEM-START V11.1</h2>
+    <h2 class="splash-h2">SYSTEM-START V11.2</h2>
     <p class="splash-p">Daten werden lokal gespeichert und via API synchronisiert. Fehler-Logging ist aktiv.</p>
     <button class="save-btn" onclick="acceptConsent()">Akzeptieren &amp; Starten</button>
   </div>
 </div>
 <header>
   <div>
-    <div class="logo">PB<span class="splash-logo-ver"> V11.1</span></div>
+    <div class="logo">PB<span class="splash-logo-ver"> V11.2</span></div>
     <span class="hbadge" id="todayBadge">Lädt…</span>
     <div class="splash-build">Build: <span id="buildDateTxt"></span></div>
   </div>
@@ -826,6 +826,7 @@ main{padding:16px;max-width:860px;}
     </div>
     <input type="file" id="importFile" class="import-file" onchange="handleImport(this)">
     <button class="test-btn" onclick="document.getElementById('importFile').click()">📥 Backup importieren</button>
+    <button class="test-btn" onclick="checkForUpdate(this)">🔄 Auf Update prüfen</button>
     <button class="test-btn btn-danger" onclick="if(this.dataset.confirm){wipeAllData();}else{this.textContent='⚠ Nochmal tippen zum Bestätigen';this.dataset.confirm='1';}">⚠ Alle Daten löschen</button>
   </div>
 </div>
@@ -841,6 +842,7 @@ main{padding:16px;max-width:860px;}
     <button class="pr-filter-chip active" onclick="setPRFilter('all',this)">Alle</button>
     <button class="pr-filter-chip" onclick="setPRFilter('has_pr',this)">✓ Mit PR</button>
     <button class="pr-filter-chip" onclick="setPRFilter('no_pr',this)">✗ Ohne PR</button>
+    <button class="pr-filter-chip" onclick="rebuildPRsFromHistory(false);renderRecords();">⟳ Neu berechnen</button>
   </div>
   <div id="recordsList"></div>
 </div>
@@ -1104,9 +1106,10 @@ const PLAN = [
 // ============================================================
 // STORAGE
 // ============================================================
-const SK='pb_v11_1';
-const APP_VERSION='V11.1';
+const SK='pb_v11_2';
+const APP_VERSION='V11.2';
 const BUILD_DATE='09.05.2026';
+const GITHUB_RAW_URL='https://raw.githubusercontent.com/twfypbgfdz-max/Plateaubrecher/main/index.html';
 const errorLog=[];
 let store={};
 try{store=JSON.parse(localStorage.getItem(SK)||'{}');}catch(e){}
@@ -1156,7 +1159,7 @@ window.addEventListener('offline',()=>{
 });
 
 // Migration: pb_v10_9 / pb_v10_8_1 / pb_v9_2 → pb_v11_0
-if(Object.keys(store).length===0){try{const old=JSON.parse(localStorage.getItem('pb_v11_0')||localStorage.getItem('pb_v10_9')||localStorage.getItem('pb_v10_8_1')||localStorage.getItem('pb_v9_2')||'{}');if(Object.keys(old).length>0){Object.assign(store,old);persist();}}catch(e){}}
+if(Object.keys(store).length===0){try{const old=JSON.parse(localStorage.getItem('pb_v11_1')||localStorage.getItem('pb_v11_0')||localStorage.getItem('pb_v10_9')||localStorage.getItem('pb_v10_8_1')||localStorage.getItem('pb_v9_2')||'{}');if(Object.keys(old).length>0){Object.assign(store,old);persist();}}catch(e){}}
 // (alte Keys pb_v7_4 etc. werden nicht mehr importiert)
 
 function persist(){try{localStorage.setItem(SK,JSON.stringify(store));}catch(e){}}
@@ -1164,6 +1167,32 @@ function getD(c,w,d,e){const k=c+'_'+w+'_'+d+'_'+e;if(!store[k])store[k]={g1:'',
 function getRecord(n){return store['rec_'+n]||null;}
 function setRecord(n,o,d){store['rec_'+n]={orm:o,date:d};persist();}
 function checkPR(n,o){const r=getRecord(n);if(!r||o>r.orm){setRecord(n,o,getCurrentDateStr());return true;}return false;}
+
+// ── PR Auto-Rebuild aus gespeicherter Trainingshistorie ───────
+function rebuildPRsFromHistory(silent=true) {
+  let updated = 0;
+  for(const key of Object.keys(store)){
+    // Keys haben Format: c_w_d_e (alles Zahlen)
+    if(!/^\d+_\d+_\d+_\d+$/.test(key)) continue;
+    const [c,w,d,e] = key.split('_').map(Number);
+    if(!PLAN[c]?.weeks[w]?.days[d]?.exercises[e]) continue;
+    const exName = PLAN[c].weeks[w].days[d].exercises[e];
+    const data = store[key];
+    if(!data?.g1) continue;
+    const orm = calc1RM(data);
+    if(!orm || orm <= 0) continue;
+    const rec = getRecord(exName);
+    if(!rec || orm > rec.orm){
+      // Datum aus PLAN ermitteln
+      const date = PLAN[c].weeks[w].days[d].date || getCurrentDateStr();
+      setRecord(exName, Math.round(orm*10)/10, date);
+      updated++;
+    }
+  }
+  if(!silent) showSetupStatus('ok','✓ '+updated+' PRs aus Historie berechnet');
+  return updated;
+}
+
 function getCurrentDateStr(){const n=new Date();return String(n.getDate()).padStart(2,'0')+'.'+String(n.getMonth()+1).padStart(2,'0');}
 
 function saveTrainingStats(){
@@ -1189,6 +1218,45 @@ function loadTrainingStats(){
 // ============================================================
 // THEME
 // ============================================================
+// ── Update-Check ─────────────────────────────────────────────
+async function checkForUpdate(btn) {
+  if(btn){ btn.textContent='Suche…'; btn.disabled=true; }
+  try {
+    const resp = await fetch(GITHUB_RAW_URL+'?cb='+Date.now(), {cache:'no-store'});
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const html = await resp.text();
+    const m = html.match(/APP_VERSION=['"]([^'"]+)['"]/);
+    const remote = m ? m[1] : null;
+    if(!remote){ showSetupStatus('warn','⚠ Version nicht lesbar'); return; }
+    if(remote === APP_VERSION){
+      showSetupStatus('ok','✓ Aktuell — '+APP_VERSION);
+    } else {
+      showSetupStatus('warn','🔄 Update verfügbar: '+remote);
+      showUpdateBanner(remote);
+    }
+  } catch(e) {
+    showSetupStatus('warn','⚠ Nicht erreichbar');
+  }
+  if(btn){ btn.textContent='Auf Update prüfen'; btn.disabled=false; }
+}
+
+function showUpdateBanner(newVer) {
+  let banner = document.getElementById('updateBanner');
+  if(!banner){
+    banner = document.createElement('div');
+    banner.id = 'updateBanner';
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:var(--acc);color:#000;font-family:"Barlow Condensed",sans-serif;font-size:14px;letter-spacing:1px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;';
+    banner.innerHTML = '<span>🔄 UPDATE VERFÜGBAR — '+newVer+'</span>'
+      +'<button onclick="doUpdate()" style="background:#000;color:var(--acc);border:none;padding:5px 12px;border-radius:4px;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">JETZT LADEN</button>';
+    document.body.prepend(banner);
+  }
+}
+
+function doUpdate() {
+  // Hard-Reload ohne Cache — localStorage bleibt erhalten
+  window.location.href = GITHUB_RAW_URL + '?cb=' + Date.now();
+}
+
 function toggleTheme(){
   const curr=document.documentElement.getAttribute('data-theme');
   const next=curr==='light'?'dark':'light';
@@ -1288,6 +1356,8 @@ function init(){
   if(store._lastSync){const el=document.getElementById('lastSyncTxt');if(el)el.textContent='Sync: '+store._lastSync;}
   renderCycleRow();renderWeekRow();renderDayRow();renderWorkout();
   selfCheck();
+  // PR-Rebuild aus Trainingshistorie (still)
+  setTimeout(()=>rebuildPRsFromHistory(true), 500);
   // Auto-Sync beim Start: Sheet-Daten laden
   if(API_URL) syncAllFromSheet();
 }
