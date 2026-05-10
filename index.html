@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#080808">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PB V11.9">
-<title>Plateau-Brecher V11.9</title>
+<meta name="apple-mobile-web-app-title" content="PB V12.0.1-test">
+<title>Plateau-Brecher V12.0.1-test</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -727,14 +727,14 @@ main{padding:16px;max-width:860px;}
 <body>
 <div class="consent-overlay" id="consentOverlay">
   <div class="consent-box">
-    <h2 class="splash-h2">SYSTEM-START V11.9</h2>
+    <h2 class="splash-h2">SYSTEM-START V12.0.1-test</h2>
     <p class="splash-p">Daten werden lokal gespeichert und via API synchronisiert. Fehler-Logging ist aktiv.</p>
     <button class="save-btn" onclick="acceptConsent()">Akzeptieren &amp; Starten</button>
   </div>
 </div>
 <header>
   <div>
-    <div class="logo">PB<span class="splash-logo-ver"> V11.9</span></div>
+    <div class="logo">PB<span class="splash-logo-ver"> V12.0.1-test</span></div>
     <span class="hbadge" id="todayBadge">Lädt…</span>
     <div class="splash-build">Build: <span id="buildDateTxt"></span></div>
   </div>
@@ -908,7 +908,7 @@ main{padding:16px;max-width:860px;}
       <button class="ki-auto-run-btn" id="kiAutoRunBtn" onclick="runAutoAnalysis()">▶ Analysieren</button>
     </div>
     <div class="ki-auto-body" id="kiAutoBody">
-      <div class="ki-auto-idle">Tippe ▶ für automatische Analyse deiner Trainingsdaten</div>
+      <div class="ki-auto-idle">▶ Lokale Analyse starten — kein API Key nötig</div>
     </div>
   </div>
 
@@ -1162,8 +1162,8 @@ const PLAN = [
 // ============================================================
 // STORAGE
 // ============================================================
-const SK='pb_v11_9';
-const APP_VERSION='V11.9.1';
+const SK='pb_v12_0_test';
+const APP_VERSION='V12.0.1-test';
 const BUILD_DATE='10.05.2026';
 const GITHUB_RAW_URL='https://raw.githubusercontent.com/twfypbgfdz-max/Plateaubrecher/main/index.html';
 const errorLog=[];
@@ -2241,13 +2241,13 @@ function editDayName(c,w,d){
 }
 
 function checkFatigueHint(){
-  // Regel 1: RPE ≥9 über 2 Wochen (bestehend)
   const m = computeLocalMetrics();
-  if(m.avgRpe >= 9) return true;
-  // Regel 2: Durchschnittlicher 1RM fällt über 2+ Wochen
-  if(m.ormTrend === 'falling' && m.avgRpe >= 8) return true;
-  // Regel 3: Mehr als 3 stagnierende Übungen
-  if(m.stagnatingCount >= 3) return true;
+  // Regel 1: RPE ≥9 — nur wenn mindestens 3 RPE-Werte vorhanden
+  if(m.avgRpe >= 9 && m.rpeCount >= 3) return true;
+  // Regel 2: 1RM fällt + RPE erhöht — nur wenn genug Daten
+  if(m.ormTrend === 'falling' && m.avgRpe >= 8 && m.rpeCount >= 3) return true;
+  // Regel 3: ≥3 stagnierende Übungen — nur wenn genug ORM-Vergleiche
+  if(m.stagnatingCount >= 3 && m.ormCompareCount >= 3) return true;
   return false;
 }
 
@@ -2256,31 +2256,33 @@ function computeLocalMetrics() {
   const result = {
     avgRpe: 0,
     rpeCount: 0,
-    rpeTrend: 'stable',   // 'rising' | 'falling' | 'stable'
-    ormTrend: 'stable',   // 'rising' | 'falling' | 'stable'
-    stagnatingCount: 0,   // Übungen ohne 1RM-Fortschritt seit 2+ Wochen
-    pushVol: 0,
-    pullVol: 0,
-    pushPullRatio: null,  // pull/push
-    volTrend: 'stable',
+    rpeTrend: 'stable',      // 'rising' | 'falling' | 'stable'
+    ormTrend: 'stable',      // 'rising' | 'falling' | 'stable'
+    ormCompareCount: 0,      // wie viele Übungen verglichen werden konnten
+    stagnatingCount: 0,      // Übungen ohne 1RM-Fortschritt
+    pushVol: 0,              // Push-Volumen nur aktuelle Woche
+    pullVol: 0,              // Pull-Volumen nur aktuelle Woche
+    pushPullRatio: null,
+    volTrend: 'stable',      // 'rising' | 'falling' | 'stable'
+    weekVolNow: 0,           // Gesamt-Volumen aktuelle Woche
+    weekVolPrev: 0,          // Gesamt-Volumen Vorwoche
+    dataBasis: 'ok',         // 'ok' | 'low' | 'none'
   };
 
-  // RPE der letzten 2 Nicht-Deload-Wochen
+  // ── RPE: letzte 2 Nicht-Deload-Wochen ─────────────────────
   let rpeW1=[], rpeW2=[];
   let tempW=W, tempC=C, weeksFound=0;
   while(weeksFound<2){
-    if(tempW<0){tempC--;if(tempC<0)break;tempW=PLAN[tempC]?.weeks.length-1||0;}
+    if(tempW<0){tempC--;if(tempC<0)break;tempW=(PLAN[tempC]?.weeks.length||1)-1;}
     const week=PLAN[tempC]?.weeks[tempW];
     if(!week){tempW--;continue;}
     if(!week.isDeload){
       week.days.forEach((day,di)=>{
         day.exercises.forEach((_,ei)=>{
           const d=getD(tempC,tempW,di,ei);
-          if(d.rpe){
-            const v=parseFloat(d.rpe);
-            if(weeksFound===0) rpeW1.push(v);
-            else rpeW2.push(v);
-          }
+          if(d.rpe){const v=parseFloat(d.rpe);if(!isNaN(v)){
+            if(weeksFound===0) rpeW1.push(v); else rpeW2.push(v);
+          }}
         });
       });
       weeksFound++;
@@ -2289,56 +2291,108 @@ function computeLocalMetrics() {
   }
   const avgW1=rpeW1.length?rpeW1.reduce((a,b)=>a+b,0)/rpeW1.length:0;
   const avgW2=rpeW2.length?rpeW2.reduce((a,b)=>a+b,0)/rpeW2.length:0;
-  result.avgRpe=avgW1;
+  result.avgRpe=Math.round(avgW1*10)/10;
   result.rpeCount=rpeW1.length;
   if(avgW1>0&&avgW2>0){
     result.rpeTrend=avgW1>avgW2+0.5?'rising':avgW1<avgW2-0.5?'falling':'stable';
   }
 
-  // Stagnations-Score: Übungen ohne 1RM-Verbesserung über 2 Wochen
-  let stagCount=0;
+  // ── Stagnation + ORM-Trend: über Übungsname, defensiv ────
+  // currOrm: NUR aus dem aktuell ausgewählten Training (C/W/D)
+  // prevOrm: rückwärts durch frühere Einträge, aktueller Tag ausgeschlossen
   const day=PLAN[C]?.weeks[W]?.days[D];
+  let ormNow=0, ormOld=0, ormCount=0, stagCount=0;
   if(day){
-    day.exercises.forEach((ex,i)=>{
-      const curr=calc1RM(getD(C,W,D,i));
-      if(!curr) return;
-      let prevOrm=0;
-      if(W>1){prevOrm=calc1RM(getD(C,W-2,D,i))||0;}
-      else if(C>0){prevOrm=calc1RM(getD(C-1,PLAN[C-1].weeks.length-2,D,i))||0;}
-      if(prevOrm>0&&curr<=prevOrm) stagCount++;
+    day.exercises.forEach((exName)=>{
+      // Schritt 1: aktuellen Wert nur aus C/W/D holen
+      const exIdxCurrent = day.exercises.indexOf(exName);
+      const currData = getD(C, W, D, exIdxCurrent);
+      const currOrm = calc1RM(currData);
+      if(!currOrm) return; // kein aktueller Wert → kein Vergleich
+
+      // Schritt 2: Vergleichswert rückwärts suchen
+      // Startpunkt: aktueller Tag - 1 (nicht aktuellen Tag selbst nehmen)
+      // Innerhalb gleicher Woche: nur frühere Tage (di < D)
+      let prevOrm = 0;
+      outer2:
+      for(let ci=C; ci>=0; ci--){
+        const weeks = PLAN[ci].weeks;
+        const startW = (ci===C) ? W : weeks.length-1;
+        for(let wi=startW; wi>=0; wi--){
+          if(PLAN[ci].weeks[wi]?.isDeload) continue;
+          const days = PLAN[ci].weeks[wi].days;
+          // In gleicher Woche nur Tage vor D, in früheren Wochen alle Tage
+          const startDi = (ci===C && wi===W) ? D-1 : days.length-1;
+          if(startDi < 0) continue;
+          for(let di=startDi; di>=0; di--){
+            const idx = days[di].exercises.indexOf(exName);
+            if(idx < 0) continue;
+            const d = getD(ci, wi, di, idx);
+            const orm = calc1RM(d);
+            if(!orm) continue;
+            prevOrm = orm;
+            break outer2;
+          }
+        }
+      }
+
+      if(prevOrm > 0){
+        ormNow += currOrm; ormOld += prevOrm; ormCount++;
+        if(currOrm <= prevOrm) stagCount++;
+      }
     });
   }
   result.stagnatingCount=stagCount;
+  result.ormCompareCount=ormCount;
+  if(ormCount>=2){
+    const avgNow=ormNow/ormCount, avgOld=ormOld/ormCount;
+    result.ormTrend=avgNow>avgOld+1?'rising':avgNow<avgOld-1?'falling':'stable';
+  }
 
-  // ORM-Trend: Vergleich aktuell vs. vor 2 Wochen (gesamt)
-  let ormNow=0,ormOld=0,ormCount=0;
-  if(day){
-    day.exercises.forEach((ex,i)=>{
-      const c1=calc1RM(getD(C,W,D,i));
-      let c2=0;
-      if(W>=2) c2=calc1RM(getD(C,W-2,D,i))||0;
-      else if(C>0) c2=calc1RM(getD(C-1,PLAN[C-1].weeks.length-2,D,i))||0;
-      if(c1&&c2){ormNow+=c1;ormOld+=c2;ormCount++;}
+  // ── Push/Pull + Volumen: nur aktuelle Woche ────────────────
+  const curWeek=PLAN[C]?.weeks[W];
+  if(curWeek){
+    curWeek.days.forEach((d2,di)=>{
+      const m2=(d2.muscle||'').toLowerCase();
+      let dayVol=0;
+      d2.exercises.forEach((_,ei)=>{
+        const vol=calcTotal(getD(C,W,di,ei))||0;
+        dayVol+=vol;
+        if(m2.includes('rücken')||m2.includes('bizeps'))result.pullVol+=vol;
+        if(m2.includes('brust')||m2.includes('trizeps')||m2.includes('schulter'))result.pushVol+=vol;
+      });
+      result.weekVolNow+=dayVol;
     });
   }
-  if(ormCount>0){
-    result.ormTrend=ormNow/ormCount>ormOld/ormCount+1?'rising':ormNow/ormCount<ormOld/ormCount-1?'falling':'stable';
-  }
+  if(result.pushVol>0) result.pushPullRatio=Math.round(result.pullVol/result.pushVol*100)/100;
 
-  // Push/Pull Volumen (letzte Woche)
-  for(let c2=0;c2<PLAN.length;c2++){
-    for(let w2=0;w2<PLAN[c2].weeks.length;w2++){
-      PLAN[c2].weeks[w2].days.forEach((d2,di)=>{
-        const m2=(d2.muscle||'').toLowerCase();
+  // ── Vorwoche Volumen für volTrend ──────────────────────────
+  // Finde letzte Nicht-Deload-Woche vor aktueller
+  let prevC=C, prevW=W-1;
+  while(true){
+    if(prevW<0){prevC--;if(prevC<0)break;prevW=(PLAN[prevC]?.weeks.length||1)-1;}
+    const wk=PLAN[prevC]?.weeks[prevW];
+    if(!wk){prevW--;continue;}
+    if(!wk.isDeload){
+      wk.days.forEach((d2,di)=>{
         d2.exercises.forEach((_,ei)=>{
-          const vol=calcTotal(getD(c2,w2,di,ei))||0;
-          if(m2.includes('rücken')||m2.includes('bizeps'))result.pullVol+=vol;
-          if(m2.includes('brust')||m2.includes('trizeps')||m2.includes('schulter'))result.pushVol+=vol;
+          result.weekVolPrev+=calcTotal(getD(prevC,prevW,di,ei))||0;
         });
       });
+      break;
     }
+    prevW--;
   }
-  if(result.pushVol>0)result.pushPullRatio=Math.round(result.pullVol/result.pushVol*100)/100;
+  if(result.weekVolNow>0&&result.weekVolPrev>0){
+    const diff=result.weekVolNow-result.weekVolPrev;
+    const pct=diff/result.weekVolPrev;
+    result.volTrend=pct>0.1?'rising':pct<-0.1?'falling':'stable';
+  }
+
+  // ── Datenbasis bewerten ────────────────────────────────────
+  if(result.rpeCount===0&&ormCount===0) result.dataBasis='none';
+  else if(result.rpeCount<3&&ormCount<2) result.dataBasis='low';
+  else result.dataBasis='ok';
 
   return result;
 }
@@ -2349,39 +2403,60 @@ function computeLocalMetrics() {
 function calcDeloadSignal() {
   const m = computeLocalMetrics();
 
-  // Letzten Deload finden — wie viele Nicht-Deload-Wochen seitdem?
-  let weeksSinceDeload = 0;
+  // Letzten Deload finden
+  let weeksSinceDeload = 0, wsdReliable = false;
   let tempC = C, tempW = W, searching = true;
-  while(searching) {
+  while(searching){
     if(tempW < 0){ tempC--; if(tempC < 0) break; tempW = (PLAN[tempC]?.weeks.length||1) - 1; }
     const wk = PLAN[tempC]?.weeks[tempW];
     if(!wk){ tempW--; continue; }
-    if(wk.isDeload){ searching = false; break; }
+    if(wk.isDeload){ wsdReliable = true; searching = false; break; }
     weeksSinceDeload++;
     tempW--;
     if(weeksSinceDeload > 12) break;
   }
 
   // In Deload-Woche → kein Signal
-  if(PLAN[C]?.weeks[W]?.isDeload) return { type:'none', level:0, reasons:[] };
+  if(PLAN[C]?.weeks[W]?.isDeload) return { type:'none', level:0, reasons:[], dataBasis: m.dataBasis };
 
-  // Score
+  // Datenbasis-Guard: bei 'none' → kein Signal
+  if(m.dataBasis === 'none') return { type:'none', level:0, reasons:['Keine Trainingsdaten vorhanden'], dataBasis:'none' };
+
   let score = 0;
   const reasons = [];
+  const lowData = m.dataBasis === 'low';
 
-  if(m.avgRpe >= 9 && m.rpeCount >= 3){ score+=3; reasons.push('RPE Ø '+m.avgRpe.toFixed(1)+' — sehr hoch'); }
-  else if(m.avgRpe >= 8 && m.rpeCount >= 3){ score+=1; reasons.push('RPE Ø '+m.avgRpe.toFixed(1)); }
+  // RPE — nur wenn genug Daten
+  if(m.rpeCount >= 3){
+    if(m.avgRpe >= 9){ score+=3; reasons.push('RPE Ø '+m.avgRpe+' — sehr hoch'); }
+    else if(m.avgRpe >= 8){ score+=1; reasons.push('RPE Ø '+m.avgRpe); }
+  } else if(m.rpeCount >= 1 && m.avgRpe >= 9){
+    score+=1; reasons.push('RPE Ø '+m.avgRpe+' (wenig Daten)');
+  }
 
-  if(m.rpeTrend === 'rising'){ score+=2; reasons.push('RPE-Trend steigend'); }
+  // RPE-Trend — nur wenn beide Wochen Daten hatten
+  if(!lowData && m.rpeTrend === 'rising'){ score+=2; reasons.push('RPE-Trend steigend'); }
 
-  if(m.ormTrend === 'falling'){ score+=2; reasons.push('1RM fallend'); }
-  else if(m.ormTrend === 'stable' && m.avgRpe >= 8){ score+=1; reasons.push('1RM stagniert trotz hoher RPE'); }
+  // ORM-Trend — nur wenn mindestens 2 Übungen verglichen
+  if(m.ormCompareCount >= 2){
+    if(m.ormTrend === 'falling'){ score+=2; reasons.push('1RM fallend ('+m.ormCompareCount+' Übungen)'); }
+    else if(m.ormTrend === 'stable' && m.avgRpe >= 8){ score+=1; reasons.push('1RM stagniert trotz hoher RPE'); }
+  }
 
-  if(m.stagnatingCount >= 4){ score+=2; reasons.push(m.stagnatingCount+' Übungen stagnieren'); }
-  else if(m.stagnatingCount >= 2){ score+=1; reasons.push(m.stagnatingCount+' Übungen stagnieren'); }
+  // Stagnation — nur wenn genug Vergleiche
+  if(m.ormCompareCount >= 2){
+    if(m.stagnatingCount >= 4){ score+=2; reasons.push(m.stagnatingCount+' Übungen stagnieren'); }
+    else if(m.stagnatingCount >= 2){ score+=1; reasons.push(m.stagnatingCount+' Übungen stagnieren'); }
+  }
 
-  if(weeksSinceDeload >= 5){ score+=2; reasons.push(weeksSinceDeload+' Wo. seit letztem Deload'); }
-  else if(weeksSinceDeload >= 4){ score+=1; reasons.push(weeksSinceDeload+' Wo. seit letztem Deload'); }
+  // Wochen seit Deload — nur wenn zuverlässig ermittelt
+  if(wsdReliable){
+    if(weeksSinceDeload >= 5){ score+=2; reasons.push(weeksSinceDeload+' Wo. seit letztem Deload'); }
+    else if(weeksSinceDeload >= 4){ score+=1; reasons.push(weeksSinceDeload+' Wo. seit letztem Deload'); }
+  }
+
+  // Bei wenig Datenbasis Score kappen
+  if(lowData) score = Math.min(score, 2);
 
   let type, level;
   if(score === 0){ type='none'; level=0; }
@@ -2389,11 +2464,143 @@ function calcDeloadSignal() {
   else if(score <= 4){ type='moderate'; level=2; }
   else { type='strong'; level=3; }
 
-  return { type, level, score, reasons, weeksSinceDeload };
+  return { type, level, score, reasons, weeksSinceDeload, dataBasis: m.dataBasis };
 }
 
-// ============================================================
-// ÜBUNGS-SWAP
+// ── PB Analyse Engine ─────────────────────────────────────────
+// Dünne Schicht über bestehenden Funktionen — erzeugt findings[]
+// Läuft komplett lokal, kein API-Key nötig
+function buildPbAnalysisEngine() {
+  const findings = [];
+  const m = computeLocalMetrics();
+  const ds = calcDeloadSignal();
+
+  // Guard: keine Daten → ein Info-Finding
+  if(m.dataBasis === 'none'){
+    findings.push({
+      category: 'info',
+      level: 'info',
+      title: 'Noch keine Trainingsdaten',
+      text: 'Trag erste Sätze ein — dann erscheint hier die Analyse.',
+      evidence: {}
+    });
+    return findings;
+  }
+
+  // ── FATIGUE ──────────────────────────────────────────────
+  if(m.avgRpe >= 9 && m.rpeCount >= 3){
+    findings.push({ category:'fatigue', level:'alert',
+      title:'Hohe Fatigue',
+      text:'RPE Ø '+m.avgRpe+' über '+m.rpeCount+' Einheiten — Erholung prüfen.',
+      evidence:{ avgRpe:m.avgRpe, rpeCount:m.rpeCount }
+    });
+  } else if(m.avgRpe >= 8 && m.rpeCount >= 3){
+    findings.push({ category:'fatigue', level:'warn',
+      title:'Erhöhte Belastung',
+      text:'RPE Ø '+m.avgRpe+' — weiter beobachten.',
+      evidence:{ avgRpe:m.avgRpe, rpeCount:m.rpeCount }
+    });
+  } else if(m.rpeCount >= 3){
+    findings.push({ category:'fatigue', level:'ok',
+      title:'Fatigue normal',
+      text:'RPE Ø '+m.avgRpe+' — Belastung im grünen Bereich.',
+      evidence:{ avgRpe:m.avgRpe }
+    });
+  }
+
+  // ── RPE-TREND ────────────────────────────────────────────
+  if(m.rpeTrend === 'rising' && m.rpeCount >= 3){
+    findings.push({ category:'recovery', level:'warn',
+      title:'RPE steigt',
+      text:'Anstrengung wächst ohne entsprechende Leistungssteigerung.',
+      evidence:{ rpeTrend:m.rpeTrend }
+    });
+  }
+
+  // ── PROGRESS / PLATEAU ───────────────────────────────────
+  if(m.ormCompareCount >= 2){
+    if(m.ormTrend === 'rising'){
+      findings.push({ category:'progress', level:'ok',
+        title:'Fortschritt sichtbar',
+        text:'1RM steigt bei '+m.ormCompareCount+' verglichenen Übungen.',
+        evidence:{ ormTrend:m.ormTrend, ormCompareCount:m.ormCompareCount }
+      });
+    } else if(m.ormTrend === 'falling'){
+      findings.push({ category:'progress', level:'warn',
+        title:'1RM rückläufig',
+        text:'Leistung fällt bei mehreren Übungen — Deload oder mehr Erholung prüfen.',
+        evidence:{ ormTrend:m.ormTrend, stagnatingCount:m.stagnatingCount }
+      });
+    } else if(m.stagnatingCount >= 3){
+      findings.push({ category:'progress', level:'warn',
+        title:'Plateau bei '+m.stagnatingCount+' Übungen',
+        text:'Kein 1RM-Fortschritt seit letztem Vergleich.',
+        evidence:{ stagnatingCount:m.stagnatingCount }
+      });
+    }
+  }
+
+  // ── VOLUMEN ──────────────────────────────────────────────
+  if(m.weekVolNow > 0 && m.weekVolPrev > 0){
+    if(m.volTrend === 'rising'){
+      findings.push({ category:'volume', level:'info',
+        title:'Volumen steigt',
+        text:'Aktuelle Woche: '+Math.round(m.weekVolNow)+'kg vs. Vorwoche: '+Math.round(m.weekVolPrev)+'kg.',
+        evidence:{ weekVolNow:m.weekVolNow, weekVolPrev:m.weekVolPrev }
+      });
+    } else if(m.volTrend === 'falling'){
+      findings.push({ category:'volume', level:'info',
+        title:'Volumen sinkt',
+        text:'Aktuelle Woche: '+Math.round(m.weekVolNow)+'kg vs. Vorwoche: '+Math.round(m.weekVolPrev)+'kg.',
+        evidence:{ weekVolNow:m.weekVolNow, weekVolPrev:m.weekVolPrev }
+      });
+    }
+  }
+
+  // ── PUSH/PULL ────────────────────────────────────────────
+  if(m.pushPullRatio !== null && m.pushVol > 0 && m.pullVol > 0){
+    if(m.pushPullRatio > 1.5){
+      findings.push({ category:'volume', level:'warn',
+        title:'Pull dominiert',
+        text:'Pull/Push-Ratio '+m.pushPullRatio+'× — mehr Push-Volumen in Betracht ziehen.',
+        evidence:{ pushPullRatio:m.pushPullRatio, pullVol:Math.round(m.pullVol), pushVol:Math.round(m.pushVol) }
+      });
+    } else if(m.pushPullRatio < 0.7){
+      findings.push({ category:'volume', level:'warn',
+        title:'Push dominiert',
+        text:'Pull/Push-Ratio '+m.pushPullRatio+'× — mehr Pull-Volumen in Betracht ziehen.',
+        evidence:{ pushPullRatio:m.pushPullRatio }
+      });
+    }
+  }
+
+  // ── DELOAD ───────────────────────────────────────────────
+  if(ds.level >= 3){
+    findings.push({ category:'deload', level:'alert',
+      title:'Deload empfohlen',
+      text:ds.reasons.join(' · '),
+      evidence:{ score:ds.score, weeksSinceDeload:ds.weeksSinceDeload }
+    });
+  } else if(ds.level === 2){
+    findings.push({ category:'deload', level:'warn',
+      title:'Leichtes Deload-Signal',
+      text:ds.reasons.join(' · '),
+      evidence:{ score:ds.score }
+    });
+  }
+
+  // Wenn kein einziges Finding → positives Summary
+  if(findings.length === 0){
+    findings.push({ category:'info', level:'ok',
+      title:'Alles im grünen Bereich',
+      text:'Keine Auffälligkeiten in Fatigue, Volumen oder Progression.',
+      evidence:{}
+    });
+  }
+
+  return findings;
+}
+
 // ============================================================
 let _swapIdx=null;
 
@@ -3576,52 +3783,69 @@ async function runAutoAnalysis() {
   const body = document.getElementById('kiAutoBody');
   if (!btn || !body) return;
 
+  btn.disabled = true;
+  btn.textContent = '⏳';
+
+  // ── Schritt 1: Lokale Findings sofort anzeigen ─────────────
+  const findings = buildPbAnalysisEngine();
+  const levelIcon = { ok:'✓', info:'→', warn:'⚠', alert:'🔴' };
+  const levelCls  = { ok:'ok', info:'', warn:'warn', alert:'alert' };
+
+  body.innerHTML = findings.map(f => {
+    const icon = levelIcon[f.level] || '→';
+    const cls  = levelCls[f.level]  || '';
+    return '<div class="ki-finding '+cls+'">'
+      +'<span class="ki-finding-icon">'+icon+'</span>'
+      +'<span class="ki-finding-text"><b>'+f.title+'</b>'
+      +(f.text ? ': '+f.text : '')+'</span>'
+      +'</div>';
+  }).join('');
+
+  // ── Schritt 2: Groq optional — formuliert Findings um ──────
   if (!store._aiKey) {
-    body.innerHTML = '<div class="ki-auto-idle">⚠ Groq API Key fehlt — bitte im Setup eintragen</div>';
+    btn.disabled = false;
+    btn.textContent = '▶ Neu analysieren';
     return;
   }
 
-  btn.disabled = true;
-  btn.textContent = '⏳';
-  body.innerHTML = '<div class="ki-auto-idle"><div class="spinner" style="display:inline-block;margin-right:6px;"></div>Analysiere Trainingsdaten…</div>';
-
-  const prompt = 'Analysiere folgende Trainingsdaten und gib exakt 3-5 Findings aus:\n\n' + buildKiContext();
+  // Groq-Spinner als letztes Finding anhängen
+  const groqRow = document.createElement('div');
+  groqRow.className = 'ki-finding';
+  groqRow.id = 'groqRow';
+  groqRow.innerHTML = '<span class="ki-finding-icon"><div class="spinner" style="display:inline-block;width:12px;height:12px;"></div></span>'
+    +'<span class="ki-finding-text" style="color:var(--mu);">Groq interpretiert…</span>';
+  body.appendChild(groqRow);
 
   try {
+    const localSummary = findings.map(f => '['+f.level.toUpperCase()+'] '+f.title+': '+f.text).join('\n');
+    const prompt = 'Lokale Analyse-Ergebnisse:\n'+localSummary+'\n\nTrainingsdaten:\n'+buildKiContext()
+      +'\n\nFormuliere die obigen Findings kurz und konkret um. Keine neuen Diagnosen. Max 5 Zeilen.';
+
     const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+store._aiKey},
-      body:JSON.stringify({model:'llama-3.1-8b-instant',max_tokens:400,messages:[
-        {role:'system',content:KI_SYSTEM_PROMPT},
-        {role:'user',content:prompt}
+      body:JSON.stringify({model:'llama-3.1-8b-instant', max_tokens:300, messages:[
+        {role:'system', content:KI_SYSTEM_PROMPT},
+        {role:'user',   content:prompt}
       ]})
     });
     if(!resp.ok) throw new Error('Groq '+resp.status);
     const data = await resp.json();
-    const result = data.choices?.[0]?.message?.content || '';
+    const groqText = data.choices?.[0]?.message?.content || '';
 
-    const lines = result.split('\n').map(l=>l.trim()).filter(l=>l.length>5);
-    if(lines.length===0){ body.innerHTML='<div class="ki-auto-idle">Keine Findings generiert</div>'; return; }
-
-    body.innerHTML = lines.map(line=>{
-      let cls='', icon='→';
-      if(line.startsWith('⚠')){cls='warn';icon='⚠';}
-      else if(line.startsWith('✓')){cls='ok';icon='✓';}
-      else if(line.startsWith('🔴')){cls='alert';icon='🔴';}
-      const text = line.replace(/^[⚠✓🔴→]\s*/,'');
-      const parts = text.split(':');
-      const cat = parts[0]||'';
-      const msg = parts.slice(1).join(':').trim();
-      return '<div class="ki-finding '+cls+'">'
-        +'<span class="ki-finding-icon">'+icon+'</span>'
-        +'<span class="ki-finding-text"><b>'+cat+'</b>'+(msg?': '+msg:'')+'</span>'
-        +'</div>';
-    }).join('');
+    // Groq-Zeile ersetzen durch Ergebnis
+    const groqFinal = document.getElementById('groqRow');
+    if(groqFinal) groqFinal.outerHTML = '<div class="ki-finding" style="border-top:1px solid var(--bor);margin-top:4px;padding-top:8px;">'
+      +'<span class="ki-finding-icon">⚡</span>'
+      +'<span class="ki-finding-text" style="color:var(--mu);">'+groqText.replace(/\n/g,'<br>')+'</span>'
+      +'</div>';
 
   } catch(e) {
-    body.innerHTML = '<div class="ki-auto-idle">⚠ Fehler: '+e.message+'</div>';
+    const groqFinal = document.getElementById('groqRow');
+    if(groqFinal) groqFinal.remove();
     addToErrorLog('KI_AUTO_ERROR', e.message);
   }
+
   btn.disabled = false;
   btn.textContent = '▶ Neu analysieren';
 }
