@@ -979,117 +979,173 @@ main{padding:16px;max-width:860px;}
 // ============================================================
 // APPS SCRIPT CODE
 // ============================================================
-const SCRIPT_CODE = [
-  "// PLATEAU-BRECHER V11.7 — Google Apps Script",
-  "const SHEET_ID = '1NA5OUomzaSFSw6_VzdJ6U7FaD1bU0qTEsQCtIneJ1JI';",
-  "",
-  "function doPost(e) {",
-  "  const lock = LockService.getScriptLock();",
-  "  lock.tryLock(10000);",
-  "  try {",
-  "    const data = JSON.parse(e.postData.contents);",
-  "    const type = (data.type || '').toLowerCase();",
-  "",
-  "    // ── type:'log' → Fehlerprotokoll ──────────────────────────────",
-  "    if (type === 'log') {",
-  "      logError('APP LOG: ' + (data.type_detail || 'INFO'), data.msg || '', JSON.stringify(data).substring(0, 400));",
-  "      return ContentService.createTextOutput('{\"success\":true}').setMimeType(ContentService.MimeType.JSON);",
-  "    }",
-  "",
-  "    // ── type:'pr' → Bestleistungen ────────────────────────────────",
-  "    if (type === 'pr') {",
-  "      updatePersonalBest(data.exercise, data.orm, data.date);",
-  "      logError('PR_UPDATE', data.exercise + ' → ' + data.orm + ' kg', data.date || '');",
-  "      return ContentService.createTextOutput('{\"success\":true}').setMimeType(ContentService.MimeType.JSON);",
-  "    }",
-  "",
-  "    // ── type:'training' oder leer → Bulk-Upload ───────────────────",
-  "    const ss = SpreadsheetApp.openById(SHEET_ID);",
-  "    const entries = Array.isArray(data.exercises) ? data.exercises : [data];",
-  "    const sheetName = data.sheet || (entries[0] && entries[0].sheet);",
-  "    const sheet = ss.getSheetByName(sheetName);",
-  "    if (!sheet) throw new Error('Sheet nicht gefunden: ' + sheetName);",
-  "    const values = sheet.getRange(1, 1, sheet.getLastRow(), 22).getValues();",
-  "    let updated = 0;",
-  "    for (const entry of entries) {",
-  "      for (let r = 3; r < values.length; r++) {",
-  "        const rowDate = String(values[r][1]).trim();",
-  "        const rowEx   = String(values[r][4]).trim();",
-  "        if (rowDate === entry.date && rowEx.toLowerCase() === entry.uebung.toLowerCase()) {",
-  "          const sr = r + 1;",
-  "          if (entry.kg)       sheet.getRange(sr, 3).setValue(parseNum(entry.kg));",
-  "          const sets = [[parseNum(entry.g1), parseNum(entry.r1), parseNum(entry.g2), parseNum(entry.r2), parseNum(entry.g3), parseNum(entry.r3)]];",
-  "          sheet.getRange(sr, 7, 1, 6).setValues(sets);",
-  "          if (entry.rpe)      sheet.getRange(sr, 15).setValue(parseNum(entry.rpe));",
-  "          if (entry.notes !== undefined && entry.notes !== '') sheet.getRange(sr, 19).setValue(String(entry.notes));",
-  "          if (entry.kcal)     sheet.getRange(sr, 20).setValue(parseNum(entry.kcal));",
-  "          if (entry.bpm)      sheet.getRange(sr, 21).setValue(parseNum(entry.bpm));",
-  "          if (entry.duration) sheet.getRange(sr, 22).setValue(parseNum(entry.duration));",
-  "          const maxG = Math.max(parseNum(entry.g1), parseNum(entry.g2), parseNum(entry.g3));",
-  "          updatePersonalBest(entry.uebung, maxG, entry.date);",
-  "          updated++; break;",
-  "        }",
-  "      }",
-  "    }",
-  "    logError('SYNC_OK', 'Bulk: ' + updated + '/' + entries.length + ' gespeichert', data.date || '');",
-  "    return ContentService.createTextOutput(JSON.stringify({",
-  "      success: updated > 0, updated: updated, total: entries.length",
-  "    })).setMimeType(ContentService.MimeType.JSON);",
-  "",
-  "  } catch (err) {",
-  "    logError('API POST', err.toString(), e.postData ? e.postData.contents.substring(0, 200) : 'Kein Inhalt');",
-  "    return ContentService.createTextOutput(JSON.stringify({success: false, error: err.toString()})).setMimeType(ContentService.MimeType.JSON);",
-  "  } finally {",
-  "    lock.releaseLock();",
-  "  }",
-  "}",
-  "",
-  "function doGet(e) {",
-  "  try {",
-  "    const ss = SpreadsheetApp.openById(SHEET_ID);",
-  "    if (e.parameter.action === 'getPlan') {",
-  "      const sheet = ss.getSheetByName(e.parameter.sheet);",
-  "      if (!sheet) {",
-  "        logError('API GET', 'Sheet nicht gefunden', e.parameter.sheet);",
-  "        return ContentService.createTextOutput('Fehler: Blatt nicht gefunden.').setMimeType(ContentService.MimeType.TEXT);",
-  "      }",
-  "      const data = sheet.getRange(4, 1, sheet.getLastRow() - 3, 22).getValues();",
-  "      return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);",
-  "    }",
-  "    return ContentService.createTextOutput('API aktiv - V9.1').setMimeType(ContentService.MimeType.TEXT);",
-  "  } catch (err) {",
-  "    logError('API GET KRITISCH', err.toString(), JSON.stringify(e.parameter));",
-  "    return ContentService.createTextOutput('Fehler: ' + err.toString()).setMimeType(ContentService.MimeType.TEXT);",
-  "  }",
-  "}",
-  "",
-  "function updatePersonalBest(uebung, gewicht, datum) {",
-  "  if (!gewicht || gewicht <= 0) return;",
-  "  const pbSheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName('Bestleistungen');",
-  "  if (!pbSheet) return;",
-  "  const data = pbSheet.getDataRange().getValues();",
-  "  for (let i = 4; i < data.length; i++) {",
-  "    if (String(data[i][0]).trim().toLowerCase() === String(uebung).toLowerCase()) {",
-  "      if (parseFloat(gewicht) >= (parseFloat(data[i][1]) || 0)) {",
-  "        pbSheet.getRange(i + 1, 2).setValue(gewicht);",
-  "        pbSheet.getRange(i + 1, 5).setValue(datum);",
-  "        pbSheet.getRange(i + 1, 7).setValue('App-Update V9.1');",
-  "      }",
-  "      return;",
-  "    }",
-  "  }",
-  "}",
-  "",
-  "function parseNum(val) {",
-  "  if (typeof val === 'string') return parseFloat(val.replace(',', '.')) || 0;",
-  "  return parseFloat(val) || 0;",
-  "}",
-  "",
-  "function logError(typ, nachricht, details) {",
-  "  const logSheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName('Fehlerprotokoll');",
-  "  if (logSheet) logSheet.appendRow([new Date(), typ, nachricht, String(details).substring(0, 500)]);",
-  "}",
-].join('\n');
+const SCRIPT_CODE = String.raw`// PLATEAU-BRECHER V11.9.1 — Google Apps Script
+const SHEET_ID = '1NA5OUomzaSFSw6_VzdJ6U7FaD1bU0qTEsQCtIneJ1JI';
+
+function doPost(e) {
+  const lock = LockService.getScriptLock();
+  lock.tryLock(10000);
+  try {
+    const data = JSON.parse(e.postData.contents);
+    const type = (data.type || '').toLowerCase();
+
+    // ── type:'log' → Fehlerprotokoll ──────────────────────────────
+    if (type === 'log') {
+      logError('APP LOG: ' + (data.type_detail || 'INFO'), data.msg || '', JSON.stringify(data).substring(0, 400));
+      return ContentService.createTextOutput('{"success":true}').setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ── type:'pr' → Bestleistungen-Fallback ───────────────────────
+    if (type === 'pr') {
+      updatePersonalBest({
+        uebung: data.exercise,
+        orm: data.orm,
+        datum: data.date,
+        sheetName: normalizeCycleName(data.sheet || data.cycle),
+        source: 'PR App V11.9.1'
+      });
+      logError('PR_UPDATE', data.exercise + ' → 1RM ' + data.orm + ' kg', data.date || '');
+      return ContentService.createTextOutput('{"success":true}').setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ── type:'training' oder leer → Bulk-Upload ────────────────────
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const entries = Array.isArray(data.exercises) ? data.exercises : [data];
+    const sheetName = data.sheet || (entries[0] && entries[0].sheet);
+    const sheet = ss.getSheetByName(sheetName);
+    if (!sheet) throw new Error('Sheet nicht gefunden: ' + sheetName);
+    const values = sheet.getRange(1, 1, sheet.getLastRow(), 22).getValues();
+    let updated = 0;
+
+    for (const entry of entries) {
+      for (let r = 3; r < values.length; r++) {
+        const rowDate = String(values[r][1]).trim();
+        const rowEx = String(values[r][4]).trim();
+        if (rowDate === entry.date && rowEx.toLowerCase() === String(entry.uebung).toLowerCase()) {
+          const sr = r + 1;
+          if (entry.kg) sheet.getRange(sr, 3).setValue(parseNum(entry.kg));
+          const sets = [[parseNum(entry.g1), parseNum(entry.r1), parseNum(entry.g2), parseNum(entry.r2), parseNum(entry.g3), parseNum(entry.r3)]];
+          sheet.getRange(sr, 7, 1, 6).setValues(sets);
+          if (entry.rpe) sheet.getRange(sr, 15).setValue(parseNum(entry.rpe));
+          if (entry.notes !== undefined && entry.notes !== '') sheet.getRange(sr, 19).setValue(String(entry.notes));
+          if (entry.kcal) sheet.getRange(sr, 20).setValue(parseNum(entry.kcal));
+          if (entry.bpm) sheet.getRange(sr, 21).setValue(parseNum(entry.bpm));
+          if (entry.duration) sheet.getRange(sr, 22).setValue(parseNum(entry.duration));
+
+          const best = getBestSetByOrm(entry);
+          if (best) {
+            updatePersonalBest({
+              uebung: entry.uebung,
+              gewicht: best.g,
+              wdh: best.r,
+              orm: best.orm,
+              datum: entry.date,
+              sheetName: sheetName,
+              woche: values[r][0],
+              trainingstag: values[r][3],
+              notiz: entry.notes,
+              source: 'Training App V11.9.1'
+            });
+          }
+
+          updated++;
+          break;
+        }
+      }
+    }
+
+    logError('SYNC_OK', 'Bulk: ' + updated + '/' + entries.length + ' gespeichert', data.date || '');
+    return ContentService.createTextOutput(JSON.stringify({
+      success: updated > 0, updated: updated, total: entries.length
+    })).setMimeType(ContentService.MimeType.JSON);
+
+  } catch (err) {
+    logError('API POST', err.toString(), e.postData ? e.postData.contents.substring(0, 200) : 'Kein Inhalt');
+    return ContentService.createTextOutput(JSON.stringify({success: false, error: err.toString()})).setMimeType(ContentService.MimeType.JSON);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function doGet(e) {
+  try {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    if (e.parameter.action === 'getPlan') {
+      const sheet = ss.getSheetByName(e.parameter.sheet);
+      if (!sheet) {
+        logError('API GET', 'Sheet nicht gefunden', e.parameter.sheet);
+        return ContentService.createTextOutput('Fehler: Blatt nicht gefunden.').setMimeType(ContentService.MimeType.TEXT);
+      }
+      const data = sheet.getRange(4, 1, sheet.getLastRow() - 3, 22).getValues();
+      return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+    }
+    return ContentService.createTextOutput('API aktiv - V11.9.1').setMimeType(ContentService.MimeType.TEXT);
+  } catch (err) {
+    logError('API GET KRITISCH', err.toString(), JSON.stringify(e.parameter));
+    return ContentService.createTextOutput('Fehler: ' + err.toString()).setMimeType(ContentService.MimeType.TEXT);
+  }
+}
+
+function updatePersonalBest(pb) {
+  const uebung = String(pb.uebung || '').trim();
+  const newOrm = parseNum(pb.orm);
+  if (!uebung || !newOrm || newOrm <= 0) return;
+
+  const pbSheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName('Bestleistungen');
+  if (!pbSheet) return;
+
+  const data = pbSheet.getDataRange().getValues();
+  for (let i = 4; i < data.length; i++) {
+    if (String(data[i][0]).trim().toLowerCase() === uebung.toLowerCase()) {
+      const oldOrm = parseNum(data[i][3]);
+      if (oldOrm && newOrm <= oldOrm) return;
+
+      const row = i + 1;
+      const gewicht = parseNum(pb.gewicht);
+      const wdh = parseNum(pb.wdh);
+
+      if (gewicht > 0 && wdh > 0) {
+        pbSheet.getRange(row, 2).setValue(gewicht);       // B Bestes Gewicht
+        pbSheet.getRange(row, 3).setValue(wdh);           // C Beste Wdh.
+      }
+      pbSheet.getRange(row, 4).setValue(newOrm);          // D Bester 1RM
+      if (pb.datum) pbSheet.getRange(row, 5).setValue(pb.datum);              // E Datum
+      if (pb.sheetName) pbSheet.getRange(row, 6).setValue(pb.sheetName);      // F Zyklus
+      pbSheet.getRange(row, 7).setValue(pb.source || 'App-Update V11.9.1');   // G Quelle
+      if (pb.woche) pbSheet.getRange(row, 8).setValue(pb.woche);              // H Woche
+      if (pb.trainingstag) pbSheet.getRange(row, 9).setValue(pb.trainingstag);// I Trainingstag
+      if (pb.notiz) pbSheet.getRange(row, 10).setValue(String(pb.notiz));     // J Notiz
+      return;
+    }
+  }
+}
+
+function getBestSetByOrm(entry) {
+  const sets = [
+    {g: parseNum(entry.g1), r: parseNum(entry.r1)},
+    {g: parseNum(entry.g2), r: parseNum(entry.r2)},
+    {g: parseNum(entry.g3), r: parseNum(entry.r3)}
+  ].filter(s => s.g > 0 && s.r > 0)
+   .map(s => ({g: s.g, r: s.r, orm: Math.round(s.g * (1 + s.r / 30) * 10) / 10}));
+  if (!sets.length) return null;
+  return sets.sort((a, b) => b.orm - a.orm || b.g - a.g || b.r - a.r)[0];
+}
+
+function normalizeCycleName(value) {
+  if (value === undefined || value === null || value === '') return '';
+  const s = String(value).trim();
+  return /^ZYKLUS\s+/i.test(s) ? s : 'ZYKLUS ' + s;
+}
+
+function parseNum(val) {
+  if (typeof val === 'string') return parseFloat(val.replace(',', '.')) || 0;
+  return parseFloat(val) || 0;
+}
+
+function logError(typ, nachricht, details) {
+  const logSheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName('Fehlerprotokoll');
+  if (logSheet) logSheet.appendRow([new Date(), typ, nachricht, String(details).substring(0, 500)]);
+}`;
 
 // ============================================================
 // TRAINING PLAN DATA
@@ -1107,7 +1163,7 @@ const PLAN = [
 // STORAGE
 // ============================================================
 const SK='pb_v11_9';
-const APP_VERSION='V11.9';
+const APP_VERSION='V11.9.1';
 const BUILD_DATE='10.05.2026';
 const GITHUB_RAW_URL='https://raw.githubusercontent.com/twfypbgfdz-max/Plateaubrecher/main/index.html';
 const errorLog=[];
