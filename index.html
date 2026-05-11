@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#080808">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PB V12.2-test">
-<title>Plateau-Brecher V12.2-test</title>
+<meta name="apple-mobile-web-app-title" content="PB V12.3.1-test">
+<title>Plateau-Brecher V12.3.1-test</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -375,6 +375,15 @@ main{padding:16px;max-width:860px;}
 .sc-item.ok{background:rgba(0,230,118,.06);color:var(--ok);}
 .sc-icon{font-size:13px;flex-shrink:0;margin-top:1px;}
 .sc-text b{display:block;margin-bottom:2px;font-size:10px;}
+.sc-item.has-detail{cursor:pointer;}
+.sc-item.has-detail:active{opacity:.82;}
+.sc-detail-hint{font-size:8px;color:var(--mu);margin-left:auto;white-space:nowrap;padding-left:8px;}
+.sc-detail-section{border-top:1px solid var(--bor);padding-top:10px;margin-top:10px;}
+.sc-detail-section:first-child{border-top:none;padding-top:0;margin-top:0;}
+.sc-detail-hd{font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:1px;color:var(--acc);margin-bottom:6px;}
+.sc-detail-p{font-family:'DM Mono',monospace;font-size:10px;line-height:1.55;color:var(--tx);margin:0 0 6px;}
+.sc-detail-list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;}
+.sc-detail-list li{font-family:'DM Mono',monospace;font-size:9px;line-height:1.5;color:var(--tx2);border:1px solid var(--bor);border-radius:var(--r);padding:7px 8px;background:rgba(255,255,255,.02);}
 .sc-close{background:none;border:none;color:inherit;cursor:pointer;font-size:14px;margin-left:auto;padding:0 0 0 8px;opacity:.7;flex-shrink:0;}
 .sc-close:hover{opacity:1;}
 /* END SELF-CHECK */
@@ -727,14 +736,14 @@ main{padding:16px;max-width:860px;}
 <body>
 <div class="consent-overlay" id="consentOverlay">
   <div class="consent-box">
-    <h2 class="splash-h2">SYSTEM-START V12.2-test</h2>
+    <h2 class="splash-h2">SYSTEM-START V12.3.1-test</h2>
     <p class="splash-p">Daten werden lokal gespeichert und via API synchronisiert. Fehler-Logging ist aktiv.</p>
     <button class="save-btn" onclick="acceptConsent()">Akzeptieren &amp; Starten</button>
   </div>
 </div>
 <header>
   <div>
-    <div class="logo">PB<span class="splash-logo-ver"> V12.2-test</span></div>
+    <div class="logo">PB<span class="splash-logo-ver"> V12.3.1-test</span></div>
     <span class="hbadge" id="todayBadge">Lädt…</span>
     <div class="splash-build">Build: <span id="buildDateTxt"></span></div>
   </div>
@@ -975,6 +984,13 @@ main{padding:16px;max-width:860px;}
   </div>
 </div>
 
+<div class="modal-bg" id="selfCheckDetailModal" onclick="if(event.target===this)closeSelfCheckDetail()">
+  <div class="modal">
+    <div class="modal-title"><span id="selfCheckDetailTitle">Details</span><button class="modal-close" onclick="closeSelfCheckDetail()">✕</button></div>
+    <div id="selfCheckDetailBody"></div>
+  </div>
+</div>
+
 <script>
 // ============================================================
 // APPS SCRIPT CODE
@@ -1163,7 +1179,7 @@ const PLAN = [
 // STORAGE
 // ============================================================
 const SK='pb_v12_0_test';
-const APP_VERSION='V12.2-test';
+const APP_VERSION='V12.3.1-test';
 const BUILD_DATE='11.05.2026';
 const GITHUB_RAW_URL='https://raw.githubusercontent.com/twfypbgfdz-max/Plateaubrecher/main/index.html';
 const errorLog=[];
@@ -1536,6 +1552,7 @@ function selfCheck(){
   // 7. Smart Deload Signal
   try {
     const ds = calcDeloadSignal();
+    const details = buildSelfCheckDeloadDetails(ds);
     if(ds.dataBasis === 'none'){
       // Keine Daten → kein Eintrag, kein Rauschen
     } else if(ds.dataBasis === 'low'){
@@ -1545,7 +1562,8 @@ function selfCheck(){
           level:'warn',
           icon:'🔸',
           title:'Datenlage dünn — beobachten',
-          text:ds.reasons.join(' · ')+'.'
+          text:ds.reasons.join(' · ')+'.',
+          detail:details
         });
       }
     } else if(ds.level >= 3){
@@ -1553,14 +1571,16 @@ function selfCheck(){
         level:'warn',
         icon:'🔻',
         title:'Deload dringend empfohlen',
-        text:ds.reasons.join(' · ')+'.'
+        text:ds.reasons.join(' · ')+'.',
+        detail:details
       });
     } else if(ds.level === 2){
       issues.push({
         level:'warn',
         icon:'🔸',
         title:'Deload empfohlen',
-        text:ds.reasons.join(' · ')+'.'
+        text:ds.reasons.join(' · ')+'.',
+        detail:details
       });
     } else if(ds.level === 1 && ds.reasons.length > 0){
       // Level 1 nur wenn konkrete Gründe — kein globales Rauschen
@@ -1568,7 +1588,8 @@ function selfCheck(){
         level:'warn',
         icon:'→',
         title:'Beobachten',
-        text:ds.reasons.join(' · ')+'.'
+        text:ds.reasons.join(' · ')+'.',
+        detail:details
       });
     }
     // Level 0 → kein Eintrag im selfCheck
@@ -1585,13 +1606,17 @@ function selfCheck(){
     return;
   }
 
-  const html = issues.map((issue,idx) =>
-    '<div class="sc-item '+issue.level+'">'
+  window._selfCheckDetails = [];
+  const html = issues.map((issue,idx) => {
+    const hasDetail = issue.detail && issue.detail.sections && issue.detail.sections.length;
+    if(hasDetail) window._selfCheckDetails[idx]=issue.detail;
+    return '<div class="sc-item '+issue.level+(hasDetail?' has-detail':'')+'" '+(hasDetail?'onclick="openSelfCheckDetail('+idx+')"':'')+'>'
     +'<span class="sc-icon">'+issue.icon+'</span>'
     +'<span class="sc-text"><b>'+issue.title+'</b>'+issue.text+'</span>'
-    +(idx===0?'<button class="sc-close" onclick="document.getElementById(\'selfCheckBanner\').classList.remove(\'show\')" title="Schließen">✕</button>':'')
-    +'</div>'
-  ).join('');
+    +(hasDetail?'<span class="sc-detail-hint">Details</span>':'')
+    +(idx===0?'<button class="sc-close" onclick="event.stopPropagation();document.getElementById(\'selfCheckBanner\').classList.remove(\'show\')" title="Schließen">✕</button>':'')
+    +'</div>';
+  }).join('');
 
   banner.innerHTML = html;
   banner.classList.add('show');
@@ -1600,6 +1625,113 @@ function selfCheck(){
     i.level==='err' ? 'DATEN_WARNUNG' : 'INFO',
     '[SelfCheck] '+i.title
   ));
+}
+
+window._selfCheckDetails = [];
+
+function buildSelfCheckDeloadDetails(ds){
+  if(!ds || !ds.reasons || ds.reasons.length===0) return null;
+  const m = computeLocalMetrics();
+  const items = getStagnatingExerciseDetails();
+  const sections = [];
+  const mapDataBasisLabel = (value) => ({
+    none:'keine Daten',
+    low:'dünn',
+    ok:'ausreichend'
+  }[value] || value || 'keine Daten');
+  const mapTrendLabel = (value) => ({
+    rising:'steigend',
+    falling:'fallend',
+    stable:'stabil',
+    none:'keine Daten'
+  }[value] || value || 'keine Daten');
+
+  sections.push({
+    heading:'Grund der Meldung',
+    text:ds.reasons.join(' · ')+'.'
+  });
+
+  const evidence = [];
+  evidence.push('Datenbasis: '+mapDataBasisLabel(ds.dataBasis || m.dataBasis));
+  if(typeof ds.score !== 'undefined') evidence.push('Deload-Score: '+ds.score);
+  if(m.rpeCount > 0) evidence.push('RPE Ø: '+m.avgRpe+' aus '+m.rpeCount+' Werten');
+  if(m.ormCompareCount > 0) evidence.push('1RM-Vergleiche: '+m.ormCompareCount+', Trend: '+mapTrendLabel(m.ormTrend));
+  if(m.stagnatingCount > 0) evidence.push('Stagnierende Übungen: '+m.stagnatingCount);
+  sections.push({ heading:'Evidence', items:evidence });
+
+  if(items.length){
+    sections.push({ heading:'Betroffene Übungen', items:items.map(x=>x.name+': '+x.reason) });
+  }
+
+  sections.push({
+    heading:'Handlungsempfehlung',
+    text:ds.level >= 2
+      ? 'Als Vorschlag behandeln: Intensität bewusst prüfen, aber den Plan nicht automatisch ändern.'
+      : 'Weiter beobachten und nach der nächsten Einheit erneut analysieren.'
+  });
+
+  return { title: ds.level >= 2 ? 'Deload-Details' : 'Beobachten-Details', sections };
+}
+
+function getStagnatingExerciseDetails(){
+  const day=PLAN[C]?.weeks[W]?.days[D];
+  const result=[];
+  if(!day) return result;
+  day.exercises.forEach((exName)=>{
+    const exIdxCurrent = day.exercises.indexOf(exName);
+    const currOrm = calc1RM(getD(C,W,D,exIdxCurrent));
+    if(!currOrm) return;
+    let prevOrm = 0;
+    outer:
+    for(let ci=C; ci>=0; ci--){
+      const weeks=PLAN[ci].weeks;
+      const startW=(ci===C)?W:weeks.length-1;
+      for(let wi=startW; wi>=0; wi--){
+        if(PLAN[ci].weeks[wi]?.isDeload) continue;
+        const days=PLAN[ci].weeks[wi].days;
+        const startDi=(ci===C && wi===W)?D-1:days.length-1;
+        if(startDi<0) continue;
+        for(let di=startDi; di>=0; di--){
+          const idx=days[di].exercises.indexOf(exName);
+          if(idx<0) continue;
+          const orm=calc1RM(getD(ci,wi,di,idx));
+          if(!orm) continue;
+          prevOrm=orm;
+          break outer;
+        }
+      }
+    }
+    if(prevOrm>0 && currOrm<=prevOrm){
+      result.push({
+        name:exName,
+        reason:'1RM '+currOrm+'kg vs. vorher '+prevOrm+'kg — kein Fortschritt'
+      });
+    }
+  });
+  return result;
+}
+
+function openSelfCheckDetail(idx){
+  const detail = window._selfCheckDetails && window._selfCheckDetails[idx];
+  if(!detail || !detail.sections || detail.sections.length===0) return;
+  const modal=document.getElementById('selfCheckDetailModal');
+  const title=document.getElementById('selfCheckDetailTitle');
+  const body=document.getElementById('selfCheckDetailBody');
+  if(!modal || !title || !body) return;
+  title.textContent=detail.title || 'Details';
+  body.innerHTML=detail.sections.map(sec=>{
+    const items = sec.items && sec.items.length
+      ? '<ul class="sc-detail-list">'+sec.items.map(item=>'<li>'+sanitize(item)+'</li>').join('')+'</ul>'
+      : '';
+    const text = sec.text ? '<p class="sc-detail-p">'+sanitize(sec.text)+'</p>' : '';
+    return '<div class="sc-detail-section"><div class="sc-detail-hd">'+sanitize(sec.heading||'Details')+'</div>'+text+items+'</div>';
+  }).join('');
+  modal.classList.add('open');
+}
+
+function closeSelfCheckDetail(){
+  const modal=document.getElementById('selfCheckDetailModal');
+  if(modal) modal.classList.remove('open');
 }
 
 async function syncAllFromSheet(){
@@ -1916,9 +2048,9 @@ function renderWorkout(){
       // calcDeloadSignal gibt 'none' zurück wenn isDeload aktiv — daher Metriken direkt prüfen
       const m = computeLocalMetrics();
       if(m.dataBasis === 'none'){
-        deloadDataStatus = ' · Datenlage: keine aktuellen Daten';
+        deloadDataStatus = ' · keine ausreichenden Daten';
       } else if(m.dataBasis === 'low'){
-        deloadDataStatus = ' · Datenlage: dünn';
+        deloadDataStatus = ' · Datenbasis dünn';
       } else if((m.avgRpe >= 8 && m.rpeCount >= 3) || m.ormTrend === 'falling' || m.stagnatingCount >= 2){
         deloadDataStatus = ' · Daten bestätigen Bedarf';
       } else {
