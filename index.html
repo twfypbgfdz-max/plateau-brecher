@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#080808">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PB V12.3.1-test">
-<title>Plateau-Brecher V12.3.1-test</title>
+<meta name="apple-mobile-web-app-title" content="PB V12.4-test">
+<title>Plateau-Brecher V12.4-test</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -445,6 +445,15 @@ main{padding:16px;max-width:860px;}
 .step-desc b{color:var(--tx);}
 .step-desc a{color:var(--acc);}
 [data-theme="light"] .step-desc a{color:#111;}
+.setup-note{font-family:'DM Mono',monospace;font-size:9px;line-height:1.55;color:var(--tx2);background:var(--sur2);border:1px solid var(--bor);border-radius:var(--r);padding:8px 10px;margin:8px 0;}
+.setup-note strong{color:var(--acc);font-weight:500;}
+.setup-mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+.setup-mini-card{background:var(--sur2);border:1px solid var(--bor);border-radius:var(--r);padding:9px 10px;font-family:'DM Mono',monospace;font-size:9px;line-height:1.5;color:var(--tx2);}
+.setup-mini-card b{color:var(--tx);}
+.setup-action-group{border-top:1px solid var(--bor);padding-top:10px;margin-top:10px;}
+.setup-action-label{font-family:'DM Mono',monospace;font-size:8px;color:var(--mu);letter-spacing:1px;margin-bottom:6px;text-transform:uppercase;}
+.danger-zone{border:1px solid rgba(255,61,0,.35);background:rgba(255,61,0,.06);border-radius:var(--r);padding:10px;margin-top:12px;}
+.danger-zone .setup-action-label{color:var(--acc2);}
 .code-box{background:#000;border:1px solid var(--bor);padding:10px;margin:8px 0;font-family:'DM Mono',monospace;font-size:10px;overflow-x:auto;white-space:pre;color:var(--ok);max-height:150px;line-height:1.6;border-radius:4px;}
 .copy-btn{background:var(--sur2);border:1px solid var(--bor);color:var(--tx2);font-family:'DM Mono',monospace;font-size:8px;padding:5px 10px;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:4px;border-radius:4px;letter-spacing:1px;}
 .copy-btn:hover{border-color:var(--acc);color:var(--acc);}
@@ -736,14 +745,14 @@ main{padding:16px;max-width:860px;}
 <body>
 <div class="consent-overlay" id="consentOverlay">
   <div class="consent-box">
-    <h2 class="splash-h2">SYSTEM-START V12.3.1-test</h2>
+    <h2 class="splash-h2">SYSTEM-START V12.4-test</h2>
     <p class="splash-p">Daten werden lokal gespeichert und via API synchronisiert. Fehler-Logging ist aktiv.</p>
     <button class="save-btn" onclick="acceptConsent()">Akzeptieren &amp; Starten</button>
   </div>
 </div>
 <header>
   <div>
-    <div class="logo">PB<span class="splash-logo-ver"> V12.3.1-test</span></div>
+    <div class="logo">PB<span class="splash-logo-ver"> V12.4-test</span></div>
     <span class="hbadge" id="todayBadge">Lädt…</span>
     <div class="splash-build">Build: <span id="buildDateTxt"></span></div>
   </div>
@@ -800,8 +809,13 @@ main{padding:16px;max-width:860px;}
   <div class="setup-step"><div class="step-num">1</div><div class="step-title">Google Sheet öffnen</div><div class="step-desc"><b><a href="https://docs.google.com/spreadsheets/d/1NA5OUomzaSFSw6_VzdJ6U7FaD1bU0qTEsQCtIneJ1JI/edit" target="_blank">→ Plateau-Brecher Sheet öffnen ↗</a></b></div></div>
   <div class="setup-step"><div class="step-num">2</div><div class="step-title">Apps Script öffnen</div><div class="step-desc">Im Sheet oben: <b>Erweiterungen → Apps Script</b></div></div>
   <div class="setup-step">
-    <div class="step-num">3</div><div class="step-title">Script einfügen & deployen</div>
-    <div class="step-desc">Lösche den vorhandenen Code und füge diesen ein:</div>
+    <div class="step-num">3</div><div class="step-title">Apps Script Code</div>
+    <div class="step-desc">Nur ändern, wenn <b>SCRIPT_CODE</b> aktualisiert wurde. App-Testversionen brauchen nicht automatisch ein neues Apps-Script-Deployment.</div>
+    <div class="setup-mini-grid">
+      <div class="setup-mini-card"><b>Aktuelle Script-Basis:</b><br>V11.9.1</div>
+      <div class="setup-mini-card"><b>App-Version:</b><br>V12.4-test</div>
+    </div>
+    <div class="setup-note"><strong>Hinweis:</strong> Wenn die Sheet-Verbindung bereits funktioniert, muss dieser Code für diese Testversion normalerweise nicht neu deployed werden.</div>
     <div class="code-box" id="scriptCodeBox">Lädt…</div>
     <button class="copy-btn" onclick="copyScript()"><svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Script kopieren</button>
     <div class="step-desc step-desc-mt">Dann: <b>Bereitstellen → Neue Bereitstellung → Web-App</b><br>Zugriff: <b>Jeder</b> → Bereitstellen → Zugriff erlauben<br>→ Du bekommst eine <b>Web-App-URL</b></div>
@@ -815,12 +829,14 @@ main{padding:16px;max-width:860px;}
     <button class="test-btn" onclick="testApi()"><svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;"><polyline points="20 6 9 17 4 12"/></svg>Verbindung testen</button>
     <div class="status" id="setupStatus"></div>
     <div style="font-family:'DM Mono',monospace;font-size:8px;color:var(--mu);margin-top:8px;padding:6px 8px;background:var(--sur2);border-radius:4px;border:1px solid var(--bor);">
-      Aktive Datenquelle: <span style="color:var(--acc);">ZYKLUS 1 – 6</span> · ZYKLUS MASTER wird nicht verwendet
+      <b style="color:var(--tx);">Aktive Datenquelle:</b> <span style="color:var(--acc);">ZYKLUS 1–6</span><br>
+      <span>ZYKLUS MASTER wird nicht verwendet.</span>
     </div>
   </div>
   <div class="setup-step">
-    <div class="step-num">5</div><div class="step-title">Groq API Key (KI-Analyse — Kostenlos)</div>
-    <div class="step-desc step-desc-mb">Kostenloser Key auf <b><a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys ↗</a></b> — nur lokal gespeichert, wird nie übertragen</div>
+    <div class="step-num">5</div><div class="step-title">Groq optional – nur Coach-Texte</div>
+    <div class="step-desc step-desc-mb">Lokale Analyse funktioniert ohne API-Key. Ein Groq-Key wird nur für optionale Coach-Formulierungen genutzt und nur lokal gespeichert.</div>
+    <div class="setup-note">Kostenloser Key bei <b><a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys ↗</a></b>. Ohne Key bleiben Trainingsanalyse und lokale Findings nutzbar.</div>
     <input class="ai-key-input" id="aiKeyInput" type="password" placeholder="gsk_… (Groq)" autocomplete="off">
     <button class="test-btn ai-key-btn-mt" onclick="saveAiKey()"><svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;"><polyline points="20 6 9 17 4 12"/></svg>Key speichern</button>
     <div class="status" id="aiKeyStatus"></div>
@@ -828,16 +844,26 @@ main{padding:16px;max-width:860px;}
   <!-- Daten & Log -->
   <div class="setup-step">
     <div class="step-num">6</div><div class="step-title">Daten & Log</div>
-    <button class="test-btn" onclick="exportBackup()">💾 Backup (JSON)</button>
-    <button class="test-btn" onclick="document.getElementById('appLogBox').style.display=document.getElementById('appLogBox').style.display==='none'?'block':'none'">🔍 Live-Log anzeigen/ausblenden</button>
+    <div class="setup-action-group">
+      <div class="setup-action-label">Backup & Import</div>
+      <button class="test-btn" onclick="exportBackup()">💾 Backup exportieren (JSON)</button>
+      <input type="file" id="importFile" class="import-file" onchange="handleImport(this)">
+      <button class="test-btn" onclick="document.getElementById('importFile').click()">📥 Backup importieren</button>
+    </div>
+    <div class="setup-action-group">
+      <div class="setup-action-label">Diagnose & Update</div>
+      <button class="test-btn" onclick="document.getElementById('appLogBox').style.display=document.getElementById('appLogBox').style.display==='none'?'block':'none'">🔍 Live-Log anzeigen/ausblenden</button>
+      <button class="test-btn" onclick="checkForUpdate(this)">🔄 Auf Update prüfen</button>
+    </div>
     <div id="appLogBox" class="log-box-wrap">
       <div class="log-box-lbl">LIVE FEHLERPROTOKOLL</div>
       <div id="appLogContent" class="log-box-content"></div>
     </div>
-    <input type="file" id="importFile" class="import-file" onchange="handleImport(this)">
-    <button class="test-btn" onclick="document.getElementById('importFile').click()">📥 Backup importieren</button>
-    <button class="test-btn" onclick="checkForUpdate(this)">🔄 Auf Update prüfen</button>
-    <button class="test-btn btn-danger" onclick="if(this.dataset.confirm){wipeAllData();}else{this.textContent='⚠ Nochmal tippen zum Bestätigen';this.dataset.confirm='1';}">⚠ Alle Daten löschen</button>
+    <div class="danger-zone">
+      <div class="setup-action-label">Gefahrenzone</div>
+      <div class="step-desc step-desc-mb">Löscht lokale Trainingsdaten auf diesem Gerät. Vorher Backup exportieren.</div>
+      <button class="test-btn btn-danger" onclick="if(this.dataset.confirm){wipeAllData();}else{this.textContent='⚠ Nochmal tippen zum Bestätigen';this.dataset.confirm='1';}">⚠ Alle Daten löschen</button>
+    </div>
   </div>
 </div>
 
@@ -1179,7 +1205,7 @@ const PLAN = [
 // STORAGE
 // ============================================================
 const SK='pb_v12_0_test';
-const APP_VERSION='V12.3.1-test';
+const APP_VERSION='V12.4-test';
 const BUILD_DATE='11.05.2026';
 const GITHUB_RAW_URL='https://raw.githubusercontent.com/twfypbgfdz-max/Plateaubrecher/main/index.html';
 const errorLog=[];
