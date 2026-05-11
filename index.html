@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#080808">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PB V12.0.1-test">
-<title>Plateau-Brecher V12.0.1-test</title>
+<meta name="apple-mobile-web-app-title" content="PB V12.2-test">
+<title>Plateau-Brecher V12.2-test</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -727,14 +727,14 @@ main{padding:16px;max-width:860px;}
 <body>
 <div class="consent-overlay" id="consentOverlay">
   <div class="consent-box">
-    <h2 class="splash-h2">SYSTEM-START V12.0.1-test</h2>
+    <h2 class="splash-h2">SYSTEM-START V12.2-test</h2>
     <p class="splash-p">Daten werden lokal gespeichert und via API synchronisiert. Fehler-Logging ist aktiv.</p>
     <button class="save-btn" onclick="acceptConsent()">Akzeptieren &amp; Starten</button>
   </div>
 </div>
 <header>
   <div>
-    <div class="logo">PB<span class="splash-logo-ver"> V12.0.1-test</span></div>
+    <div class="logo">PB<span class="splash-logo-ver"> V12.2-test</span></div>
     <span class="hbadge" id="todayBadge">Lädt…</span>
     <div class="splash-build">Build: <span id="buildDateTxt"></span></div>
   </div>
@@ -1163,8 +1163,8 @@ const PLAN = [
 // STORAGE
 // ============================================================
 const SK='pb_v12_0_test';
-const APP_VERSION='V12.0.1-test';
-const BUILD_DATE='10.05.2026';
+const APP_VERSION='V12.2-test';
+const BUILD_DATE='11.05.2026';
 const GITHUB_RAW_URL='https://raw.githubusercontent.com/twfypbgfdz-max/Plateaubrecher/main/index.html';
 const errorLog=[];
 let store={};
@@ -1536,22 +1536,42 @@ function selfCheck(){
   // 7. Smart Deload Signal
   try {
     const ds = calcDeloadSignal();
-    if(ds.level >= 3){
+    if(ds.dataBasis === 'none'){
+      // Keine Daten → kein Eintrag, kein Rauschen
+    } else if(ds.dataBasis === 'low'){
+      // Wenig Daten → nur wenn Score > 0 ein vorsichtiger Hinweis
+      if(ds.level >= 1 && ds.reasons.length > 0){
+        issues.push({
+          level:'warn',
+          icon:'🔸',
+          title:'Datenlage dünn — beobachten',
+          text:ds.reasons.join(' · ')+'.'
+        });
+      }
+    } else if(ds.level >= 3){
       issues.push({
         level:'warn',
         icon:'🔻',
-        title:'Deload-Signal: '+ds.reasons.join(' · '),
-        text:' — Volles Deload empfohlen (60% Gewicht, niedrige RPE).'
+        title:'Deload dringend empfohlen',
+        text:ds.reasons.join(' · ')+'.'
       });
     } else if(ds.level === 2){
       issues.push({
         level:'warn',
         icon:'🔸',
-        title:'Leichtes Deload-Signal: '+ds.reasons.join(' · '),
-        text:' — Intensität optional reduzieren.'
+        title:'Deload empfohlen',
+        text:ds.reasons.join(' · ')+'.'
+      });
+    } else if(ds.level === 1 && ds.reasons.length > 0){
+      // Level 1 nur wenn konkrete Gründe — kein globales Rauschen
+      issues.push({
+        level:'warn',
+        icon:'→',
+        title:'Beobachten',
+        text:ds.reasons.join(' · ')+'.'
       });
     }
-    // level 1 oder 0 → kein Banner, kein Rauschen
+    // Level 0 → kein Eintrag im selfCheck
   } catch(e){}
 
   // Banner rendern
@@ -1877,7 +1897,7 @@ function renderWorkout(){
   const doneCount=day.exercises.filter((_,i)=>getD(C,W,D,i).done).length;
   const pct=Math.round(doneCount/day.exercises.length*100);
 
-  // Deload: Vorwoche-Gewichte ermitteln für Banner + Placeholder
+  // Deload: Plan-Kontext-Banner + optionaler Datenstatus
   let deloadHints=[];
   if(week.isDeload){
     day.exercises.forEach((ex,i)=>{
@@ -1887,14 +1907,34 @@ function renderWorkout(){
       if(prevG){const kg=Math.round(prevG*0.6*2)/2;deloadHints.push(getExName(i).split('(')[0].trim()+': '+kg+'kg');}
     });
   }
-  const deloadText=deloadHints.length>0
-    ?'⚡ DELOAD — Vorschläge: '+deloadHints.join(' · ')
-    :'⚡ DELOAD — 60% Gewicht';
+
+  // Datenstatus für Deload-Woche ermitteln
+  let deloadDataStatus = '';
+  if(week.isDeload){
+    try {
+      const ds = calcDeloadSignal();
+      // calcDeloadSignal gibt 'none' zurück wenn isDeload aktiv — daher Metriken direkt prüfen
+      const m = computeLocalMetrics();
+      if(m.dataBasis === 'none'){
+        deloadDataStatus = ' · Datenlage: keine aktuellen Daten';
+      } else if(m.dataBasis === 'low'){
+        deloadDataStatus = ' · Datenlage: dünn';
+      } else if((m.avgRpe >= 8 && m.rpeCount >= 3) || m.ormTrend === 'falling' || m.stagnatingCount >= 2){
+        deloadDataStatus = ' · Daten bestätigen Bedarf';
+      } else {
+        deloadDataStatus = ' · Daten zeigen keinen akuten Bedarf';
+      }
+    } catch(e){}
+  }
+
+  const deloadBannerText = deloadHints.length > 0
+    ? '📅 Planmäßiger Deload'+deloadDataStatus+' — Vorschläge: '+deloadHints.join(' · ')
+    : '📅 Planmäßiger Deload'+deloadDataStatus+' — 60% Gewicht';
 
   document.getElementById('cinfo').innerHTML=
     '<div class="ctitle">ZYKLUS '+(C+1)+' — '+week.weekLabel+'</div>'+
     '<div class="cdate">'+week.days.map(d=>d.date).join(' · ')+'</div>'+
-    (week.isDeload?'<span class="deload-tag">'+deloadText+'</span>':'')+
+    (week.isDeload?'<span class="deload-tag">'+deloadBannerText+'</span>':'')+
     (week.isSchool?'<span class="deload-tag deload-tag-school">⛔ SCHULWOCHE — 3 Tage</span>':'');
 
   loadBW();
@@ -2575,17 +2615,41 @@ function buildPbAnalysisEngine() {
   }
 
   // ── DELOAD ───────────────────────────────────────────────
-  if(ds.level >= 3){
+  if(ds.dataBasis === 'none'){
+    findings.push({ category:'deload', level:'info',
+      title:'Deload: keine Datenbasis',
+      text:'Noch keine RPE- oder ORM-Werte — Deload-Bewertung nicht möglich.',
+      evidence:{ dataBasis:'none' }
+    });
+  } else if(ds.dataBasis === 'low'){
+    findings.push({ category:'deload', level:'info',
+      title:'Deload: Datenlage dünn',
+      text:'Zu wenig Vergleichswerte für sichere Aussage.'+(ds.reasons.length?' Beobachten: '+ds.reasons.join(', '):''),
+      evidence:{ dataBasis:'low', score:ds.score }
+    });
+  } else if(ds.level >= 3){
     findings.push({ category:'deload', level:'alert',
       title:'Deload empfohlen',
-      text:ds.reasons.join(' · '),
+      text:ds.reasons.join(' · ')+'.',
       evidence:{ score:ds.score, weeksSinceDeload:ds.weeksSinceDeload }
     });
   } else if(ds.level === 2){
     findings.push({ category:'deload', level:'warn',
-      title:'Leichtes Deload-Signal',
-      text:ds.reasons.join(' · '),
+      title:'Deload-Signal: beobachten',
+      text:ds.reasons.join(' · ')+'.',
       evidence:{ score:ds.score }
+    });
+  } else if(ds.level === 1){
+    findings.push({ category:'deload', level:'info',
+      title:'Deload: beobachten',
+      text:ds.reasons.join(' · ')+'.',
+      evidence:{ score:ds.score }
+    });
+  } else {
+    findings.push({ category:'deload', level:'ok',
+      title:'Kein Deload nötig',
+      text:'Keine akuten Fatigue- oder Leistungs-Signale.',
+      evidence:{ score:0 }
     });
   }
 
