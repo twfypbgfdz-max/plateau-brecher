@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#080808">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PB V12.4.7-test">
-<title>Plateau-Brecher V12.4.7-test</title>
+<meta name="apple-mobile-web-app-title" content="PB V12.5-test">
+<title>Plateau-Brecher V12.5-test</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -150,6 +150,14 @@ main{padding:16px;max-width:860px;}
 .excard.stagnation-card .exname::after{content:' ⚠';color:#ff4444;font-size:11px;}
 .load-suggest{font-family:'DM Mono',monospace;font-size:9px;color:var(--acc3);background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.2);border-radius:var(--r);padding:6px 10px;margin-bottom:8px;}
 .load-suggest b{color:var(--acc3);}
+.coach-rec{font-family:'DM Mono',monospace;font-size:9px;color:var(--tx2);background:rgba(200,255,0,.045);border:1px solid rgba(200,255,0,.16);border-radius:var(--r);padding:7px 10px;margin-bottom:8px;line-height:1.45;}
+.coach-rec b{color:var(--acc);}
+.coach-rec.warn{background:rgba(255,171,0,.07);border-color:rgba(255,171,0,.22);}
+.coach-rec.warn b{color:var(--warn);}
+.coach-rec.muted{background:var(--sur2);border-color:var(--bor);color:var(--mu);}
+.coach-summary-box{display:none;font-family:'DM Mono',monospace;font-size:10px;line-height:1.55;color:var(--tx);border:1px solid var(--bor);border-left:3px solid var(--acc);background:var(--sur2);border-radius:0 var(--r) var(--r) 0;padding:10px 12px;margin-top:8px;}
+.coach-summary-box.show{display:block;}
+.coach-summary-box b{color:var(--acc);}
 /* ── Hall of Fame ─────────────────────────────────── */
 .hof-podium{display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:auto auto;gap:6px;margin-bottom:16px;align-items:end;}
 .hof-card{background:var(--sur);border-radius:var(--r);padding:10px 8px;text-align:center;position:relative;overflow:hidden;border:1px solid var(--bor);}
@@ -391,6 +399,11 @@ main{padding:16px;max-width:860px;}
 .ki-model-btn{font-family:'DM Mono',monospace;font-size:9px;padding:6px 12px;border:1px solid var(--bor);background:var(--sur);color:var(--mu);border-radius:var(--r);cursor:pointer;transition:all .2s;flex:1;}
 .ki-model-btn.active{border-color:var(--acc);color:var(--acc);background:rgba(200,255,0,.06);}
 .ki-model-btn:active{opacity:.7;}
+.ki-groq-panel{display:none;border:1px solid var(--bor);background:var(--sur2);border-radius:var(--r);padding:10px 12px;margin:-4px 0 12px;font-family:'DM Mono',monospace;font-size:9px;color:var(--tx2);line-height:1.55;}
+.ki-groq-panel.show{display:block;}
+.ki-groq-panel b{display:block;color:var(--acc);font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:1px;margin-bottom:4px;}
+.ki-groq-panel .ai-key-input{margin-top:8px;}
+.ki-groq-panel .status{margin-top:8px;}
 #kiChatBox{display:flex;flex-direction:column;gap:10px;min-height:120px;margin-bottom:12px;max-height:55vh;overflow-y:auto;padding-bottom:4px;}
 .ki-msg{padding:10px 13px;border-radius:var(--r);font-size:12px;line-height:1.6;max-width:92%;}
 .ki-msg.user{background:var(--sur2);border:1px solid var(--bor);color:var(--tx);align-self:flex-end;font-family:'DM Mono',monospace;font-size:10px;}
@@ -745,14 +758,14 @@ main{padding:16px;max-width:860px;}
 <body>
 <div class="consent-overlay" id="consentOverlay">
   <div class="consent-box">
-    <h2 class="splash-h2">SYSTEM-START V12.4.7-test</h2>
+    <h2 class="splash-h2">SYSTEM-START V12.5-test</h2>
     <p class="splash-p">Daten werden lokal gespeichert und via API synchronisiert. Fehler-Logging ist aktiv.</p>
     <button class="save-btn" onclick="acceptConsent()">Akzeptieren &amp; Starten</button>
   </div>
 </div>
 <header>
   <div>
-    <div class="logo">PB<span class="splash-logo-ver"> V12.4.7-test</span></div>
+    <div class="logo">PB<span class="splash-logo-ver"> V12.5-test</span></div>
     <span class="hbadge" id="todayBadge">Lädt…</span>
     <div class="splash-build">Build: <span id="buildDateTxt"></span></div>
   </div>
@@ -800,6 +813,7 @@ main{padding:16px;max-width:860px;}
   </div>
   <div id="workoutContent"></div>
   <div class="status" id="status"></div>
+  <div class="coach-summary-box" id="coachSummaryBox"></div>
 </div>
 
 <!-- SETUP TAB -->
@@ -813,7 +827,7 @@ main{padding:16px;max-width:860px;}
     <div class="step-desc">Nur ändern, wenn <b>SCRIPT_CODE</b> aktualisiert wurde. App-Testversionen brauchen nicht automatisch ein neues Apps-Script-Deployment.</div>
     <div class="setup-mini-grid">
       <div class="setup-mini-card"><b>Aktuelle Script-Basis:</b><br>V11.9.1</div>
-      <div class="setup-mini-card"><b>App-Version:</b><br>V12.4.7-test</div>
+      <div class="setup-mini-card"><b>App-Version:</b><br>V12.5-test</div>
     </div>
     <div class="setup-note"><strong>Hinweis:</strong> Wenn die Sheet-Verbindung bereits funktioniert, muss dieser Code für diese Testversion normalerweise nicht neu deployed werden.</div>
     <div class="code-box" id="scriptCodeBox">Lädt…</div>
@@ -933,27 +947,34 @@ main{padding:16px;max-width:860px;}
 <div class="sec" id="tab-ki">
   <div class="tab-hd">
     <h2 class="tab-h2">Analyse</h2>
-    <span class="ki-model-badge" id="kiModelBadge">GROQ · llama-3.1-8b</span>
+    <span class="ki-model-badge" id="kiModelBadge">LOKAL · GROQ OPTIONAL</span>
   </div>
 
   <!-- Auto-Analyse Panel -->
   <div class="ki-auto-panel" id="kiAutoPanel">
     <div class="ki-auto-hd">
-      <span class="ki-auto-label">SYSTEM-ANALYSE</span>
-      <button class="ki-auto-run-btn" id="kiAutoRunBtn" onclick="runAutoAnalysis()">▶ Analysieren</button>
+      <span class="ki-auto-label">TRAININGSFEEDBACK</span>
+      <button class="ki-auto-run-btn" id="kiAutoRunBtn" onclick="runAutoAnalysis()">▶ Analyse starten</button>
     </div>
     <div class="ki-auto-body" id="kiAutoBody">
-      <div class="ki-auto-idle">▶ Lokale Analyse starten — kein API Key nötig</div>
+      <div class="ki-auto-idle">▶ Analyse starten: Trainingsfeedback, nächste Empfehlung und Schwachstellen erkennen. Lokal ohne API-Key.</div>
     </div>
   </div>
 
   <!-- Modell-Wahl -->
   <div class="ki-btn-row">
-    <button class="ki-model-btn active" id="kiBtnGroq" onclick="setKiModel('groq')">⚡ Groq</button>
+    <button class="ki-model-btn active" id="kiBtnGroq" onclick="toggleGroqPanel()">⚡ Groq optional ▾</button>
+  </div>
+  <div class="ki-groq-panel" id="kiGroqPanel">
+    <b>Groq optional aktivieren</b>
+    Lokale Analyse und Empfehlungen funktionieren ohne API-Key. Groq formuliert nur optionale Coach-Texte und Rückfragen.
+    <input class="ai-key-input" id="kiGroqKeyInput" type="password" placeholder="gsk_… (Groq)" autocomplete="off">
+    <button class="test-btn ai-key-btn-mt" onclick="saveGroqKeyFromKi()"><svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;"><polyline points="20 6 9 17 4 12"/></svg>Key speichern</button>
+    <div class="status" id="kiGroqStatus"></div>
   </div>
 
   <!-- Chat für Rückfragen -->
-  <div class="ki-chat-label">RÜCKFRAGEN</div>
+  <div class="ki-chat-label">RÜCKFRAGE ZUM TRAININGSFEEDBACK</div>
   <div id="kiChatBox"></div>
 
   <div class="ki-input-wrap">
@@ -1205,7 +1226,7 @@ const PLAN = [
 // STORAGE
 // ============================================================
 const SK='pb_v12_0_test';
-const APP_VERSION='V12.4.7-test';
+const APP_VERSION='V12.5-test';
 const BUILD_DATE='12.05.2026';
 const GITHUB_RAW_URL='https://raw.githubusercontent.com/twfypbgfdz-max/Plateaubrecher/main/index.html';
 const errorLog=[];
@@ -1496,6 +1517,27 @@ function init(){
 // SELF-CHECK — prüft kritische Konfiguration beim App-Start
 // Zeigt Warnungen/Fehler direkt im Training-Tab
 // ============================================================
+function getSelfCheckDismissKey(){
+  return 'selfcheck_dismiss_'+C+'_'+W+'_'+D;
+}
+
+function getSelfCheckSignature(issue){
+  return String(issue.title||'')+'|'+String(issue.text||'');
+}
+
+function dismissSelfCheck(){
+  const current=window._lastSelfCheckIssues||[];
+  const dismissible=current.filter(i=>i.level!=='err').map(getSelfCheckSignature);
+  if(dismissible.length){
+    const key=getSelfCheckDismissKey();
+    const prev=Array.isArray(store[key])?store[key]:[];
+    store[key]=Array.from(new Set(prev.concat(dismissible)));
+    persist();
+  }
+  const banner=document.getElementById('selfCheckBanner');
+  if(banner)banner.classList.remove('show');
+}
+
 function selfCheck(){
   const issues = [];
 
@@ -1518,16 +1560,6 @@ function selfCheck(){
         text:'Die eingetragene URL sieht nicht wie eine Apps Script URL aus. Bitte prüfen.'
       });
     }
-  }
-
-  // 3. Groq-Key fehlt
-  if(!store._aiKey){
-    issues.push({
-      level:'warn',
-      icon:'🤖',
-      title:'Kein Groq API Key',
-      text:'KI-Coach nicht verfügbar. → Setup Tab → Schritt 5.'
-    });
   }
 
   // 4. Storage-Größe prüfen (>3 MB = Warnung, >4.5 MB = kritisch)
@@ -1589,7 +1621,7 @@ function selfCheck(){
         issues.push({
           level:'warn',
           icon:'🔸',
-          title:'Datenlage dünn — beobachten',
+          title:'Info: Datenlage dünn',
           text:ds.reasons.join(' · ')+'.',
           detail:details
         });
@@ -1598,7 +1630,7 @@ function selfCheck(){
       issues.push({
         level:'warn',
         icon:'🔻',
-        title:'Deload dringend empfohlen',
+        title:'Handeln: Deload prüfen',
         text:ds.reasons.join(' · ')+'.',
         detail:details
       });
@@ -1606,7 +1638,7 @@ function selfCheck(){
       issues.push({
         level:'warn',
         icon:'🔸',
-        title:'Deload empfohlen',
+        title:'Achtung: Deload empfohlen',
         text:ds.reasons.join(' · ')+'.',
         detail:details
       });
@@ -1615,7 +1647,7 @@ function selfCheck(){
       issues.push({
         level:'warn',
         icon:'→',
-        title:'Beobachten',
+        title:'Info: Beobachten',
         text:ds.reasons.join(' · ')+'.',
         detail:details
       });
@@ -1626,8 +1658,11 @@ function selfCheck(){
   // Banner rendern
   const banner = document.getElementById('selfCheckBanner');
   if(!banner) return;
+  const dismissed=Array.isArray(store[getSelfCheckDismissKey()])?store[getSelfCheckDismissKey()]:[];
+  const visibleIssues=issues.filter(i=>i.level==='err'||!dismissed.includes(getSelfCheckSignature(i)));
+  window._lastSelfCheckIssues=visibleIssues;
 
-  if(issues.length === 0){
+  if(visibleIssues.length === 0){
     // Alles OK — kein Banner zeigen (kein Rauschen bei perfektem Setup)
     banner.classList.remove('show');
     banner.innerHTML = '';
@@ -1635,21 +1670,21 @@ function selfCheck(){
   }
 
   window._selfCheckDetails = [];
-  const html = issues.map((issue,idx) => {
+  const html = visibleIssues.map((issue,idx) => {
     const hasDetail = issue.detail && issue.detail.sections && issue.detail.sections.length;
     if(hasDetail) window._selfCheckDetails[idx]=issue.detail;
     return '<div class="sc-item '+issue.level+(hasDetail?' has-detail':'')+'" '+(hasDetail?'onclick="openSelfCheckDetail('+idx+')"':'')+'>'
     +'<span class="sc-icon">'+issue.icon+'</span>'
     +'<span class="sc-text"><b>'+issue.title+'</b>'+issue.text+'</span>'
     +(hasDetail?'<span class="sc-detail-hint">Details</span>':'')
-    +(idx===0?'<button class="sc-close" onclick="event.stopPropagation();document.getElementById(\'selfCheckBanner\').classList.remove(\'show\')" title="Schließen">✕</button>':'')
+    +(idx===0?'<button class="sc-close" onclick="event.stopPropagation();dismissSelfCheck()" title="Schließen">✕</button>':'')
     +'</div>';
   }).join('');
 
   banner.innerHTML = html;
   banner.classList.add('show');
   // Warnungen ins Error-Log schreiben
-  issues.forEach(i => addToErrorLog(
+  visibleIssues.forEach(i => addToErrorLog(
     i.level==='err' ? 'DATEN_WARNUNG' : 'INFO',
     '[SelfCheck] '+i.title
   ));
@@ -1918,6 +1953,136 @@ function calc1RM(d){
   return best?Math.round(best):null;
 }
 
+function coachNum(v){
+  return parseFloat(String(v||'').replace(',','.'))||0;
+}
+
+function countFilledWorkSets(d){
+  let count=0;
+  if(d?.g1&&d?.r1)count++;
+  if(d?.g2&&d?.r2)count++;
+  if(d?.g3&&d?.r3)count++;
+  return count;
+}
+
+function getRecommendationDataBasis(exName){
+  const wanted=normExLookupName(exName);
+  const currentPos=getPlanDayPosition(C,W,D);
+  const entries=[];
+  if(!wanted||!currentPos)return{level:'thin',count:0};
+
+  for(let w=W;w>=0&&entries.length<3;w--){
+    const week=PLAN[C].weeks[w];
+    if(!week||week.isDeload)continue;
+    const days=week.days||[];
+    const startD=(w===W)?D-1:days.length-1;
+    for(let d=startD;d>=0&&entries.length<3;d--){
+      if(d<0)continue;
+      const pos=getPlanDayPosition(C,w,d);
+      if(!pos||pos.order>=currentPos.order)continue;
+      const day=days[d];
+      for(let i=0;i<(day?.exercises?.length||0);i++){
+        const histName=getHistoricalExName(C,w,d,i);
+        if(normExLookupName(histName)!==wanted)continue;
+        const data=getD(C,w,d,i);
+        const orm=calc1RM(data);
+        const volume=calcTotal(data);
+        if(!orm&&!volume)continue;
+        entries.push({w,d,i,data,orm,volume,sets:countFilledWorkSets(data),age:currentPos.order-pos.order});
+        break;
+      }
+    }
+  }
+
+  const latest=entries[0]||null;
+  const enoughSets=entries.reduce((sum,e)=>sum+e.sets,0)>=4;
+  const level=(entries.length>=2&&latest&&latest.age<=12&&enoughSets)?'good':(entries.length>=1?'medium':'thin');
+  return{level,count:entries.length,latest};
+}
+
+function buildExerciseRecommendation(i){
+  const week=PLAN[C].weeks[W],day=week.days[D];
+  const exName=getExName(i);
+  const d=getD(C,W,D,i);
+  const orm=calc1RM(d);
+  const rpe=coachNum(d.rpe);
+  const reps1=coachNum(d.r1);
+  const basis=getRecommendationDataBasis(exName);
+  const prevEntry=week.isDeload
+    ? (findPreviousExerciseEntry(exName,{sameCycleOnly:true})||findPreviousSheetExerciseEntry(exName))
+    : findPreviousExerciseEntry(exName,{sameCycleOnly:true});
+  const prevOrm=prevEntry?.orm||0;
+  const prevG=prevEntry?.g1||0;
+  const prevRpe=coachNum(prevEntry?.data?.rpe);
+
+  if(week.isDeload){
+    return{level:'muted',text:prevG?'Deload: leichter trainieren':'Deload: 60% Richtwert'};
+  }
+
+  if(!d.g1&&!d.r1){
+    if(!prevEntry)return{level:'muted',text:'Wenige Vergleichsdaten vorhanden'};
+    if(basis.level==='good'&&prevRpe>0&&prevRpe<7)return{level:'ok',text:'+2,5 kg versuchen'};
+    if(basis.level==='good')return{level:'muted',text:'gleiches Gewicht wiederholen'};
+    return{level:'muted',text:prevRpe>0&&prevRpe<7?'leichte Steigerung möglich':'Gewicht wahrscheinlich haltbar'};
+  }
+
+  if(!prevOrm)return{level:'muted',text:'Empfehlung nur eingeschränkt möglich'};
+  if(prevOrm&&orm&&orm<prevOrm*0.95)return{level:basis.level==='good'?'warn':'muted',text:basis.level==='good'?'-5 % wegen Leistungseinbruch':'Gewicht halten, Leistung prüfen'};
+  if(rpe>=9.5)return{level:'warn',text:'gleiches Gewicht wiederholen'};
+  if(reps1&&reps1<8)return{level:'muted',text:'erst Ziel-Reps vollmachen'};
+  if(prevOrm&&orm>prevOrm+0.5&&(!rpe||rpe<=8.5)){
+    if(basis.level==='good')return{level:'ok',text:'+2,5 kg versuchen'};
+    return{level:'muted',text:'leichte Steigerung möglich'};
+  }
+  if(prevOrm&&orm>=prevOrm-0.5)return{level:'muted',text:basis.level==='good'?'gleiches Gewicht wiederholen':'Gewicht wahrscheinlich haltbar'};
+  return{level:'muted',text:'Gewicht halten'};
+}
+
+function getDayRecommendationHighlight(){
+  const day=PLAN[C].weeks[W].days[D];
+  for(let i=0;i<day.exercises.length;i++){
+    const rec=buildExerciseRecommendation(i);
+    if(rec&&rec.level==='ok')return getExName(i).split('(')[0].trim()+' '+rec.text;
+  }
+  for(let i=0;i<day.exercises.length;i++){
+    const rec=buildExerciseRecommendation(i);
+    if(rec&&rec.level==='warn')return getExName(i).split('(')[0].trim()+': '+rec.text;
+  }
+  return '';
+}
+
+function buildTrainingSummary(toSend){
+  const day=PLAN[C].weeks[W].days[D];
+  const exercises=day.exercises.map((_,i)=>({name:getExName(i),data:getD(C,W,D,i),rec:buildExerciseRecommendation(i)}))
+    .filter(x=>x.data.g1||x.data.r1);
+  const totalVol=exercises.reduce((sum,x)=>sum+(calcTotal(x.data)||0),0);
+  let improved=0, declines=0, prs=0;
+  exercises.forEach((x)=>{
+    const orm=calc1RM(x.data);
+    const prev=findPreviousExerciseEntry(x.name,{sameCycleOnly:true});
+    if(prev?.orm&&orm){
+      if(orm>prev.orm+0.5)improved++;
+      if(orm<prev.orm*0.95)declines++;
+    }
+    const record=getRecord(x.name);
+    if(record&&orm&&orm>record.orm)prs++;
+  });
+  const parts=[
+    'Training gesendet. Lokal berechnet:',
+    'Volumen '+totalVol.toLocaleString('de-DE')+' kg',
+    exercises.length+' Übungen'
+  ];
+  if(improved)parts.push(improved+' verbessert');
+  if(prs)parts.push(prs+' PR-Kandidat'+(prs>1?'en':''));
+  if(declines)parts.push(declines+' Leistungseinbruch'+(declines>1?'e':''));
+  const ds=calcDeloadSignal();
+  if(ds.level>=2)parts.push('Deload prüfen');
+  else if(ds.level===1)parts.push('Erholung beobachten');
+  else parts.push('kein akutes Deload-Signal');
+  const highlight=getDayRecommendationHighlight();
+  return parts.join(' · ')+(highlight?' · Nächstes Mal: '+highlight:'');
+}
+
 // ============================================================
 // AI MODULE — Groq API Integration V7.3
 // ============================================================
@@ -2013,6 +2178,34 @@ function saveAiKey(){
   const s=document.getElementById('aiKeyStatus');
   s.className='status vis ok';s.textContent='✓ Groq Key gespeichert!';s.style.display='block';
 }
+
+function toggleGroqPanel(){
+  const panel=document.getElementById('kiGroqPanel');
+  const btn=document.getElementById('kiBtnGroq');
+  if(!panel||!btn)return;
+  const open=!panel.classList.contains('show');
+  panel.classList.toggle('show',open);
+  btn.innerHTML=open?'⚡ Groq optional ▴':'⚡ Groq optional ▾';
+  if(open){
+    const input=document.getElementById('kiGroqKeyInput');
+    if(input)input.value=store._aiKey||'';
+  }
+}
+
+function saveGroqKeyFromKi(){
+  const input=document.getElementById('kiGroqKeyInput');
+  const status=document.getElementById('kiGroqStatus');
+  const val=(input?.value||'').trim();
+  if(!val||val.length<10){
+    if(status){status.className='status vis err';status.textContent='⚠ Key zu kurz';status.style.display='block';}
+    return;
+  }
+  store._aiKey=val;
+  persist();
+  const setupInput=document.getElementById('aiKeyInput');
+  if(setupInput)setupInput.value=val;
+  if(status){status.className='status vis ok';status.textContent='✓ Groq Key lokal gespeichert';status.style.display='block';}
+}
 function acceptConsent(){
   store._consent=true;persist();
   document.getElementById('consentOverlay').style.display='none';
@@ -2045,7 +2238,7 @@ async function runAiAnalysis(){
   }
 
   btn.disabled=false;
-  btn.innerHTML='<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg> KI-Analyse starten';
+  btn.innerHTML='<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg> Analyse starten';
 }
 
 // ============================================================
@@ -2164,6 +2357,10 @@ function renderWorkout(){
         loadSuggest='<div class="load-suggest">💡 Vorschlag: <b>'+suggestG+' kg</b>'+(hint?' <span class="load-hint">'+hint+'</span>':'')+'</div>';
       }
     }
+    const coachRec=buildExerciseRecommendation(i);
+    const coachRecHtml=coachRec&&coachRec.text
+      ? '<div class="coach-rec '+(coachRec.level||'muted')+'"><b>Nächste Empfehlung:</b> '+coachRec.text+'</div>'
+      : '';
 
     const wu=d.g1?parseFloat(d.g1):null;
     const isStag=checkStagnation(i);
@@ -2190,6 +2387,7 @@ function renderWorkout(){
       +(wu?'<span class="wu-set">40% → '+Math.round(wu*0.4*2)/2+' kg</span><span class="wu-set">60% → '+Math.round(wu*0.6*2)/2+' kg</span><span class="wu-set">80% → '+Math.round(wu*0.8*2)/2+' kg</span>':'')
       +'</div></div>'
       +loadSuggest
+      +coachRecHtml
       +'<div class="sets-grid">'
       +'<div class="slbl">SATZ 1</div>'
       +'<input class="sinput" type="number" placeholder="'+ph+'" value="'+d.g1+'" oninput="upd('+i+',\'g1\',this.value)" min="0" step="0.5">'
@@ -3585,6 +3783,7 @@ window.addEventListener('online',()=>flushOfflineBuffer());
 setTimeout(()=>flushOfflineBuffer(),3000);
 
 async function saveToSheet(){
+  showCoachSummary('');
   if(!API_URL){showStatus('err','⚠ API nicht verbunden — URL in Setup eintragen');return;}
   const week=PLAN[C].weeks[W], day=week.days[D];
   const sheetName='ZYKLUS '+(C+1);
@@ -3667,6 +3866,7 @@ async function saveToSheet(){
       body:payload
     });
     showStatus('ok','✓ '+toSend.length+' Übung(en) gesendet! ('+day.date+')');
+    showCoachSummary(buildTrainingSummary(toSend));
     haptic(30);
     addToErrorLog('SYNC_OK','Bulk: '+toSend.length+' Übungen ('+day.date+')');
     updateLastSync();
@@ -3693,6 +3893,13 @@ function updateLastSync(){
   if(el)el.textContent='Sync: '+ts;
 }
 function showStatus(t,m){const e=document.getElementById('status');e.className='status vis '+t;e.textContent=m;}
+function showCoachSummary(text){
+  const e=document.getElementById('coachSummaryBox');
+  if(!e)return;
+  if(!text){e.classList.remove('show');e.innerHTML='';return;}
+  e.innerHTML='<b>Trainingsfeedback</b><br>'+sanitize(text);
+  e.classList.add('show');
+}
 function showSetupStatus(t,m){const e=document.getElementById('setupStatus');e.className='status vis '+t;e.textContent=m;e.style.display='block';}
 function copyScript(){
   navigator.clipboard.writeText(SCRIPT_CODE)
@@ -4126,7 +4333,7 @@ const kiHistory = []; // {role:'user'|'assistant', content, model}
 function setKiModel(m) {
   // Nur Groq unterstützt — Funktion bleibt für Kompatibilität
   document.getElementById('kiBtnGroq').classList.add('active');
-  document.getElementById('kiModelBadge').textContent = 'GROQ · llama-3.1-8b';
+  document.getElementById('kiModelBadge').textContent = 'LOKAL · GROQ OPTIONAL';
 }
 
 function initKiTab() {
@@ -4144,7 +4351,7 @@ function renderKiChat() {
     if (m.role === 'user') {
       return '<div class="ki-msg user">' + sanitize(m.content) + '</div>';
     } else {
-      const label = '⚡ Groq Coach';
+      const label = 'Coach-Text (Groq)';
       return '<div class="ki-msg ai"><div class="ki-label">' + label + '</div>'
         + m.content.replace(/\n/g, '<br>') + '</div>';
     }
@@ -4287,7 +4494,7 @@ async function runAutoAnalysis() {
   // ── Schritt 2: Groq optional — formuliert Findings um ──────
   if (!store._aiKey) {
     btn.disabled = false;
-    btn.textContent = '▶ Neu analysieren';
+    btn.textContent = '▶ Analyse starten';
     return;
   }
 
@@ -4330,7 +4537,7 @@ async function runAutoAnalysis() {
   }
 
   btn.disabled = false;
-  btn.textContent = '▶ Neu analysieren';
+  btn.textContent = '▶ Analyse starten';
 }
 
 
@@ -4342,7 +4549,7 @@ async function sendKiMessage() {
 
   // Key-Check
   if (!store._aiKey) {
-    alert('Groq API Key fehlt — bitte im Setup unter Schritt 5 eintragen.');
+    alert('Rückfragen mit Coach-Text brauchen den optionalen Groq-Key. Die lokale Analyse funktioniert ohne Key.');
     return;
   }
 
@@ -4356,7 +4563,7 @@ async function sendKiMessage() {
   const box = document.getElementById('kiChatBox');
   const loading = document.createElement('div');
   loading.className = 'ki-msg loading';
-  loading.innerHTML = '<div class="spinner"></div> <span>Groq denkt…</span>';
+  loading.innerHTML = '<div class="spinner"></div> <span>Coach-Text wird formuliert…</span>';
   box.appendChild(loading);
   box.scrollTop = box.scrollHeight;
 
