@@ -526,28 +526,38 @@ main{padding:16px;max-width:860px;}
 .pr-count-badge{font-family:'DM Mono',monospace;font-size:8px;background:rgba(200,255,0,.12);color:var(--acc);padding:2px 6px;border-radius:3px;}
 .pr-chev{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s;}
 .pr-group-body{overflow:hidden;transition:max-height .3s cubic-bezier(.4,0,.2,1);}
+.pr-group-body.open{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:18px;}
 /* PR Card */
-.pr-card{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);padding:13px 14px;margin-bottom:8px;}
+.pr-card{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);padding:17px 16px;margin-bottom:0;min-width:0;display:flex;flex-direction:column;gap:12px;}
 .pr-card.has-pr{border-left:4px solid var(--bor2);}
 .pr-card.has-pr.tier-1{border-left:4px solid var(--acc);background:linear-gradient(90deg,rgba(200,255,0,.035) 0%,var(--sur) 62%);}
 .pr-card.has-pr.tier-2{border-left:4px solid var(--tx2);}
-.pr-card.no-pr{opacity:.4;}
-.pr-card-top{display:flex;align-items:flex-start;gap:10px;}
-.pr-ex-name{font-size:13px;font-weight:500;flex:1;line-height:1.35;min-width:0;}
+.pr-card.no-pr{opacity:.58;background:rgba(255,255,255,.015);}
+.pr-card-top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:start;}
+.pr-ex-name{font-size:13px;font-weight:500;line-height:1.35;min-width:0;color:var(--tx2);}
 .pr-card.tier-1 .pr-ex-name{font-size:15px;font-weight:700;}
-.pr-badge{font-family:'Barlow Condensed',sans-serif;font-size:28px;letter-spacing:1px;line-height:1;white-space:nowrap;flex-shrink:0;color:var(--tx);}
-.pr-card.tier-1.has-pr .pr-badge{font-size:36px;color:var(--acc);}
-.pr-badge.no-pr{font-family:'DM Mono',monospace;font-size:9px;color:var(--mu);}
-.pr-card-meta-row{display:flex;align-items:center;gap:8px;margin:6px 0 9px;flex-wrap:wrap;}
-.pr-meta{font-family:'DM Mono',monospace;font-size:9px;color:var(--mu);}
+.pr-value-wrap{text-align:right;min-width:86px;}
+.pr-badge{font-family:'Barlow Condensed',sans-serif;font-size:42px;letter-spacing:1px;line-height:.95;white-space:nowrap;color:var(--tx);}
+.pr-card.has-pr .pr-badge{color:var(--acc);}
+.pr-card.tier-1.has-pr .pr-badge{font-size:50px;color:var(--acc);}
+.pr-badge-unit{font-size:12px;font-weight:400;color:var(--mu);margin-left:2px;}
+.pr-badge.no-pr{font-family:'Barlow Condensed',sans-serif;font-size:30px;color:var(--mu);}
+.pr-value-label{font-family:'DM Mono',monospace;font-size:7px;color:var(--mu);letter-spacing:1.4px;text-transform:uppercase;margin-top:4px;}
+.pr-card-meta-row{display:flex;align-items:center;gap:7px;margin:0;flex-wrap:wrap;min-height:18px;}
+.pr-meta{font-family:'DM Mono',monospace;font-size:8px;color:var(--mu);letter-spacing:.4px;}
 .pr-trend-up{font-family:'DM Mono',monospace;font-size:9px;color:var(--ok);}
 .pr-trend-down{font-family:'DM Mono',monospace;font-size:9px;color:var(--acc2);}
-.pr-edit-row{display:flex;gap:6px;align-items:center;margin-top:6px;}
-.pr-edit-inp{background:var(--sur2);border:1px solid var(--bor);color:var(--tx);font-family:'DM Mono',monospace;font-size:12px;padding:7px 8px;border-radius:4px;width:76px;text-align:center;}
+.pr-edit-row{display:flex;gap:5px;align-items:center;margin-top:auto;padding-top:6px;border-top:1px solid rgba(255,255,255,.04);opacity:.46;flex-wrap:wrap;}
+.pr-card.no-pr .pr-edit-row{opacity:.68;}
+.pr-card:hover .pr-edit-row,.pr-edit-row:focus-within{opacity:1;}
+.pr-override-label{font-family:'DM Mono',monospace;font-size:7px;color:var(--mu);letter-spacing:1.2px;text-transform:uppercase;margin-right:auto;line-height:1;}
+.pr-edit-inp{background:transparent;border:1px solid var(--bor);color:var(--tx2);font-family:'DM Mono',monospace;font-size:9px;padding:4px 6px;border-radius:4px;width:58px;text-align:center;}
 .pr-edit-inp:focus{outline:none;border-color:var(--acc);}
-.pr-edit-btn{background:var(--acc);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:1px;padding:7px 13px;border-radius:4px;cursor:pointer;flex-shrink:0;}
+.pr-edit-btn{background:transparent;color:var(--mu);border:1px solid var(--bor);font-family:'DM Mono',monospace;font-size:7px;letter-spacing:1px;text-transform:uppercase;padding:4px 7px;border-radius:4px;cursor:pointer;flex-shrink:0;}
+.pr-edit-btn:hover{border-color:var(--acc);color:var(--acc);}
 .pr-edit-btn:active{opacity:.8;}
-.pr-del-btn{background:none;border:1px solid var(--bor);color:var(--mu);font-size:10px;padding:7px 9px;border-radius:4px;cursor:pointer;flex-shrink:0;}
+.pr-del-btn{background:none;border:1px solid transparent;color:var(--mu);font-size:8px;padding:4px 5px;border-radius:4px;cursor:pointer;flex-shrink:0;}
+.pr-del-btn:hover{border-color:var(--acc2);color:var(--acc2);}
 .pr-spark-toggle{background:none;border:none;color:var(--mu);font-size:11px;cursor:pointer;padding:2px 0;flex-shrink:0;opacity:.7;}
 .pr-spark-toggle:hover{opacity:1;}
 .pr-spark-wrap{overflow:hidden;max-height:0;transition:max-height .3s cubic-bezier(.4,0,.2,1);}
@@ -787,12 +797,15 @@ main{padding:16px;max-width:860px;}
   .weekly-v,.pr-insight-v{font-size:24px;}
   .pr-filter-row{gap:8px;margin-bottom:14px;}
   .pr-filter-chip{padding:8px 11px;}
+  .pr-group-body.open{grid-template-columns:1fr;gap:10px;}
   .pr-card{padding:14px;margin-bottom:9px;}
   .pr-card-top{gap:9px;}
   .pr-badge{font-size:30px;}
   .pr-card.tier-1.has-pr .pr-badge{font-size:38px;}
   .pr-card-meta-row{gap:7px;margin:7px 0 10px;}
-  .pr-edit-row{flex-wrap:wrap;gap:7px;}
+  .pr-edit-row{flex-wrap:wrap;gap:6px;opacity:.86;}
+  .pr-override-label{width:100%;margin-right:0;}
+  .pr-edit-inp{width:64px;}
   .prog-tab-section{margin-bottom:26px;}
   .prog-section-hd{flex-wrap:wrap;align-items:flex-start;line-height:1.35;font-size:9px;}
   .prog-ex-select{width:100%;max-width:none;}
@@ -4944,14 +4957,14 @@ function renderRecords() {
       html += '<div class="pr-card-top">';
       html += '<div class="pr-ex-name">'+exName+'</div>';
       if (hasPR) {
-        html += '<div class="pr-badge">'+rec.orm+' <span style="font-size:11px;font-weight:400;color:var(--mu);">kg</span></div>';
+        html += '<div class="pr-value-wrap"><div class="pr-badge">'+rec.orm+'<span class="pr-badge-unit">kg</span></div><div class="pr-value-label">PR</div></div>';
       } else {
-        html += '<div class="pr-badge no-pr">—</div>';
+        html += '<div class="pr-value-wrap"><div class="pr-badge no-pr">—</div><div class="pr-value-label">offen</div></div>';
       }
       html += '</div>';
       if(hasPR){
         html += '<div class="pr-card-meta-row">'
-          +'<span class="pr-meta">'+rec.date+'</span>'
+          +'<span class="pr-meta">Letzter PR · '+rec.date+'</span>'
           +trendHtml
           +relBadge
           +(hist.length>=2?'<button class="pr-spark-toggle" onclick="event.stopPropagation();document.getElementById(\''+sparkId+'\').classList.toggle(\'open\')">📈</button>':'')
@@ -4959,6 +4972,7 @@ function renderRecords() {
         html += '<div class="pr-spark-wrap" id="'+sparkId+'">'+buildPRSparkline(hist)+'</div>';
       }
       html += '<div class="pr-edit-row">'
+        +'<span class="pr-override-label">Override</span>'
         +'<input class="pr-edit-inp" type="number" id="pr_inp_'+safeId+'" placeholder="kg" step="0.5" min="0" value="'+(hasPR?rec.orm:'')+'">'
         +'<button class="pr-edit-btn" onclick="savePRManual(\''+exName.replace(/'/g,"\\'")+'\')">Speichern</button>'
         +(hasPR?'<button class="pr-del-btn" onclick="deletePR(\''+exName.replace(/'/g,"\\'")+'\')">✕</button>':'')
