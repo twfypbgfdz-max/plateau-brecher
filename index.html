@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#080808">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PB V12.6-test">
-<title>Plateau-Brecher V12.6-test</title>
+<meta name="apple-mobile-web-app-title" content="PB V12.7-test">
+<title>Plateau-Brecher V12.7-test</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -173,12 +173,17 @@ main{padding:16px;max-width:860px;}
 .pain-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px;}
 .pain-input{width:100%;background:var(--sur2);border:1px solid var(--bor);color:var(--tx);font-family:'DM Mono',monospace;font-size:12px;border-radius:var(--r);padding:7px;text-align:center;}
 .readiness-note{font-family:'DM Mono',monospace;font-size:9px;line-height:1.45;color:var(--mu);margin-top:10px;}
-.weekly-overview,.pr-insight{border:1px solid var(--bor);background:var(--sur);border-radius:var(--r);padding:12px;margin-bottom:12px;}
-.weekly-line,.pr-insight-line{font-family:'DM Mono',monospace;font-size:10px;line-height:1.55;color:var(--tx);}
+.weekly-overview,.pr-insight{border:1px solid var(--bor);background:var(--sur);border-radius:var(--r);padding:14px;margin-bottom:14px;}
+.weekly-line,.pr-insight-line{font-family:'DM Mono',monospace;font-size:10px;line-height:1.55;color:var(--tx);margin-bottom:2px;}
 .weekly-grid,.pr-insight-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px;}
 .weekly-kv,.pr-insight-kv{background:var(--sur2);border:1px solid var(--bor);border-radius:var(--r);padding:8px;}
 .weekly-k,.pr-insight-k{font-family:'DM Mono',monospace;font-size:8px;color:var(--mu);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:3px;}
 .weekly-v,.pr-insight-v{font-family:'Barlow Condensed',sans-serif;font-size:18px;color:var(--acc);letter-spacing:1px;}
+.weekly-primary,.pr-primary{font-family:'Barlow Condensed',sans-serif;font-size:24px;line-height:1;color:var(--tx);letter-spacing:1px;margin-bottom:6px;}
+.weekly-sub,.pr-sub{font-family:'DM Mono',monospace;font-size:9px;line-height:1.5;color:var(--mu);}
+.weekly-v.good,.pr-insight-v.good{color:var(--ok);}
+.weekly-v.watch,.pr-insight-v.watch{color:var(--warn);}
+.weekly-v.warning,.pr-insight-v.warning{color:var(--acc2);}
 .balance-row{font-family:'DM Mono',monospace;font-size:9px;color:var(--tx2);display:flex;justify-content:space-between;gap:8px;border-top:1px solid var(--bor);padding-top:7px;margin-top:7px;}
 @media(max-width:420px){.readiness-grid,.pain-grid,.weekly-grid,.pr-insight-grid{grid-template-columns:1fr;}}
 /* ── Hall of Fame ─────────────────────────────────── */
@@ -705,9 +710,9 @@ main{padding:16px;max-width:860px;}
 .ki-finding-icon{font-size:13px;flex-shrink:0;margin-top:1px;}
 .ki-finding-text{font-family:'DM Mono',monospace;font-size:9px;line-height:1.5;color:var(--tx);}
 .ki-finding-text b{color:var(--acc);font-weight:700;}
-.ki-finding.warn .ki-finding-text b{color:#ff8800;}
-.ki-finding.ok .ki-finding-text b{color:var(--ok);}
-.ki-finding.alert .ki-finding-text b{color:var(--acc2);}
+.ki-finding.watch .ki-finding-text b,.ki-finding.warn .ki-finding-text b{color:var(--warn);}
+.ki-finding.good .ki-finding-text b,.ki-finding.ok .ki-finding-text b{color:var(--ok);}
+.ki-finding.warning .ki-finding-text b,.ki-finding.alert .ki-finding-text b{color:var(--acc2);}
 .ki-chat-label{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--mu);text-transform:uppercase;margin:12px 0 6px;}
 
 .save-spin-wrap{display:none;}
@@ -781,14 +786,14 @@ main{padding:16px;max-width:860px;}
 <body>
 <div class="consent-overlay" id="consentOverlay">
   <div class="consent-box">
-    <h2 class="splash-h2">SYSTEM-START V12.6-test</h2>
+    <h2 class="splash-h2">SYSTEM-START V12.7-test</h2>
     <p class="splash-p">Daten werden lokal gespeichert und via API synchronisiert. Fehler-Logging ist aktiv.</p>
     <button class="save-btn" onclick="acceptConsent()">Akzeptieren &amp; Starten</button>
   </div>
 </div>
 <header>
   <div>
-    <div class="logo">PB<span class="splash-logo-ver"> V12.6-test</span></div>
+    <div class="logo">PB<span class="splash-logo-ver"> V12.7-test</span></div>
     <span class="hbadge" id="todayBadge">Lädt…</span>
     <div class="splash-build">Build: <span id="buildDateTxt"></span></div>
   </div>
@@ -850,7 +855,7 @@ main{padding:16px;max-width:860px;}
     <div class="step-desc">Nur ändern, wenn <b>SCRIPT_CODE</b> aktualisiert wurde. App-Testversionen brauchen nicht automatisch ein neues Apps-Script-Deployment.</div>
     <div class="setup-mini-grid">
       <div class="setup-mini-card"><b>Aktuelle Script-Basis:</b><br>V11.9.1</div>
-      <div class="setup-mini-card"><b>App-Version:</b><br>V12.6-test</div>
+      <div class="setup-mini-card"><b>App-Version:</b><br>V12.7-test</div>
     </div>
     <div class="setup-note"><strong>Hinweis:</strong> Wenn die Sheet-Verbindung bereits funktioniert, muss dieser Code für diese Testversion normalerweise nicht neu deployed werden.</div>
     <div class="code-box" id="scriptCodeBox">Lädt…</div>
@@ -1251,7 +1256,7 @@ const PLAN = [
 // STORAGE
 // ============================================================
 const SK='pb_v12_0_test';
-const APP_VERSION='V12.6-test';
+const APP_VERSION='V12.7-test';
 const BUILD_DATE='12.05.2026';
 const GITHUB_RAW_URL='https://raw.githubusercontent.com/twfypbgfdz-max/Plateaubrecher/main/index.html';
 const errorLog=[];
@@ -2161,6 +2166,8 @@ function buildExerciseRecommendation(i){
   const prevOrm=prevEntry?.orm||0;
   const prevG=prevEntry?.g1||0;
   const prevRpe=coachNum(prevEntry?.data?.rpe);
+  const quality=prevEntry?mergeQualityContexts(getEntryQualityContext(C,W,D,i),getEntryQualityContext(prevEntry.c,prevEntry.w,prevEntry.d,prevEntry.i)):getEntryQualityContext(C,W,D,i);
+  const qualityDefensive=quality.confidence!=='high';
 
   if(week.isDeload){
     return{level:'muted',text:prevG?'Deload: leichter trainieren':'Deload: 60% Richtwert'};
@@ -2172,7 +2179,7 @@ function buildExerciseRecommendation(i){
 
   if(!d.g1&&!d.r1){
     if(!prevEntry)return{level:'muted',text:'Wenige Vergleichsdaten vorhanden'};
-    if(caution.level==='light'&&basis.level==='good')return{level:'muted',text:'leichte Steigerung nur wenn sauber'};
+    if((caution.level==='light'||qualityDefensive)&&basis.level==='good')return{level:'muted',text:'Steigerung nur sauber bewerten'};
     if(basis.level==='good'&&prevRpe>0&&prevRpe<7)return{level:'ok',text:'+2,5 kg versuchen'};
     if(basis.level==='good')return{level:'muted',text:'gleiches Gewicht wiederholen'};
     return{level:'muted',text:prevRpe>0&&prevRpe<7?'leichte Steigerung möglich':'Gewicht wahrscheinlich haltbar'};
@@ -2183,7 +2190,7 @@ function buildExerciseRecommendation(i){
   if(rpe>=9.5)return{level:'warn',text:'gleiches Gewicht wiederholen'};
   if(reps1&&reps1<8)return{level:'muted',text:'erst Ziel-Reps vollmachen'};
   if(prevOrm&&orm>prevOrm+0.5&&(!rpe||rpe<=8.5)){
-    if(caution.level==='light')return{level:'muted',text:'leichte Steigerung nur wenn sauber'};
+    if(caution.level==='light'||qualityDefensive)return{level:'muted',text:'Steigerung nur sauber bewerten'};
     if(basis.level==='good')return{level:'ok',text:'+2,5 kg versuchen'};
     return{level:'muted',text:'leichte Steigerung möglich'};
   }
@@ -2230,6 +2237,8 @@ function buildTrainingSummary(toSend){
   if(declines)parts.push(declines+' Leistungseinbruch'+(declines>1?'e':''));
   const readiness=buildReadinessContext();
   if(readiness.level!=='none')parts.push(readiness.summary.replace(/\.$/,''));
+  const metrics=computeLocalMetrics();
+  if(metrics.qualityAffectedComparisons>0)parts.push('Vergleiche vorsichtig bewerten');
   const ds=calcDeloadSignal();
   if(ds.level>=2)parts.push('Deload prüfen');
   else if(ds.level===1)parts.push('Erholung beobachten');
@@ -3039,6 +3048,72 @@ function checkFatigueHint(){
 }
 
 // ── Lokale Metriken — zentral berechnet, von KI + Fatigue genutzt ──
+function analyzeDataQualityNote(note){
+  const text=String(note||'').toLowerCase();
+  const markers=[];
+  const add=(type,label,rx)=>{if(rx.test(text))markers.push({type,label});};
+  add('machine','Matrix',/matrix/);
+  add('machine','MedX',/medx/);
+  add('machine','Hammer Strength',/hammer\s*strength|hammer/);
+  add('machine','Ersatzmaschine',/ersatzmaschine|andere maschine|maschine gewechselt/);
+  add('setup','anderer Griff',/anderer griff|griff gewechselt|enger griff|breiter griff|v-griff|untergriff|obergriff/);
+  add('setup','anderer Sitz',/anderer sitz|sitz anders|sitzposition|lehne|polster/);
+  add('setup','anderer Winkel',/anderer winkel|winkel|incline|decline/);
+  add('execution','ROM',/\brom\b|range of motion|bewegungsradius|tiefer|kürzer|kuerzer/);
+  add('execution','Technik',/technik|sauber|kontrolle|kontrolliert|schwung|ausführung|ausfuehrung/);
+  add('pain','Schmerz',/schmerz|zieht|stechen|unangenehm|aua|pain/);
+  let confidence='high';
+  if(markers.some(m=>m.type==='machine'||m.type==='pain'))confidence='low';
+  else if(markers.length)confidence='medium';
+  return{markers,confidence,hasMarkers:markers.length>0};
+}
+
+function getEntryQualityContext(c,w,d,i){
+  const data=getD(c,w,d,i);
+  const note=data?.notes||data?.note||'';
+  const q=analyzeDataQualityNote(note);
+  return{...q,note};
+}
+
+function mergeQualityContexts(a,b){
+  const markers=[...(a?.markers||[]),...(b?.markers||[])];
+  let confidence='high';
+  if((a?.confidence==='low')||(b?.confidence==='low'))confidence='low';
+  else if((a?.confidence==='medium')||(b?.confidence==='medium'))confidence='medium';
+  return{markers,confidence,hasMarkers:markers.length>0};
+}
+
+function confidenceWeight(confidence){
+  if(confidence==='low')return 0.35;
+  if(confidence==='medium')return 0.65;
+  return 1;
+}
+
+function buildProgressSignalFromEntries(currentData,prevData,quality){
+  if(!currentData||!prevData)return null;
+  const currOrm=calc1RM(currentData),prevOrm=calc1RM(prevData);
+  const currVol=calcTotal(currentData)||0,prevVol=calcTotal(prevData)||0;
+  const currG=coachNum(currentData.g1),prevG=coachNum(prevData.g1);
+  const currR=coachNum(currentData.r1),prevR=coachNum(prevData.r1);
+  const currRpe=coachNum(currentData.rpe),prevRpe=coachNum(prevData.rpe);
+  const prefix=quality?.confidence==='high'?'':'vorsichtig: ';
+  if(currOrm&&prevOrm&&currOrm>prevOrm+0.5)return{type:'orm',level:'good',text:prefix+'1RM steigt',delta:Math.round((currOrm-prevOrm)*10)/10};
+  if(currG&&prevG&&Math.abs(currG-prevG)<0.01&&currR>prevR)return{type:'reps',level:'good',text:prefix+'mehr Wiederholungen',delta:currR-prevR};
+  if(currVol&&prevVol&&currVol>prevVol*1.08)return{type:'volume',level:'info',text:prefix+'Volumen steigt',delta:Math.round((currVol-prevVol)/prevVol*100)};
+  if(currRpe&&prevRpe&&currOrm&&prevOrm&&currOrm>=prevOrm-0.5&&currRpe<=prevRpe-0.5)return{type:'rpe',level:'good',text:prefix+'gleiche Leistung leichter',delta:Math.round((prevRpe-currRpe)*10)/10};
+  const q=analyzeDataQualityNote(currentData.notes||'');
+  const noteText=String(currentData.notes||'').toLowerCase();
+  if(q.markers.some(m=>m.type==='execution')&&/sauber|kontrolliert|bessere|besser|rom|tiefer/.test(noteText)){
+    return{type:'execution',level:'info',text:'Technik/ROM verbessert',delta:0};
+  }
+  return null;
+}
+
+function normalizeFindingLevel(level){
+  const map={ok:'good',good:'good',info:'info',watch:'watch',warn:'warning',warning:'warning',alert:'critical',critical:'critical',muted:'info'};
+  return map[level]||'info';
+}
+
 function computeLocalMetrics() {
   const result = {
     avgRpe: 0,
@@ -3056,6 +3131,10 @@ function computeLocalMetrics() {
     trainingEntryCount: 0,    // Übungen mit Gewicht/Wdh in aktueller Woche
     recentTrainingEntries: 0, // Übungen mit Gewicht/Wdh in letzten Nicht-Deload-Wochen
     dataBasis: 'ok',         // 'ok' | 'low' | 'none'
+    qualityMarkerCount: 0,
+    qualityAffectedComparisons: 0,
+    cleanCompareCount: 0,
+    progressionSignals: [],
   };
 
   // ── RPE: letzte 2 Nicht-Deload-Wochen ─────────────────────
@@ -3103,7 +3182,7 @@ function computeLocalMetrics() {
       // Schritt 2: Vergleichswert rückwärts suchen
       // Startpunkt: aktueller Tag - 1 (nicht aktuellen Tag selbst nehmen)
       // Innerhalb gleicher Woche: nur frühere Tage (di < D)
-      let prevOrm = 0;
+      let prevOrm = 0, prevData = null, prevPos = null, prevIdx = -1;
       outer2:
       for(let ci=C; ci>=0; ci--){
         const weeks = PLAN[ci].weeks;
@@ -3121,14 +3200,24 @@ function computeLocalMetrics() {
             const orm = calc1RM(d);
             if(!orm) continue;
             prevOrm = orm;
+            prevData = d;
+            prevPos = {c:ci,w:wi,d:di};
+            prevIdx = idx;
             break outer2;
           }
         }
       }
 
       if(prevOrm > 0){
-        ormNow += currOrm; ormOld += prevOrm; ormCount++;
-        if(currOrm <= prevOrm) stagCount++;
+        const quality=mergeQualityContexts(getEntryQualityContext(C,W,D,exIdxCurrent),getEntryQualityContext(prevPos.c,prevPos.w,prevPos.d,prevIdx));
+        const weight=confidenceWeight(quality.confidence);
+        ormNow += currOrm*weight; ormOld += prevOrm*weight; ormCount+=weight;
+        if(quality.confidence==='high')result.cleanCompareCount++;
+        else result.qualityAffectedComparisons++;
+        result.qualityMarkerCount+=quality.markers.length;
+        const signal=buildProgressSignalFromEntries(currData,prevData,quality);
+        if(signal)result.progressionSignals.push({exercise:exName,...signal,confidence:quality.confidence,markers:quality.markers.map(m=>m.label)});
+        if(currOrm <= prevOrm && quality.confidence!=='low') stagCount++;
       }
     });
   }
@@ -3149,7 +3238,11 @@ function computeLocalMetrics() {
         const entry=getD(C,W,di,ei);
         const vol=calcTotal(entry)||0;
         dayVol+=vol;
-        if(calc1RM(entry)>0||vol>0)result.trainingEntryCount++;
+        if(calc1RM(entry)>0||vol>0){
+          result.trainingEntryCount++;
+          const q=getEntryQualityContext(C,W,di,ei);
+          result.qualityMarkerCount+=q.markers.length;
+        }
         if(m2.includes('rücken')||m2.includes('bizeps'))result.pullVol+=vol;
         if(m2.includes('brust')||m2.includes('trizeps')||m2.includes('schulter'))result.pushVol+=vol;
       });
@@ -3270,6 +3363,8 @@ function buildPbAnalysisEngine() {
   const m = computeLocalMetrics();
   const ds = calcDeloadSignal();
   const rc = buildReadinessContext();
+  const cleanCompare=Math.round(m.cleanCompareCount||0);
+  const affectedCompare=Math.round(m.qualityAffectedComparisons||0);
 
   // Guard: keine Daten → ein Info-Finding
   if(m.dataBasis === 'none'){
@@ -3283,40 +3378,61 @@ function buildPbAnalysisEngine() {
     if(rc.level !== 'none'){
       findings.push({
         category: 'readiness',
-        level: rc.level === 'moderate' ? 'warn' : 'info',
+        level: rc.level === 'moderate' ? 'warning' : 'info',
         title: 'Kontext zum Training',
         text: rc.summary,
         evidence: { reasons: rc.reasons, painMax: rc.painMax }
       });
     }
-    return findings;
+    return findings.map(f=>({...f,level:normalizeFindingLevel(f.level)}));
   }
 
   if(rc.level !== 'none'){
     findings.push({
       category: 'readiness',
-      level: rc.level === 'moderate' ? 'warn' : 'info',
+      level: rc.level === 'moderate' ? 'warning' : 'info',
       title: 'Kontext zum Training',
       text: rc.summary,
       evidence: { reasons: rc.reasons, painMax: rc.painMax }
     });
   }
 
+  if(m.qualityMarkerCount>0||affectedCompare>0){
+    findings.push({
+      category:'data_quality',
+      level:affectedCompare>=2?'watch':'info',
+      title:'Vergleiche vorsichtig',
+      text:(affectedCompare?affectedCompare+' Vergleich(e) mit Marker. ':'')+'Maschine, Griff, Sitz oder Schmerzen koennen Werte verzerren.',
+      evidence:{qualityMarkerCount:m.qualityMarkerCount,affectedComparisons:affectedCompare,cleanComparisons:cleanCompare}
+    });
+  }
+
+  if(m.progressionSignals.length){
+    const s=m.progressionSignals[0];
+    findings.push({
+      category:'progression',
+      level:s.level||'good',
+      title:'Fortschritt sichtbar',
+      text:s.exercise.split('(')[0].trim()+': '+s.text+(s.delta?(' ('+(s.type==='volume'?'+':'')+s.delta+(s.type==='volume'?'%':'')+')'):'')+'.',
+      evidence:{type:s.type,confidence:s.confidence,markers:s.markers}
+    });
+  }
+
   // ── FATIGUE ──────────────────────────────────────────────
   if(m.avgRpe >= 9 && m.rpeCount >= 3){
-    findings.push({ category:'fatigue', level:'alert',
+    findings.push({ category:'fatigue', level:'warning',
       title:'Hohe Fatigue',
       text:'RPE Ø '+m.avgRpe+' über '+m.rpeCount+' Einheiten — Erholung prüfen.',
       evidence:{ avgRpe:m.avgRpe, rpeCount:m.rpeCount }
     });
   } else if(m.avgRpe >= 8 && m.rpeCount >= 3){
-    findings.push({ category:'fatigue', level:'warn',
+    findings.push({ category:'fatigue', level:'watch',
       title:'Erhöhte Belastung',
       text:'RPE Ø '+m.avgRpe+' — weiter beobachten.',
       evidence:{ avgRpe:m.avgRpe, rpeCount:m.rpeCount }
     });
   } else if(m.rpeCount >= 3){
-    findings.push({ category:'fatigue', level:'ok',
+    findings.push({ category:'fatigue', level:'good',
       title:'Fatigue normal',
       text:'RPE Ø '+m.avgRpe+' — Belastung im grünen Bereich.',
       evidence:{ avgRpe:m.avgRpe }
@@ -3325,7 +3441,7 @@ function buildPbAnalysisEngine() {
 
   // ── RPE-TREND ────────────────────────────────────────────
   if(m.rpeTrend === 'rising' && m.rpeCount >= 3){
-    findings.push({ category:'recovery', level:'warn',
+    findings.push({ category:'recovery', level:'watch',
       title:'RPE steigt',
       text:'Anstrengung wächst ohne entsprechende Leistungssteigerung.',
       evidence:{ rpeTrend:m.rpeTrend }
@@ -3335,19 +3451,19 @@ function buildPbAnalysisEngine() {
   // ── PROGRESS / PLATEAU ───────────────────────────────────
   if(m.ormCompareCount >= 2){
     if(m.ormTrend === 'rising'){
-      findings.push({ category:'progress', level:'ok',
+      findings.push({ category:'progress', level:'good',
         title:'Fortschritt sichtbar',
         text:'1RM steigt bei '+m.ormCompareCount+' verglichenen Übungen.',
         evidence:{ ormTrend:m.ormTrend, ormCompareCount:m.ormCompareCount }
       });
     } else if(m.ormTrend === 'falling'){
-      findings.push({ category:'progress', level:'warn',
+      findings.push({ category:'progress', level:(m.qualityAffectedComparisons>0?'watch':'warning'),
         title:'1RM rückläufig',
         text:'Leistung fällt bei mehreren Übungen — Deload oder mehr Erholung prüfen.',
         evidence:{ ormTrend:m.ormTrend, stagnatingCount:m.stagnatingCount }
       });
     } else if(m.stagnatingCount >= 3){
-      findings.push({ category:'progress', level:'warn',
+      findings.push({ category:'progress', level:(m.qualityAffectedComparisons>0?'watch':'warning'),
         title:'Plateau bei '+m.stagnatingCount+' Übungen',
         text:'Kein 1RM-Fortschritt seit letztem Vergleich.',
         evidence:{ stagnatingCount:m.stagnatingCount }
@@ -3375,13 +3491,13 @@ function buildPbAnalysisEngine() {
   // ── PUSH/PULL ────────────────────────────────────────────
   if(m.pushPullRatio !== null && m.pushVol > 0 && m.pullVol > 0){
     if(m.pushPullRatio > 1.5){
-      findings.push({ category:'volume', level:'warn',
+      findings.push({ category:'volume', level:'watch',
         title:'Pull dominiert',
         text:'Pull/Push-Ratio '+m.pushPullRatio+'× — mehr Push-Volumen in Betracht ziehen.',
         evidence:{ pushPullRatio:m.pushPullRatio, pullVol:Math.round(m.pullVol), pushVol:Math.round(m.pushVol) }
       });
     } else if(m.pushPullRatio < 0.7){
-      findings.push({ category:'volume', level:'warn',
+      findings.push({ category:'volume', level:'watch',
         title:'Push dominiert',
         text:'Pull/Push-Ratio '+m.pushPullRatio+'× — mehr Pull-Volumen in Betracht ziehen.',
         evidence:{ pushPullRatio:m.pushPullRatio }
@@ -3403,13 +3519,13 @@ function buildPbAnalysisEngine() {
       evidence:{ dataBasis:'low', score:ds.score }
     });
   } else if(ds.level >= 3){
-    findings.push({ category:'deload', level:'alert',
+    findings.push({ category:'deload', level:'critical',
       title:'Deload empfohlen',
       text:ds.reasons.join(' · ')+'.',
       evidence:{ score:ds.score, weeksSinceDeload:ds.weeksSinceDeload }
     });
   } else if(ds.level === 2){
-    findings.push({ category:'deload', level:'warn',
+    findings.push({ category:'deload', level:'warning',
       title:'Deload-Signal: beobachten',
       text:ds.reasons.join(' · ')+'.',
       evidence:{ score:ds.score }
@@ -3421,7 +3537,7 @@ function buildPbAnalysisEngine() {
       evidence:{ score:ds.score }
     });
   } else {
-    findings.push({ category:'deload', level:'ok',
+    findings.push({ category:'deload', level:'good',
       title:'Kein Deload nötig',
       text:'Keine akuten Fatigue- oder Leistungs-Signale.',
       evidence:{ score:0 }
@@ -3430,14 +3546,14 @@ function buildPbAnalysisEngine() {
 
   // Wenn kein einziges Finding → positives Summary
   if(findings.length === 0){
-    findings.push({ category:'info', level:'ok',
+    findings.push({ category:'info', level:'good',
       title:'Alles im grünen Bereich',
       text:'Keine Auffälligkeiten in Fatigue, Volumen oder Progression.',
       evidence:{}
     });
   }
 
-  return findings;
+  return findings.map(f=>({...f,level:normalizeFindingLevel(f.level)}));
 }
 
 // ============================================================
@@ -3562,6 +3678,40 @@ function rateMuscleVolume(bucket,total,maxVol){
 
 function buildWeeklyOverviewHtml(){
   const s=getWeekVolumeSummary();
+  const m=computeLocalMetrics();
+  const ds=calcDeloadSignal();
+  const rc=buildReadinessContext();
+  const entriesV127=Object.entries(s.buckets).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  const strongestV127=entriesV127[0]||null;
+  const weakestV127=entriesV127.length>1?entriesV127[entriesV127.length-1]:null;
+  const prevV127=getPreviousComparableWeekVolume();
+  let volTextV127='Volumen dünn',volClsV127='watch';
+  if(s.total>0&&prevV127>0){
+    const pct=Math.round((s.total-prevV127)/prevV127*100);
+    volTextV127=Math.abs(pct)<=10?'stabil':(pct>0?'steigt':'niedriger');
+    volClsV127=Math.abs(pct)<=10?'good':'info';
+  }else if(s.total>0){volTextV127='vorhanden';volClsV127='info';}
+  const performanceV127=m.progressionSignals.length?'Leistung steigt':(m.ormTrend==='falling'?'Leistung prüfen':(m.dataBasis==='none'?'Noch keine Daten':'Leistung stabil'));
+  const performanceClsV127=m.progressionSignals.length?'good':(m.ormTrend==='falling'?'warning':'info');
+  const recoveryV127=rc.level==='moderate'?'Erholung vorsichtig':(m.avgRpe>=8&&m.rpeCount>=3?'Belastung hoch':'Erholung ok');
+  const recoveryClsV127=rc.level==='moderate'||(m.avgRpe>=8&&m.rpeCount>=3)?'watch':'good';
+  const deloadV127=ds.level>=3?'Deload prüfen':(ds.level>=1?'Beobachten':'Kein Deload nötig');
+  const deloadClsV127=ds.level>=2?'warning':(ds.level===1?'watch':'good');
+  const lineV127=s.doneDays+'/'+s.targetDays+' Einheiten · '+(strongestV127?strongestV127[0]+' vorn':'Balance offen')+(weakestV127?' · '+weakestV127[0]+' niedrig':'');
+  const maxVolV127=strongestV127?.[1]||1;
+  const balanceV127=Object.entries(s.buckets).map(([mName,v])=>{
+    if(!v)return'';
+    return '<div class="balance-row"><span>'+mName+' · '+rateMuscleVolume(v,s.total,maxVolV127)+'</span><span>'+Math.round(v).toLocaleString('de-DE')+' kg</span></div>';
+  }).join('');
+  return '<div class="weekly-overview">'
+    +'<div class="weekly-primary">'+performanceV127+'</div>'
+    +'<div class="weekly-sub">'+lineV127+'</div>'
+    +'<div class="weekly-grid">'
+    +'<div class="weekly-kv"><div class="weekly-k">Leistung</div><div class="weekly-v '+performanceClsV127+'">'+performanceV127+'</div></div>'
+    +'<div class="weekly-kv"><div class="weekly-k">Erholung</div><div class="weekly-v '+recoveryClsV127+'">'+recoveryV127+'</div></div>'
+    +'<div class="weekly-kv"><div class="weekly-k">Volumen</div><div class="weekly-v '+volClsV127+'">'+volTextV127+'</div></div>'
+    +'<div class="weekly-kv"><div class="weekly-k">Deload</div><div class="weekly-v '+deloadClsV127+'">'+deloadV127+'</div></div>'
+    +'</div>'+(balanceV127?'<div style="margin-top:10px">'+balanceV127+'</div>':'')+'</div>';
   const entries=Object.entries(s.buckets).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
   const strongest=entries[0]||null;
   const weakest=entries.length>1?entries[entries.length-1]:null;
@@ -4374,6 +4524,22 @@ function buildPrInsightSummary(){
     const signal=getExerciseProgressSignal(r.name);
     if(signal&&(!bestProgress||signal.delta>bestProgress.signal.delta))bestProgress={name:r.name,signal};
   });
+  const latest=records.slice().sort((a,b)=>(currentWeekDates.has(String(b.date||''))?1:0)-(currentWeekDates.has(String(a.date||''))?1:0))[0];
+  const headline=records.length
+    ? (bestProgress?'Fortschritt: '+bestProgress.name.split('(')[0].trim():'PR-Stand stabil')
+    : 'Noch keine PRs';
+  const subline=records.length
+    ? (strongest?('Stärkster Lift: '+strongest.name.split('(')[0].trim()+' · '+strongest.orm+' kg'):'PRs vorhanden')
+    : 'Erst nach echten Bestleistungen ausfüllen.';
+  return '<div class="pr-insight">'
+    +'<div class="pr-primary">'+headline+'</div>'
+    +'<div class="pr-sub">'+subline+'</div>'
+    +'<div class="pr-insight-grid">'
+    +'<div class="pr-insight-kv"><div class="pr-insight-k">Stärkster Lift</div><div class="pr-insight-v good">'+(strongest?strongest.orm+' kg':'—')+'</div></div>'
+    +'<div class="pr-insight-kv"><div class="pr-insight-k">Größter Fortschritt</div><div class="pr-insight-v '+(bestProgress?'good':'')+'">'+(bestProgress?bestProgress.signal.text:'—')+'</div></div>'
+    +'<div class="pr-insight-kv"><div class="pr-insight-k">Letzter PR</div><div class="pr-insight-v">'+(latest?String(latest.date||'—'):'—')+'</div></div>'
+    +'<div class="pr-insight-kv"><div class="pr-insight-k">Neu diese Woche</div><div class="pr-insight-v">'+newThisWeek+'</div></div>'
+    +'</div></div>';
   const line=records.length
     ? 'Wo stärker geworden? '+(bestProgress?bestProgress.name.split('(')[0].trim()+': '+bestProgress.signal.text:'Noch keine klare neue Verbesserung in der lokalen Historie.')
     : 'Noch keine PRs vorhanden.';
@@ -4827,7 +4993,7 @@ async function runAutoAnalysis() {
   // ── Schritt 1: Lokale Findings sofort anzeigen ─────────────
   const findings = buildPbAnalysisEngine();
   const levelIcon = { ok:'✓', info:'→', warn:'⚠', alert:'🔴' };
-  const levelCls  = { ok:'ok', info:'', warn:'warn', alert:'alert' };
+  const levelCls  = { ok:'ok', good:'good', info:'', warn:'warn', watch:'watch', warning:'warning', alert:'alert', critical:'warning' };
 
   body.innerHTML = findings.map(f => {
     const icon = levelIcon[f.level] || '→';
