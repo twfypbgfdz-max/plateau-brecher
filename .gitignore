@@ -1,0 +1,20 @@
+# Archive / Exporte
+*.zip
+*.bak
+*.tmp
+
+# Betriebssystem
+Thumbs.db
+.DS_Store
+
+# Logs
+05_FEHLER_LOGS/*
+!05_FEHLER_LOGS/.gitkeep
+
+# Lokale / temporäre Dateien
+*.log
+*.cache
+
+# VS Code optional
+.vscode/*
+!.vscode/settings.json
