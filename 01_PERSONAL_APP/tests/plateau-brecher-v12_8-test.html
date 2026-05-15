@@ -518,16 +518,16 @@ main{padding:16px;max-width:860px;}
 [data-theme="light"] .pr-filter-chip.active{background:#111;border-color:#111;color:#fff;}
 .pr-filter-chip:active{opacity:.7;}
 /* PR Tier-Labels */
-.pr-group-title{display:flex;align-items:center;justify-content:space-between;font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:2px;color:var(--mu);padding:14px 0 8px;cursor:pointer;user-select:none;border-bottom:1px solid var(--bor);margin-bottom:8px;}
+.pr-group-title{display:flex;align-items:center;justify-content:space-between;font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:2px;color:var(--mu);padding:9px 0 6px;cursor:pointer;user-select:none;border-bottom:1px solid var(--bor);margin-bottom:8px;}
 .pr-group-title.tier-1{color:var(--acc);}
 .pr-group-title.tier-2{color:var(--tx2);}
 .pr-group-title.tier-3{color:var(--mu);}
 .pr-group-meta{display:flex;align-items:center;gap:6px;font-size:11px;}
-.pr-count-badge{font-family:'DM Mono',monospace;font-size:8px;background:rgba(200,255,0,.12);color:var(--acc);padding:2px 6px;border-radius:3px;}
+.pr-count-badge{font-family:'DM Mono',monospace;font-size:8px;background:rgba(200,255,0,.12);color:var(--acc);padding:3px 8px;border-radius:3px;}
 .pr-chev{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s;}
 .pr-group-body{overflow:hidden;transition:max-height .3s cubic-bezier(.4,0,.2,1);}
 /* PR Card */
-.pr-card{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);padding:13px 14px;margin-bottom:8px;}
+.pr-card{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);padding:10px 12px;margin-bottom:8px;}
 .pr-card.has-pr{border-left:4px solid var(--bor2);}
 .pr-card.has-pr.tier-1{border-left:4px solid var(--acc);background:linear-gradient(90deg,rgba(200,255,0,.035) 0%,var(--sur) 62%);}
 .pr-card.has-pr.tier-2{border-left:4px solid var(--tx2);}
@@ -538,20 +538,20 @@ main{padding:16px;max-width:860px;}
 .pr-badge{font-family:'Barlow Condensed',sans-serif;font-size:28px;letter-spacing:1px;line-height:1;white-space:nowrap;flex-shrink:0;color:var(--tx);}
 .pr-card.tier-1.has-pr .pr-badge{font-size:36px;color:var(--acc);}
 .pr-badge.no-pr{font-family:'DM Mono',monospace;font-size:9px;color:var(--mu);}
-.pr-card-meta-row{display:flex;align-items:center;gap:8px;margin:6px 0 9px;flex-wrap:wrap;}
+.pr-card-meta-row{display:flex;align-items:center;gap:8px;margin:4px 0 6px;flex-wrap:wrap;}
 .pr-meta{font-family:'DM Mono',monospace;font-size:9px;color:var(--mu);}
 .pr-trend-up{font-family:'DM Mono',monospace;font-size:9px;color:var(--ok);}
 .pr-trend-down{font-family:'DM Mono',monospace;font-size:9px;color:var(--acc2);}
 .pr-edit-row{display:flex;gap:6px;align-items:center;margin-top:6px;}
 .pr-edit-inp{background:var(--sur2);border:1px solid var(--bor);color:var(--tx);font-family:'DM Mono',monospace;font-size:12px;padding:7px 8px;border-radius:4px;width:76px;text-align:center;}
 .pr-edit-inp:focus{outline:none;border-color:var(--acc);}
-.pr-edit-btn{background:var(--acc);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:1px;padding:7px 13px;border-radius:4px;cursor:pointer;flex-shrink:0;}
+.pr-edit-btn{background:var(--acc);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;padding:5px 11px;border-radius:4px;cursor:pointer;flex-shrink:0;opacity:.9;}
 .pr-edit-btn:active{opacity:.8;}
 .pr-del-btn{background:none;border:1px solid var(--bor);color:var(--mu);font-size:10px;padding:7px 9px;border-radius:4px;cursor:pointer;flex-shrink:0;}
 .pr-spark-toggle{background:none;border:none;color:var(--mu);font-size:11px;cursor:pointer;padding:6px 4px;flex-shrink:0;opacity:.7;min-width:28px;min-height:28px;display:inline-flex;align-items:center;justify-content:center;}
 .pr-spark-toggle:hover{opacity:1;}
 .pr-spark-wrap{overflow:hidden;max-height:0;transition:max-height .3s cubic-bezier(.4,0,.2,1);}
-.pr-spark-wrap.open{max-height:60px;}
+.pr-spark-wrap.open{max-height:66px;}
 
 
 /* LEGEND */
@@ -4959,8 +4959,9 @@ function renderRecords() {
         html += '<div class="pr-spark-wrap" id="'+sparkId+'">'+buildPRSparkline(hist)+'</div>';
       }
       html += '<div class="pr-edit-row">'
-        +'<input class="pr-edit-inp" type="number" id="pr_inp_'+safeId+'" placeholder="kg" step="0.5" min="0" value="'+(hasPR?rec.orm:'')+'">'
-        +'<button class="pr-edit-btn" onclick="savePRManual(\''+exName.replace(/'/g,"\\'")+'\')">Speichern</button>'
+        +'<input class="pr-edit-inp" type="number" id="pr_inp_'+safeId+'" placeholder="kg" step="0.5" min="0" value="'+(hasPR?rec.orm:'')+'"'
+        +' onblur="savePRManual(\''+exName.replace(/'/g,"\\'"+'\')")
+        +' onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur()}">'
         +(hasPR?'<button class="pr-del-btn" onclick="deletePR(\''+exName.replace(/'/g,"\\'")+'\')">✕</button>':'')
         +'</div>';
       html += '</div>';
@@ -4985,6 +4986,7 @@ function savePRManual(exName) {
   const safeId = exName.replace(/[^a-z0-9]/gi, '_');
   const inp = document.getElementById('pr_inp_'+safeId);
   if (!inp) return;
+  if (!inp.value.trim()) return;
   const val = parseFloat(String(inp.value).replace(',','.'));
   if (!val || val <= 0) { inp.style.borderColor='var(--acc2)'; return; }
   inp.style.borderColor='var(--acc)';
