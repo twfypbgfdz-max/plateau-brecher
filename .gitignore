@@ -28,5 +28,8 @@ Desktop.ini
 # VS Code
 .history/
 
+# Lokale Claude/Codex-Worktrees
+.claude/
+
 # Node optional
 node_modules/
