@@ -39,7 +39,7 @@ body{
   background:var(--bg);color:var(--tx);font-family:'DM Mono',monospace;
   min-height:100vh;overflow-x:hidden;
   padding-top:var(--safe-top);
-  padding-bottom:calc(var(--safe-bottom) + 80px);
+  padding-bottom:calc(var(--safe-bottom) + 130px);
 }
 
 /* HEADER */
@@ -68,7 +68,7 @@ header{
 .icon-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
 
 /* TABS */
-.tabs{display:flex;border-bottom:1px solid var(--bor);overflow-x:auto;scrollbar-width:none;background:var(--sur);position:sticky;top:57px;z-index:99;}
+.tabs{display:flex;border-bottom:1px solid var(--bor);overflow-x:auto;scrollbar-width:none;background:var(--sur);position:sticky;top:calc(57px + var(--safe-top));z-index:99;}
 .tabs::-webkit-scrollbar{display:none;}
 .tab{
   font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;
@@ -1153,7 +1153,7 @@ function doPost(e) {
         if (rowDate === entry.date && rowEx.toLowerCase() === String(entry.uebung).toLowerCase()) {
           const sr = r + 1;
           if (entry.kg) sheet.getRange(sr, 3).setValue(parseNum(entry.kg));
-          const sets = [[parseNum(entry.g1), parseNum(entry.r1), parseNum(entry.g2), parseNum(entry.r2), parseNum(entry.g3), parseNum(entry.r3)]];
+          const sets = [[parseSheetNumOrBlank(entry.g1), parseSheetNumOrBlank(entry.r1), parseSheetNumOrBlank(entry.g2), parseSheetNumOrBlank(entry.r2), parseSheetNumOrBlank(entry.g3), parseSheetNumOrBlank(entry.r3)]];
           sheet.getRange(sr, 7, 1, 6).setValues(sets);
           if (entry.rpe) sheet.getRange(sr, 15).setValue(parseNum(entry.rpe));
           if (entry.notes !== undefined && entry.notes !== '') sheet.getRange(sr, 19).setValue(String(entry.notes));
@@ -1269,6 +1269,18 @@ function normalizeCycleName(value) {
 function parseNum(val) {
   if (typeof val === 'string') return parseFloat(val.replace(',', '.')) || 0;
   return parseFloat(val) || 0;
+}
+
+function parseSheetNumOrBlank(val) {
+  if (val === null || val === undefined || val === '') return '';
+  if (typeof val === 'string') {
+    const clean = val.trim();
+    if (!clean) return '';
+    const parsed = parseFloat(clean.replace(',', '.'));
+    return isNaN(parsed) ? '' : parsed;
+  }
+  const parsed = parseFloat(val);
+  return isNaN(parsed) ? '' : parsed;
 }
 
 function logError(typ, nachricht, details) {
@@ -3089,19 +3101,19 @@ function applySheetNamesToDay(c,w,d,rows){
   return{ok:true,changed,message:''};
 }
 
-async function preflightSheetNamesForSave(sheetName,day){
+async function preflightSheetNamesForSave(sheetName,day,c=C,w=W,d=D){
   const rows=await fetchSheetRowsForDay(sheetName,day.date);
-  const applied=applySheetNamesToDay(C,W,D,rows);
+  const applied=applySheetNamesToDay(c,w,d,rows);
   if(!applied.ok)return{ok:false,message:applied.message};
   const missing=day.exercises
-    .map((_,i)=>getExName(i))
+    .map((_,i)=>getHistoricalExName(c,w,d,i))
     .filter(name=>!rows.some(r=>sheetNameMatches(r.name,name)));
   if(missing.length){
     return{ok:false,message:'Nicht im Sheet gefunden: '+missing.join(', ')};
   }
   if(applied.changed){
     persist();
-    renderWorkout();
+    if(C===c&&W===w&&D===d)renderWorkout();
   }
   return{ok:true,message:'',changed:applied.changed};
 }
@@ -4511,7 +4523,7 @@ async function saveToSheet(){
   showStatus('loading','⏳ Prüfe Sheet-Zuordnung…');
 
   try{
-    const preflight=await preflightSheetNamesForSave(sheetName,day);
+    const preflight=await preflightSheetNamesForSave(sheetName,day,snapC,snapW,snapD);
     if(!preflight.ok){
       showStatus('err','⚠ Speichern abgebrochen: '+preflight.message);
       addToErrorLog('SYNC_WARN','Speichern abgebrochen: '+preflight.message);
