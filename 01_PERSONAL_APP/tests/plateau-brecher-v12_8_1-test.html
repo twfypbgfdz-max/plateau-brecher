@@ -863,14 +863,14 @@ main{padding:16px;max-width:860px;}
   <div class="info-row">
     <div class="bw-box">
       <div class="box-lbl"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>Körpergewicht</div>
-      <div class="bw-row"><input class="bw-input" type="number" min="0" step="0.1" placeholder="0.0" id="bwInput" oninput="saveBW(this.value)"><span class="bw-unit">kg</span></div>
+      <div class="bw-row"><input class="bw-input" type="number" min="0" step="0.1" placeholder="0.0" id="bwInput" onchange="saveBW(this.value)"><span class="bw-unit">kg</span></div>
     </div>
     <div class="bw-box">
       <div class="box-lbl"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M8 12h4l2-4 2 8 2-4h2"/></svg>Training</div>
       <div class="stats-input-row">
-        <div class="stats-input-grp"><input class="bw-input bw-input-kcal" type="number" placeholder="0" id="kcalInput" oninput="saveTrainingStats()"><span class="bw-unit">kcal</span></div>
-        <div class="stats-input-grp"><input class="bw-input bw-input-sm" type="number" placeholder="0" id="pulseInput" oninput="saveTrainingStats()"><span class="bw-unit">bpm</span></div>
-        <div class="stats-input-grp"><input class="bw-input bw-input-sm" type="number" placeholder="0" id="durInput" oninput="saveTrainingStats()"><span class="bw-unit">min</span></div>
+        <div class="stats-input-grp"><input class="bw-input bw-input-kcal" type="number" placeholder="0" id="kcalInput" onchange="saveTrainingStats()"><span class="bw-unit">kcal</span></div>
+        <div class="stats-input-grp"><input class="bw-input bw-input-sm" type="number" placeholder="0" id="pulseInput" onchange="saveTrainingStats()"><span class="bw-unit">bpm</span></div>
+        <div class="stats-input-grp"><input class="bw-input bw-input-sm" type="number" placeholder="0" id="durInput" onchange="saveTrainingStats()"><span class="bw-unit">min</span></div>
       </div>
     </div>
   </div>
@@ -1209,7 +1209,11 @@ function doGet(e) {
         logError('API GET', 'Sheet nicht gefunden', e.parameter.sheet);
         return ContentService.createTextOutput('Fehler: Blatt nicht gefunden.').setMimeType(ContentService.MimeType.TEXT);
       }
-      const data = sheet.getRange(4, 1, sheet.getLastRow() - 3, 22).getValues();
+      const lastRow = sheet.getLastRow();
+      if (lastRow < 4) {
+        return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
+      }
+      const data = sheet.getRange(4, 1, lastRow - 3, 22).getValues();
       return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
     }
     return ContentService.createTextOutput('API aktiv - V11.9.1').setMimeType(ContentService.MimeType.TEXT);
@@ -1384,13 +1388,9 @@ function addToErrorLog(type,msg){
   if(el)el.innerHTML=appLog.map(l=>'<div style="border-bottom:1px solid var(--bor);padding:4px 0;font-size:9px;color:'+(l.includes('ERR')||l.includes('FAIL')?'var(--acc2)':l.includes('OK')||l.includes('INFO')?'var(--ok)':'var(--tx2)')+'">'+sanitize(l)+'</div>').join('');
 }
 window.addEventListener('online',()=>{
-  const el=document.getElementById('connectionStatus');
-  if(el)el.textContent='Status: Online ✓';
   document.body.style.borderTop='none';
 });
 window.addEventListener('offline',()=>{
-  const el=document.getElementById('connectionStatus');
-  if(el)el.textContent='Status: Offline';
   document.body.style.borderTop='4px solid var(--acc2)';
 });
 
@@ -2759,7 +2759,7 @@ function renderWorkout(){
       +'</div>'
       +'<div class="rpe-row">'
       +'<span class="rpe-lbl">RPE</span>'
-      +'<input class="rpe-input" type="number" placeholder="—" min="1" max="10" step="0.5" value="'+(d.rpe||'')+'" oninput="upd('+i+',\'rpe\',this.value)" id="rpe'+i+'">'
+      +'<input class="rpe-input" type="number" placeholder="—" min="1" max="10" step="0.5" value="'+(d.rpe||'')+'" onchange="upd('+i+',\'rpe\',this.value)" id="rpe'+i+'">'
       +'<span class="rpe-scale">/ 10</span>'
       +'</div>'
       +'<div class="stats-row">'
@@ -2767,7 +2767,7 @@ function renderWorkout(){
       +'<div class="sbox"><div class="skey">Bestleistung</div><div class="sval pr-warn-val">'+(rec?rec.orm+' kg':'—')+'</div></div>'
       +'</div>'
       +buildSparkline(i, orm)
-      +'<textarea class="notes" placeholder="Notizen…" oninput="upd('+i+',\'notes\',this.value)">'+d.notes+'</textarea>'
+      +'<textarea class="notes" placeholder="Notizen…" onchange="upd('+i+',\'notes\',this.value)">'+d.notes+'</textarea>'
       +'<button class="done-btn '+(d.done?'done-st':'')+'" onclick="toggleDone('+i+')">'
       +(d.done
         ?'<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Abgehakt'
@@ -4563,7 +4563,7 @@ async function saveToSheet(){
     return;
   }
 
-  showStatus('loading','⏳ '+toSend.length+' Übung(en) werden gespeichert…');
+  showStatus('loading','⏳ '+toSend.length+' Übung(en) werden gesendet…');
 
   // Bulk-Payload: ein einziger POST mit allen Übungen
   const exercises = toSend.map(e => {
@@ -4588,10 +4588,10 @@ async function saveToSheet(){
       headers:{'Content-Type':'text/plain'},
       body:payload
     });
-    showStatus('ok','✓ '+toSend.length+' Übung(en) gesendet! ('+day.date+')');
+    showStatus('ok','✓ '+toSend.length+' Übung(en) gesendet / Sync angestoßen ('+day.date+')');
     showCoachSummary(buildTrainingSummary(toSend));
     haptic(30);
-    addToErrorLog('SYNC_OK','Bulk: '+toSend.length+' Übungen ('+day.date+')');
+    addToErrorLog('SYNC_OK','Bulk gesendet / Sync angestoßen: '+toSend.length+' Übungen ('+day.date+')');
     updateLastSync();
   }catch(e){
     bufferOffline(payload);
