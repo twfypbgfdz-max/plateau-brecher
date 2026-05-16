@@ -1113,7 +1113,11 @@ const SHEET_ID = '1NA5OUomzaSFSw6_VzdJ6U7FaD1bU0qTEsQCtIneJ1JI';
 
 function doPost(e) {
   const lock = LockService.getScriptLock();
-  lock.tryLock(10000);
+  const acquired = lock.tryLock(10000);
+  if (!acquired || !lock.hasLock()) {
+    logError('API POST LOCK', 'Speichern abgebrochen: Lock nicht erhalten', e && e.postData ? e.postData.contents.substring(0, 200) : 'Kein Inhalt');
+    return ContentService.createTextOutput(JSON.stringify({success: false, error: 'LOCK_NOT_ACQUIRED'})).setMimeType(ContentService.MimeType.JSON);
+  }
   try {
     const data = JSON.parse(e.postData.contents);
     const type = (data.type || '').toLowerCase();
@@ -1192,7 +1196,7 @@ function doPost(e) {
     logError('API POST', err.toString(), e.postData ? e.postData.contents.substring(0, 200) : 'Kein Inhalt');
     return ContentService.createTextOutput(JSON.stringify({success: false, error: err.toString()})).setMimeType(ContentService.MimeType.JSON);
   } finally {
-    lock.releaseLock();
+    if (lock.hasLock()) lock.releaseLock();
   }
 }
 
@@ -1247,6 +1251,22 @@ function updatePersonalBest(pb) {
       return;
     }
   }
+
+  const row = Math.max(pbSheet.getLastRow() + 1, 5);
+  const gewicht = parseNum(pb.gewicht);
+  const wdh = parseNum(pb.wdh);
+  pbSheet.getRange(row, 1).setValue(uebung);
+  if (gewicht > 0 && wdh > 0) {
+    pbSheet.getRange(row, 2).setValue(gewicht);
+    pbSheet.getRange(row, 3).setValue(wdh);
+  }
+  pbSheet.getRange(row, 4).setValue(newOrm);
+  if (pb.datum) pbSheet.getRange(row, 5).setValue(pb.datum);
+  if (pb.sheetName) pbSheet.getRange(row, 6).setValue(pb.sheetName);
+  pbSheet.getRange(row, 7).setValue(pb.source || 'App-Update V11.9.1');
+  if (pb.woche) pbSheet.getRange(row, 8).setValue(pb.woche);
+  if (pb.trainingstag) pbSheet.getRange(row, 9).setValue(pb.trainingstag);
+  if (pb.notiz) pbSheet.getRange(row, 10).setValue(String(pb.notiz));
 }
 
 function getBestSetByOrm(entry) {
