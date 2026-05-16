@@ -1987,10 +1987,12 @@ async function syncAllFromSheet(manual=false){
   if(!manual&&Date.now()-lastAutoSyncAt<AUTO_SYNC_COOLDOWN)return;
   if(!manual)lastAutoSyncAt=Date.now();
   const sync=beginSync(snapC,snapW,snapD);
+  let syncDate='';
   try{
     showStatus('ok','↻ Lade Sheet-Daten…');
     const sheetName='ZYKLUS '+(snapC+1);
     const day=PLAN[snapC].weeks[snapW].days[snapD];
+    syncDate=day?.date||'';
     const matched=new Set();
     const resp=await fetchSheetGetWithRetry(API_URL+'?action=getPlan&sheet='+encodeURIComponent(sheetName)+'&date='+encodeURIComponent(day.date));
     if(!isCurrentSync(sync,snapC,snapW,snapD))return;
@@ -2044,7 +2046,7 @@ async function syncAllFromSheet(manual=false){
     if(!isCurrentSync(sync,snapC,snapW,snapD))return;
     if(e&&e.message==='SYNC_TIMEOUT'){
       showStatus('err','Sync Timeout – später erneut versuchen');
-      logSyncCode('TIMEOUT','Timeout '+day.date);
+      logSyncCode('TIMEOUT','Timeout '+(syncDate||'?'));
       return;
     }
     showStatus('err','⚠ Sync fehlgeschlagen: '+e.message);
