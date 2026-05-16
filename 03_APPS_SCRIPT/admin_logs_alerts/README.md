@@ -41,3 +41,9 @@ Keine Secrets, privaten Sheet-IDs, Webhook-URLs oder Tokens ins Repo schreiben.
 
 - `AdminAlerts.gs`
 - `AdminAlertSetup.gs`
+
+## Status
+
+- Noch keine aktive Implementierung.
+- Noch keine Trigger aktiv.
+- Noch keine Webhooks aktiv.
