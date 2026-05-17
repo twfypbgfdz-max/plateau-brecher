@@ -651,11 +651,15 @@
             <div class="weight-chip">
               <span>Gewicht heute</span>
               <strong id="weightToday">Noch offen</strong>
+              <span class="input-wrap">
+                <input id="weightInput" type="number" inputmode="decimal" min="0" step="0.1" placeholder="0.0">
+                <span class="unit">kg</span>
+              </span>
             </div>
             <div class="sync-strip">
-              <div class="sync-row"><span>Speicher</span><strong>Lokal gespeichert</strong></div>
-              <div class="sync-row"><span>Sync</span><strong>Sheet Sync vorbereitet</strong></div>
-              <div class="sync-row"><span>Verbindung</span><strong>Noch nicht verbunden</strong></div>
+              <div class="sync-row"><span>Speicher</span><strong id="syncStatusLocal">Lokal gespeichert</strong></div>
+              <div class="sync-row"><span>Sync</span><strong id="syncStatusSheet">Nicht konfiguriert</strong></div>
+              <div class="sync-row"><span>Verbindung</span><strong id="syncStatusConnection">Keine URL gesetzt</strong></div>
             </div>
           </div>
         </article>
@@ -737,15 +741,6 @@
           </div>
         </section>
 
-        <div class="input-grid">
-          <label class="input-card">
-            <span>Gewicht</span>
-            <span class="input-wrap">
-              <input id="weightInput" type="number" inputmode="decimal" min="0" step="0.1" placeholder="0.0">
-              <span class="unit">kg</span>
-            </span>
-          </label>
-        </div>
       </div>
     </section>
 
@@ -946,6 +941,14 @@
       return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
     }
 
+    function debounce(fn, delay) {
+      let timer;
+      return function (...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), delay);
+      };
+    }
+
     function dayTotals(day) {
       const entries = Array.isArray(day.entries) ? day.entries : [];
       return entries.reduce((totals, entry) => {
@@ -1105,11 +1108,11 @@
       }));
 
       return {
-        appVersion: "0.3-test",
+        appVersion: "0.5-test",
         syncStatus: {
           local: "Lokal gespeichert",
-          sheet: "Sheet Sync vorbereitet",
-          connection: "Noch nicht verbunden"
+          sheet: SHEET_SYNC_URL ? "Sheet Sync bereit" : "Nicht konfiguriert",
+          connection: SHEET_SYNC_URL ? "URL konfiguriert" : "Keine URL gesetzt"
         },
         date: dateKey,
         entries,
@@ -1233,14 +1236,21 @@
     }
 
     function renderSyncControls() {
+      const sheetLabel = document.getElementById("syncStatusSheet");
+      const connLabel  = document.getElementById("syncStatusConnection");
+
       if (!SHEET_SYNC_URL) {
         els.syncSheet.disabled = true;
         els.syncSheet.textContent = "Sheet Sync nicht konfiguriert";
+        if (sheetLabel) sheetLabel.textContent = "Nicht konfiguriert";
+        if (connLabel)  connLabel.textContent  = "Keine URL gesetzt";
         return;
       }
 
       els.syncSheet.disabled = false;
       els.syncSheet.textContent = "Mit Sheet synchronisieren";
+      if (sheetLabel) sheetLabel.textContent = "Sheet Sync bereit";
+      if (connLabel)  connLabel.textContent  = "URL konfiguriert";
     }
 
     function bindInputs() {
@@ -1279,6 +1289,7 @@
       els.entryList.addEventListener("click", (event) => {
         const button = event.target.closest("[data-delete-entry]");
         if (!button) return;
+        if (!confirm("Eintrag löschen?")) return;
         const today = ensureCurrentDay();
         today.entries = today.entries.filter((entry) => entry.id !== button.dataset.deleteEntry);
         saveState();
@@ -1321,17 +1332,17 @@
         renderAll();
       });
 
-      els.goalKcalInput.addEventListener("input", () => {
+      els.goalKcalInput.addEventListener("input", debounce(() => {
         state.goals.kcal = numberValue(els.goalKcalInput.value);
         saveState();
         renderAll();
-      });
+      }, 300));
 
-      els.goalProteinInput.addEventListener("input", () => {
+      els.goalProteinInput.addEventListener("input", debounce(() => {
         state.goals.protein = numberValue(els.goalProteinInput.value);
         saveState();
         renderAll();
-      });
+      }, 300));
     }
 
     function addEntryToDay(day, entry) {
@@ -1385,7 +1396,12 @@
         saveState();
         renderAll();
         setSaveStatus("Mit Sheet synchronisiert");
-      } catch {
+      } catch (error) {
+        console.error("syncTodayToSheet fehlgeschlagen:", {
+          date: activeDayKey,
+          url: SHEET_SYNC_URL ? "[gesetzt]" : "[leer]",
+          error
+        });
         today.entries = today.entries.map((entry) => ({
           ...entry,
           syncStatus: entry.syncStatus === "synced" ? "synced" : "local"
