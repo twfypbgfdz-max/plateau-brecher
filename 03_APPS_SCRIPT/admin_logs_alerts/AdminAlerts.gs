@@ -2,6 +2,8 @@
 // Vorbereitungsstruktur fuer spaetere P0/P1-Benachrichtigungen.
 // Keine echten Webhooks, Sheet-IDs oder Tokens in diese Datei schreiben.
 
+const ADMIN_ALERT_DEDUP_PREFIX = 'ADMIN_ALERT_NOTIFIED_';
+
 function scanAdminLogAlerts() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   if (!ss) {
@@ -16,6 +18,45 @@ function scanAdminLogAlerts() {
   });
 
   return rows;
+}
+
+function scanAdminLogAlertsWithDeduping() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) {
+    throw new Error('Admin-Log-Sheet ist nicht aktiv verfuegbar.');
+  }
+
+  const props = PropertiesService.getScriptProperties();
+  const alerts = findOpenP0P1Rows_(ss);
+  const fresh = [];
+  const known = [];
+
+  alerts.forEach(alert => {
+    const key = buildAlertKey_(alert);
+    const propKey = buildDedupPropertyKey_(key);
+
+    if (props.getProperty(propKey)) {
+      known.push(alert);
+      Logger.log('Admin-Alert Deduping: bereits bekannt: ' + key);
+      return;
+    }
+
+    fresh.push(alert);
+    props.setProperty(propKey, new Date().toISOString());
+    Logger.log('Admin-Alert Deduping: neu gespeichert: ' + key);
+  });
+
+  Logger.log(
+    'Admin-Alert Deduping: gesamt=' + alerts.length +
+    ' neu=' + fresh.length +
+    ' bekannt=' + known.length
+  );
+
+  return {
+    total: alerts.length,
+    fresh: fresh,
+    known: known
+  };
 }
 
 function findOpenP0P1Rows_(ss) {
@@ -71,6 +112,20 @@ function findOpenP0P1Rows_(ss) {
 }
 
 function buildAlertKey_(alert) {
+  const stableParts = [
+    alert && alert.app || '',
+    alert && alert.priority || '',
+    alert && alert.type || '',
+    alert && alert.version || '',
+    alert && alert.area || '',
+    alert && alert.file || '',
+    alert && alert.message || ''
+  ];
+
+  if (stableParts.join('').trim()) {
+    return stableParts.join('|');
+  }
+
   return [
     alert && alert.tabName || '',
     alert && alert.rowNumber || '',
@@ -78,6 +133,23 @@ function buildAlertKey_(alert) {
     alert && alert.type || '',
     alert && alert.message || ''
   ].join('|');
+}
+
+function buildDedupPropertyKey_(key) {
+  return ADMIN_ALERT_DEDUP_PREFIX + hashAlertKey_(key);
+}
+
+function hashAlertKey_(key) {
+  const digest = Utilities.computeDigest(
+    Utilities.DigestAlgorithm.SHA_256,
+    key,
+    Utilities.Charset.UTF_8
+  );
+
+  return digest.map(byte => {
+    const value = byte < 0 ? byte + 256 : byte;
+    return ('0' + value.toString(16)).slice(-2);
+  }).join('');
 }
 
 function sendDiscordAlert_(alert) {
@@ -108,6 +180,23 @@ function dryRunAdminLogAlerts() {
   });
 
   return alerts;
+}
+
+function resetAdminAlertDedupingForTest() {
+  // Nur manuell fuer Tests verwenden.
+  // Loescht ausschliesslich Properties mit Prefix ADMIN_ALERT_NOTIFIED_.
+  const props = PropertiesService.getScriptProperties();
+  const all = props.getProperties();
+  let deleted = 0;
+
+  Object.keys(all).forEach(key => {
+    if (!key.startsWith(ADMIN_ALERT_DEDUP_PREFIX)) return;
+    props.deleteProperty(key);
+    deleted++;
+  });
+
+  Logger.log('Admin-Alert Deduping Reset fuer Tests: ' + deleted + ' Keys geloescht.');
+  return deleted;
 }
 
 function buildHeaderMap_(headerRow) {

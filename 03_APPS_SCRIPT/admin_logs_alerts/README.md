@@ -15,14 +15,29 @@ Diese Struktur ist fuer eine spaetere Apps-Script-Automation vorgesehen, die neu
 
 ## Alert-Bedingung
 
-Benachrichtigungen sollen nur fuer Log-Zeilen ausgelöst werden, wenn beide Bedingungen gelten:
+Benachrichtigungen sollen nur fuer Log-Zeilen ausgeloest werden, wenn beide Bedingungen gelten:
 
 - `Status = offen`
-- `Priorität = P0` oder `Priorität = P1`
+- `Prioritaet = P0` oder `Prioritaet = P1`
+
+## Aktueller lokaler Stand
+
+- Dry-Run existiert.
+- P0/P1-Scan existiert.
+- `Personal_Logs` und `Public_Logs` werden getrennt geprueft.
+- Header werden ueber Spaltennamen erkannt.
+- Deduping ueber Apps Script Properties existiert lokal.
+- `scanAdminLogAlerts()` bleibt Dry-Run und schreibt keine Properties.
+- `dryRunAdminLogAlerts()` bleibt Dry-Run und schreibt keine Properties.
+- `scanAdminLogAlertsWithDeduping()` ist kein reiner Dry-Run mehr, weil neue Alert-Keys in Script Properties geschrieben werden.
+- Dedup-Key nutzt primaer stabile Alert-Felder: `app`, `priority`, `type`, `version`, `area`, `file`, `message`.
+- `rowNumber` wird nur noch als Fallback genutzt, wenn die stabilen Felder leer sind.
 
 ## Kanal
 
 Bevorzugter Kanal ist ein Discord Webhook.
+
+Der Discord-/Webhook-Versand ist aktuell noch No-op. `sendDiscordAlert_()` sendet nichts.
 
 ## Secrets
 
@@ -37,13 +52,16 @@ Keine Secrets, privaten Sheet-IDs, Webhook-URLs oder Tokens ins Repo schreiben.
 
 `03_APPS_SCRIPT/aktuell` bleibt getrennt von diesen Admin-Alerts und wird dadurch nicht veraendert.
 
-## Geplante Dateien
+## Dateien
 
 - `AdminAlerts.gs`
 - `AdminAlertSetup.gs`
 
 ## Status
 
-- Noch keine aktive Implementierung.
+- Lokale Dry-Run-Implementierung vorhanden.
+- Lokales Deduping ueber Script Properties vorhanden.
 - Noch keine Trigger aktiv.
 - Noch keine Webhooks aktiv.
+- Kein Deployment erfolgt.
+- Keine Google-Sheet-Aenderungen durch diese lokale Struktur.
