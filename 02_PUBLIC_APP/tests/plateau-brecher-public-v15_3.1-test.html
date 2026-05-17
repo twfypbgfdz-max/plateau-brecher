@@ -451,20 +451,26 @@ main { padding: 14px 16px; }
 .spin-sm { display: none; width: 15px; height: 15px; border: 2px solid rgba(0,0,0,.3); border-top-color: #000; border-radius: 50%; animation: spin .6s linear infinite; }
 #save-btn.saving .spin-sm { display: block; }
 #save-btn.saving .btn-lbl { display: none; }
-.api-status { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-family: 'DM Mono', monospace; font-size: 9px; color: var(--tx3); }
+.api-status { display: flex; align-items: center; gap: 7px; margin-top: 7px; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--tx2); }
 
 /* ── SETUP MODAL ─────────────────────── */
-#setup-ov { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,.88); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: none; align-items: flex-end; justify-content: center; }
+#setup-ov { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,.82); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); display: none; align-items: flex-end; justify-content: center; }
 #setup-ov.open { display: flex; }
-.modal-sheet { background: var(--s1); border-top: 1px solid var(--b2); border-radius: 16px 16px 0 0; padding: 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); width: 100%; max-width: 480px; animation: slideUp .22s ease; }
-.modal-handle { width: 34px; height: 4px; border-radius: 2px; background: var(--b2); margin: 0 auto 18px; }
-.modal-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 22px; letter-spacing: .1em; text-transform: uppercase; color: var(--acc); margin-bottom: 14px; }
-.setup-lbl { font-size: 8px; color: var(--tx3); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 5px; }
-.setup-inp { width: 100%; background: var(--s3); border: 1px solid var(--b2); border-radius: var(--r); color: var(--tx); font-family: 'DM Mono', monospace; font-size: 11px; padding: 11px 12px; outline: none; margin-bottom: 12px; transition: border-color .15s; }
+.modal-sheet { background: linear-gradient(180deg, #171a17 0%, var(--s1) 100%); border: 1px solid var(--b2); border-bottom: none; border-radius: 24px 24px 0 0; width: 100%; max-width: 520px; height: min(92vh, 760px); animation: slideUp .22s ease; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 -20px 60px rgba(0,0,0,.55); }
+.modal-scroll { flex: 1; overflow-y: auto; padding: 18px 22px 18px; }
+.modal-handle { width: 42px; height: 5px; border-radius: 999px; background: var(--b2); margin: 0 auto 22px; }
+.modal-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 30px; line-height: .95; letter-spacing: .05em; text-transform: uppercase; color: var(--tx); margin-bottom: 12px; }
+.setup-lbl { font-size: 9px; color: var(--tx); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px; }
+.setup-inp { width: 100%; background: rgba(255,255,255,.045); border: 1px solid var(--b2); border-radius: 14px; color: var(--tx); font-family: 'DM Mono', monospace; font-size: 13px; padding: 15px 14px; outline: none; margin-bottom: 16px; transition: border-color .15s, background .15s; }
 .setup-inp:focus { border-color: var(--acc); }
-.setup-help { font-size: 10px; color: var(--tx2); line-height: 1.6; margin: -4px 0 12px; }
-.modal-save { width: 100%; background: var(--acc); color: #000; border: none; border-radius: var(--r); font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 17px; letter-spacing: .14em; padding: 13px; cursor: pointer; margin-bottom: 8px; }
-.modal-cancel { width: 100%; background: none; border: 1px solid var(--b2); border-radius: var(--r); color: var(--tx3); font-family: 'DM Mono', monospace; font-size: 11px; padding: 11px; cursor: pointer; }
+.setup-help { font-size: 12px; color: var(--tx2); line-height: 1.55; background: rgba(255,255,255,.035); border: 1px solid var(--bor); border-radius: 14px; padding: 12px 14px; margin: 0 0 18px; }
+.setup-version { display: grid; gap: 8px; background: rgba(0,0,0,.18); border: 1px solid var(--bor); border-radius: 14px; padding: 12px 14px; margin-bottom: 18px; font-family:'DM Mono',monospace; font-size:10px; color:var(--tx3); line-height:1.6; }
+.setup-status-line { display: flex; align-items: center; gap: 8px; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--tx2); }
+.setup-status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--err); box-shadow: 0 0 8px rgba(255,68,68,.45); flex-shrink: 0; }
+.modal-actions { position: sticky; bottom: 0; display: grid; gap: 9px; padding: 14px 22px; padding-bottom: calc(14px + env(safe-area-inset-bottom)); background: rgba(15,17,15,.96); border-top: 1px solid var(--bor); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+.modal-save { width: 100%; background: var(--acc); color: #000; border: none; border-radius: 14px; font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 18px; letter-spacing: .12em; padding: 15px; cursor: pointer; }
+.modal-cancel { width: 100%; background: var(--s2); border: 1px solid var(--b2); border-radius: 14px; color: var(--tx); font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; padding: 13px; cursor: pointer; }
+.modal-cancel:active { border-color: var(--acc); color: var(--acc); }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 3px; height: 3px; }
@@ -502,21 +508,26 @@ main { padding: 14px 16px; }
 <!-- SETUP MODAL -->
 <div id="setup-ov">
   <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <div class="modal-title">Google-Sheet verbinden</div>
-    <div class="setup-help">Trage hier den Web-App-Link aus deinem Google Apps Script ein. Deine Trainingsdaten bleiben in deinem Google Sheet.</div>
-    <div class="setup-lbl">Trainingsplan-Tab</div>
-    <input class="setup-inp" id="si-sheet" type="text" placeholder="ZYKLUS MASTER">
-    <div class="setup-lbl">Verbindungslink</div>
-    <input class="setup-inp" id="si-url" type="url" placeholder="https://script.google.com/macros/s/…/exec">
-    <div class="setup-lbl">App-Version</div>
-    <div id="si-version-info" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--tx3);margin-bottom:12px;line-height:1.7;">
-      Lokal: <span id="si-ver-local">—</span><br>
-      Online: <span id="si-ver-remote">—</span><br>
-      Status: <span id="si-ver-status">—</span>
+    <div class="modal-scroll">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Google-Sheet verbinden</div>
+      <div class="setup-help">Web-App-Link aus Google Apps Script einfuegen. Zugriff muss fuer Jeder/Anyone freigegeben sein. Deine Trainingsdaten bleiben in deinem Google Sheet.</div>
+      <div class="setup-lbl">Trainingsplan-Tab</div>
+      <input class="setup-inp" id="si-sheet" type="text" placeholder="ZYKLUS MASTER">
+      <div class="setup-lbl">Verbindungslink</div>
+      <input class="setup-inp" id="si-url" type="url" placeholder="https://script.google.com/macros/s/…/exec">
+      <div class="setup-lbl">Verbindungsstatus</div>
+      <div id="si-version-info" class="setup-version">
+        <div class="setup-status-line"><span class="setup-status-dot"></span><span>Nicht verbunden</span></div>
+        <div>Lokal: <span id="si-ver-local">—</span></div>
+        <span id="si-ver-remote" hidden>—</span>
+        <span id="si-ver-status" hidden>—</span>
+      </div>
     </div>
-    <button class="modal-save" onclick="setupSave()">VERBINDUNG SPEICHERN</button>
-    <button class="modal-cancel" onclick="setupClose()">Abbrechen</button>
+    <div class="modal-actions">
+      <button class="modal-save" onclick="setupSave()">VERBINDUNG SPEICHERN</button>
+      <button class="modal-cancel" onclick="setupClose()">Abbrechen</button>
+    </div>
   </div>
 </div>
 
@@ -631,7 +642,7 @@ main { padding: 14px 16px; }
   </button>
   <div class="api-status">
     <div id="dot2" style="width:6px;height:6px;border-radius:50%;background:var(--tx3);flex-shrink:0;"></div>
-    <span id="api-status-txt">Nicht verbunden — Verbindung einrichten</span>
+    <span id="api-status-txt">Nicht verbunden — Setup oeffnen</span>
   </div>
   <div id="last-saved-txt" style="font-family:'DM Mono',monospace;font-size:8px;color:var(--tx3);letter-spacing:.06em;margin-top:3px;"></div>
 </div>
