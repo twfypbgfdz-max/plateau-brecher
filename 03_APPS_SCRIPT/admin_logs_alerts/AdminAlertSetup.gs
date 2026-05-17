@@ -21,13 +21,28 @@ function removeAdminAlertTriggers() {
 }
 
 function testAdminAlertConfig() {
-  // Platzhalter: spaeter PropertiesService-Konfiguration pruefen.
-  // Keine echten Secrets oder URLs ausgeben.
+  const props = PropertiesService.getScriptProperties();
+  const emailTo = props.getProperty('ADMIN_ALERT_EMAIL_TO') || '';
+  const emailEnabledRaw = props.getProperty('ADMIN_ALERT_EMAIL_ENABLED') || '';
+  const emailEnabled = emailEnabledRaw === '' || /^(true|1|yes)$/i.test(emailEnabledRaw);
+
   return {
-    active: false,
+    active: emailEnabled && !!emailTo,
     checks: [
-      'DISCORD_WEBHOOK_URL wird spaeter ueber PropertiesService erwartet.',
+      'ADMIN_ALERT_EMAIL_TO gesetzt: ' + (!!emailTo),
+      'ADMIN_ALERT_EMAIL_TO maskiert: ' + maskEmail_(emailTo),
+      'ADMIN_ALERT_EMAIL_ENABLED aktiv: ' + emailEnabled,
+      'DISCORD_WEBHOOK_URL wird spaeter optional ueber PropertiesService erwartet.',
       'ADMIN_LOG_SPREADSHEET_ID bleibt optional, wenn das Script gebunden laeuft.'
     ]
   };
+}
+
+function maskEmail_(email) {
+  if (!email) return '';
+  const parts = String(email).split('@');
+  if (parts.length !== 2) return '[maskiert]';
+  const name = parts[0];
+  const domain = parts[1];
+  return name.slice(0, 2) + '***@' + domain.slice(0, 2) + '***';
 }

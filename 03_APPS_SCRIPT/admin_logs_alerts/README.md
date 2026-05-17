@@ -27,9 +27,11 @@ Benachrichtigungen sollen nur fuer Log-Zeilen ausgeloest werden, wenn beide Bedi
 - `Personal_Logs` und `Public_Logs` werden getrennt geprueft.
 - Header werden ueber Spaltennamen erkannt.
 - Deduping ueber Apps Script Properties existiert lokal.
+- Gmail-Versand kann manuell getestet werden.
 - `scanAdminLogAlerts()` bleibt Dry-Run und schreibt keine Properties.
 - `dryRunAdminLogAlerts()` bleibt Dry-Run und schreibt keine Properties.
 - `scanAdminLogAlertsWithDeduping()` ist kein reiner Dry-Run mehr, weil neue Alert-Keys in Script Properties geschrieben werden.
+- `scanAdminLogAlertsAndNotify()` sendet Gmail-Nachrichten nur fuer neue Alerts und speichert Dedup-Keys erst nach erfolgreichem Mailversand.
 - Dedup-Key nutzt primaer stabile Alert-Felder: `app`, `priority`, `type`, `version`, `area`, `file`, `message`.
 - `rowNumber` wird nur noch als Fallback genutzt, wenn die stabilen Felder leer sind.
 
@@ -43,10 +45,22 @@ Der Discord-/Webhook-Versand ist aktuell noch No-op. `sendDiscordAlert_()` sende
 
 Secrets werden spaeter ausschliesslich ueber Apps Script Properties abgelegt:
 
+- `ADMIN_ALERT_EMAIL_TO`
+- optional `ADMIN_ALERT_EMAIL_ENABLED`
 - `DISCORD_WEBHOOK_URL`
 - optional `ADMIN_LOG_SPREADSHEET_ID`
 
 Keine Secrets, privaten Sheet-IDs, Webhook-URLs oder Tokens ins Repo schreiben.
+
+## Manueller Testablauf
+
+1. Script Property `ADMIN_ALERT_EMAIL_TO` setzen.
+2. Optional `ADMIN_ALERT_EMAIL_ENABLED=true` setzen oder leer lassen.
+3. `testAdminAlertConfig()` ausfuehren und Logs pruefen.
+4. `sendTestAdminAlert()` manuell ausfuehren.
+5. `dryRunAdminLogAlerts()` ausfuehren.
+6. `scanAdminLogAlertsAndNotify()` erst danach manuell ausfuehren.
+7. Trigger erst spaeter separat und nach Freigabe einrichten.
 
 ## Abgrenzung
 
@@ -61,6 +75,7 @@ Keine Secrets, privaten Sheet-IDs, Webhook-URLs oder Tokens ins Repo schreiben.
 
 - Lokale Dry-Run-Implementierung vorhanden.
 - Lokales Deduping ueber Script Properties vorhanden.
+- Manueller Gmail-Versand vorhanden.
 - Noch keine Trigger aktiv.
 - Noch keine Webhooks aktiv.
 - Kein Deployment erfolgt.

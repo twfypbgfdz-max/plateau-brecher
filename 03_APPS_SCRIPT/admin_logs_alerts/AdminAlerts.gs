@@ -4,6 +4,19 @@
 
 const ADMIN_ALERT_DEDUP_PREFIX = 'ADMIN_ALERT_NOTIFIED_';
 
+function getAdminAlertEmailConfig_() {
+  const props = PropertiesService.getScriptProperties();
+  const to = cleanCell_(props.getProperty('ADMIN_ALERT_EMAIL_TO'));
+  const enabledValue = cleanCell_(props.getProperty('ADMIN_ALERT_EMAIL_ENABLED')).toLowerCase();
+  const enabled = enabledValue === '' || enabledValue === 'true' || enabledValue === '1' || enabledValue === 'yes';
+
+  return {
+    to: to,
+    enabled: enabled,
+    hasRecipient: !!to
+  };
+}
+
 function scanAdminLogAlerts() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   if (!ss) {
@@ -18,6 +31,63 @@ function scanAdminLogAlerts() {
   });
 
   return rows;
+}
+
+function scanAdminLogAlertsAndNotify() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) {
+    throw new Error('Admin-Log-Sheet ist nicht aktiv verfuegbar.');
+  }
+
+  const config = getAdminAlertEmailConfig_();
+  if (!config.enabled) {
+    Logger.log('Admin-Alert Gmail: deaktiviert via ADMIN_ALERT_EMAIL_ENABLED.');
+    return { total: 0, known: 0, sent: 0, failed: 0, disabled: true };
+  }
+  if (!config.hasRecipient) {
+    throw new Error('ADMIN_ALERT_EMAIL_TO fehlt in Script Properties.');
+  }
+
+  const props = PropertiesService.getScriptProperties();
+  const alerts = findOpenP0P1Rows_(ss);
+  let known = 0;
+  let sent = 0;
+  let failed = 0;
+
+  alerts.forEach(alert => {
+    const key = buildAlertKey_(alert);
+    const propKey = buildDedupPropertyKey_(key);
+
+    if (props.getProperty(propKey)) {
+      known++;
+      Logger.log('Admin-Alert Gmail: bereits bekannt: ' + key);
+      return;
+    }
+
+    try {
+      sendAdminAlert_(alert);
+      props.setProperty(propKey, new Date().toISOString());
+      sent++;
+      Logger.log('Admin-Alert Gmail: gesendet und gespeichert: ' + key);
+    } catch (e) {
+      failed++;
+      Logger.log('Admin-Alert Gmail: Versand fehlgeschlagen: ' + key + ' | ' + (e && e.message || e));
+    }
+  });
+
+  Logger.log(
+    'Admin-Alert Gmail: gesamt=' + alerts.length +
+    ' bekannt=' + known +
+    ' gesendet=' + sent +
+    ' fehlgeschlagen=' + failed
+  );
+
+  return {
+    total: alerts.length,
+    known: known,
+    sent: sent,
+    failed: failed
+  };
 }
 
 function scanAdminLogAlertsWithDeduping() {
@@ -57,6 +127,75 @@ function scanAdminLogAlertsWithDeduping() {
     fresh: fresh,
     known: known
   };
+}
+
+function sendAdminAlert_(alert) {
+  const config = getAdminAlertEmailConfig_();
+  if (!config.enabled) {
+    throw new Error('Admin-Alert Gmail ist deaktiviert.');
+  }
+  if (!config.hasRecipient) {
+    throw new Error('ADMIN_ALERT_EMAIL_TO fehlt in Script Properties.');
+  }
+
+  const subject = '[Plateau-Brecher Admin-Alert] ' +
+    (alert.priority || 'P?') + ' ' +
+    (alert.app || 'APP') + ' ' +
+    (alert.type || 'Fehler');
+
+  const body = [
+    'Neuer offener P0/P1-Admin-Log-Eintrag',
+    '',
+    'App: ' + (alert.app || ''),
+    'Prioritaet: ' + (alert.priority || ''),
+    'Typ: ' + (alert.type || ''),
+    'Version: ' + (alert.version || ''),
+    'Bereich: ' + (alert.area || ''),
+    'Datei: ' + (alert.file || ''),
+    'Status: ' + (alert.status || ''),
+    'Teststatus: ' + (alert.teststatus || ''),
+    'Zeitstempel: ' + (alert.timestamp || ''),
+    'Tab: ' + (alert.tabName || ''),
+    'Zeile: ' + (alert.rowNumber || ''),
+    '',
+    'Fehlermeldung:',
+    alert.message || '',
+    '',
+    'Dedup-Key:',
+    buildAlertKey_(alert)
+  ].join('\n');
+
+  MailApp.sendEmail({
+    to: config.to,
+    subject: subject,
+    body: body
+  });
+
+  return true;
+}
+
+function sendTestAdminAlert() {
+  const config = getAdminAlertEmailConfig_();
+  if (!config.enabled) {
+    throw new Error('Admin-Alert Gmail ist deaktiviert.');
+  }
+  if (!config.hasRecipient) {
+    throw new Error('ADMIN_ALERT_EMAIL_TO fehlt in Script Properties.');
+  }
+
+  MailApp.sendEmail({
+    to: config.to,
+    subject: '[Plateau-Brecher Admin-Alert] Test',
+    body: [
+      'Testmail fuer Plateau-Brecher Admin-Alerts.',
+      '',
+      'Diese Mail wurde manuell aus Apps Script ausgeloest.',
+      'Es wurde kein Trigger erstellt und kein Admin-Log veraendert.'
+    ].join('\n')
+  });
+
+  Logger.log('Admin-Alert Gmail: Testmail gesendet an ' + maskEmail_(config.to));
+  return true;
 }
 
 function findOpenP0P1Rows_(ss) {

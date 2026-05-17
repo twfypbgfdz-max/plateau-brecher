@@ -9,6 +9,8 @@
 - Lokales Deduping ueber Apps Script Properties dokumentiert.
 - Hinweis ergaenzt: `scanAdminLogAlertsWithDeduping()` ist kein reiner Dry-Run mehr, weil Script Properties geschrieben werden.
 - Dedup-Key robuster dokumentiert: primaer stabile Alert-Felder, `rowNumber` nur noch als Fallback.
+- Minimalen manuellen Gmail-Versand dokumentiert.
+- Script Properties `ADMIN_ALERT_EMAIL_TO` und optional `ADMIN_ALERT_EMAIL_ENABLED` dokumentiert.
 
 ## Umgesetzt
 
@@ -18,6 +20,9 @@
 - P0/P1-Erkennung fuer offene Logs.
 - Lokales Deduping ueber Script Properties.
 - Robusterer Dedup-Key ohne primaere Abhaengigkeit von `rowNumber`.
+- Manueller Gmail-Testversand mit `sendTestAdminAlert()`.
+- Gmail-Notify-Funktion `scanAdminLogAlertsAndNotify()` ohne Trigger.
+- Config-Pruefung fuer Gmail-Properties.
 
 ## Noch nicht umgesetzt
 
@@ -28,3 +33,4 @@
 - Kein Deployment.
 - Keine Google-Sheet-Aenderungen.
 - Keine App-Datei-Aenderungen.
+- Keine Empfaengeradresse im Code.
