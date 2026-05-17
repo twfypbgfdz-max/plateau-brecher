@@ -1,0 +1,3 @@
+﻿Zeitstempel,App-Version,Env,Typ,Fehlermeldung,Detail,URL,Gerät / OS,Stacktrace,HTTP Status,Status,Notiz,Fix-Version,Priorität,Bereich,Datei,Fix-Datum,Changelog,Teststatus
+03.05 17:22,10.0,PUBLIC,TEST,DIREKTTEST,Direkter Testeintrag,,test,test,,ignorieren,Alter Testeintrag vor Strukturumbau,,,,,,,
+10.05.2026 19:04:52,V15.1 [unbekannt],PUBLIC,TEST,Manueller Test V15.1,Konsolentest,https://twfypbgfdz-max.github.io/Public-Brecher/,"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",,,offen,,,,,,,,

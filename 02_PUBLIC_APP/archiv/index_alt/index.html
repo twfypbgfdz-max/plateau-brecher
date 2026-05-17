@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>PLATEAU BRECHER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:    #0a0a0a;
+  --s1:    #111;
+  --s2:    #171717;
+  --s3:    #1f1f1f;
+  --bor:   #262626;
+  --bor2:  #333;
+  --acc:   #b8ff00;
+  --acc-d: #8fc400;
+  --tx:    #f2f2f2;
+  --tx2:   #888;
+  --tx3:   #444;
+  --ok:    #00e5a0;
+  --err:   #ff4545;
+  --r:     6px;
+  --hdr:   52px;
+  --tab:   44px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+body {
+  background: var(--bg); color: var(--tx);
+  font-family: 'DM Mono', monospace;
+  min-height: 100dvh; overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* HEADER */
+header {
+  height: var(--hdr);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px;
+  background: var(--bg); border-bottom: 1px solid var(--bor);
+  position: sticky; top: 0; z-index: 200;
+}
+.wordmark {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900; font-size: 26px;
+  letter-spacing: .12em; color: var(--acc);
+  text-transform: uppercase; line-height: 1;
+}
+.wordmark sub {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; font-weight: 400; color: var(--tx3);
+  letter-spacing: .08em; vertical-align: baseline; margin-left: 4px;
+}
+.hdr-right { display: flex; align-items: center; gap: 10px; }
+#hdr-date  { font-size: 10px; color: var(--tx2); letter-spacing: .06em; }
+#status-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--tx3); transition: background .4s;
+}
+#status-dot.ok  { background: var(--ok); box-shadow: 0 0 6px var(--ok); }
+#status-dot.err { background: var(--err); }
+
+/* TABS */
+.tabs {
+  height: var(--tab);
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  border-bottom: 1px solid var(--bor); background: var(--s1);
+  position: sticky; top: var(--hdr); z-index: 190;
+}
+.tab {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 13px;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--tx3); background: none; border: none; cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color .15s, border-color .15s;
+}
+.tab.active { color: var(--acc); border-bottom-color: var(--acc); }
+
+/* META ROW */
+.meta-row {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 8px; padding: 12px 14px 0;
+}
+.meta-box {
+  background: var(--s2); border: 1px solid var(--bor);
+  border-radius: var(--r); padding: 10px 12px;
+}
+.meta-lbl {
+  font-size: 8px; color: var(--tx3);
+  letter-spacing: .12em; text-transform: uppercase; margin-bottom: 8px;
+}
+.meta-inputs { display: flex; align-items: baseline; gap: 6px; }
+.meta-inp {
+  background: transparent; border: none;
+  border-bottom: 1px solid var(--bor2);
+  color: var(--tx); font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 22px; width: 60px; outline: none;
+  -moz-appearance: textfield;
+}
+.meta-inp::-webkit-outer-spin-button,
+.meta-inp::-webkit-inner-spin-button { -webkit-appearance: none; }
+.meta-inp:focus { border-bottom-color: var(--acc); }
+.meta-unit { font-size: 9px; color: var(--tx3); }
+.stats-inputs { display: flex; gap: 8px; flex-wrap: wrap; }
+.stat-grp { display: flex; flex-direction: column; gap: 3px; }
+.stat-lbl { font-size: 7px; color: var(--tx3); letter-spacing: .1em; text-transform: uppercase; }
+.stat-inp {
+  background: transparent; border: none;
+  border-bottom: 1px solid var(--bor2);
+  color: var(--tx); font-family: 'DM Mono', monospace;
+  font-size: 13px; font-weight: 500;
+  width: 40px; outline: none; text-align: center;
+  -moz-appearance: textfield;
+}
+.stat-inp::-webkit-outer-spin-button,
+.stat-inp::-webkit-inner-spin-button { -webkit-appearance: none; }
+.stat-inp:focus { border-bottom-color: var(--acc); }
+
+/* DAY NAV */
+.day-scroll {
+  overflow-x: auto; scrollbar-width: none;
+  padding: 10px 14px 8px; display: flex; gap: 6px;
+  -webkit-overflow-scrolling: touch;
+}
+.day-scroll::-webkit-scrollbar { display: none; }
+.dbtn {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 12px;
+  letter-spacing: .12em; text-transform: uppercase;
+  background: var(--s2); border: 1px solid var(--bor);
+  color: var(--tx2); border-radius: var(--r);
+  padding: 6px 13px; cursor: pointer; white-space: nowrap;
+  transition: background .12s, color .12s, border-color .12s; flex-shrink: 0;
+}
+.dbtn.active { background: var(--acc); border-color: var(--acc); color: #000; }
+.dbtn:active { opacity: .75; }
+
+/* VIEWS */
+main { padding: 8px 14px 140px; }
+.view { display: none; }
+.view.active { display: block; }
+
+/* EXERCISE CARD */
+.excard {
+  background: var(--s2); border: 1px solid var(--bor);
+  border-radius: var(--r); margin-bottom: 8px; overflow: hidden;
+  animation: fadeUp .18s ease both;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.excard-head {
+  display: flex; align-items: center;
+  padding: 12px 14px 0; gap: 8px;
+}
+.ex-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900; font-size: 20px;
+  letter-spacing: .06em; text-transform: uppercase;
+  color: var(--tx); flex: 1; line-height: 1.1;
+}
+.prog-chip {
+  font-size: 14px; font-weight: 700;
+  width: 26px; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 4px; flex-shrink: 0;
+}
+.prog-chip.up { color: var(--ok);  background: rgba(0,229,160,.12); }
+.prog-chip.dn { color: var(--err); background: rgba(255,69,69,.12); }
+.prog-chip.eq { color: var(--tx3); background: var(--s3); }
+
+/* SETS */
+.set-header {
+  display: grid; grid-template-columns: 28px 1fr 1fr;
+  gap: 6px; padding: 8px 14px 2px;
+}
+.sh-lbl { font-size: 7px; color: var(--tx3); letter-spacing: .12em; text-align: center; text-transform: uppercase; }
+.sets-wrap { padding: 0 14px 14px; }
+.set-row {
+  display: grid; grid-template-columns: 28px 1fr 1fr;
+  gap: 6px; align-items: center; margin-bottom: 5px;
+}
+.set-row:last-child { margin-bottom: 0; }
+.set-lbl { font-size: 8px; color: var(--tx3); letter-spacing: .1em; text-align: center; text-transform: uppercase; }
+.sinput {
+  background: var(--s3); border: 1px solid var(--bor); border-radius: 5px;
+  color: var(--tx); font-family: 'DM Mono', monospace;
+  font-size: 15px; font-weight: 500; padding: 9px 6px; text-align: center;
+  outline: none; width: 100%; transition: border-color .12s;
+  -moz-appearance: textfield;
+}
+.sinput::-webkit-outer-spin-button,
+.sinput::-webkit-inner-spin-button { -webkit-appearance: none; }
+.sinput:focus { border-color: var(--acc); }
+.sinput::placeholder { color: var(--tx3); font-size: 11px; }
+
+/* PLANUNG */
+.plan-item {
+  background: var(--s2); border: 1px solid var(--bor);
+  border-radius: var(--r); padding: 11px 13px; margin-bottom: 5px;
+  display: flex; align-items: center; gap: 10px;
+}
+.plan-idx { font-size: 9px; color: var(--tx3); width: 22px; text-align: right; flex-shrink: 0; }
+.plan-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px; letter-spacing: .04em;
+  color: var(--tx2); flex: 1;
+}
+.plan-name.named { color: var(--acc); }
+.edit-btn {
+  background: var(--s3); border: 1px solid var(--bor2); color: var(--tx2);
+  font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: .08em;
+  padding: 5px 9px; border-radius: 4px; cursor: pointer; flex-shrink: 0;
+  transition: border-color .12s, color .12s;
+}
+.edit-btn:active { border-color: var(--acc); color: var(--acc); }
+
+/* EMPTY STATE */
+.empty-state {
+  text-align: center; padding: 48px 24px;
+  color: var(--tx3); font-size: 11px; letter-spacing: .1em;
+}
+.empty-state big {
+  display: block; font-family: 'Barlow Condensed', sans-serif;
+  font-size: 36px; font-weight: 900; color: var(--bor2);
+  letter-spacing: .06em; margin-bottom: 8px;
+}
+
+/* LOAD SCREEN */
+#load-screen {
+  position: fixed; inset: 0; z-index: 999; background: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 18px;
+  transition: opacity .35s, visibility .35s;
+}
+#load-screen.gone { opacity: 0; visibility: hidden; }
+.load-logo {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900; font-size: 56px;
+  letter-spacing: .14em; color: var(--acc);
+}
+.load-spinner {
+  width: 26px; height: 26px;
+  border: 2px solid var(--bor2); border-top-color: var(--acc);
+  border-radius: 50%; animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+#load-msg { font-size: 9px; color: var(--tx3); letter-spacing: .14em; text-transform: uppercase; }
+
+/* TOAST */
+#toast {
+  position: fixed; bottom: 100px; left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--s3); border: 1px solid var(--bor2);
+  border-radius: var(--r); padding: 9px 18px;
+  font-size: 11px; color: var(--tx); letter-spacing: .06em;
+  opacity: 0; pointer-events: none;
+  transition: opacity .2s, transform .2s; z-index: 800; white-space: nowrap;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#toast.ok   { border-color: var(--ok);  color: var(--ok); }
+#toast.err  { border-color: var(--err); color: var(--err); }
+
+/* SAVE FOOTER */
+#save-footer {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 700;
+  background: rgba(10,10,10,.97);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--bor);
+  padding: 10px 14px;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+}
+#save-btn {
+  width: 100%; background: var(--acc); color: #000;
+  border: none; border-radius: var(--r);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900; font-size: 20px;
+  letter-spacing: .18em; text-transform: uppercase; padding: 15px;
+  cursor: pointer; transition: opacity .15s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+#save-btn:disabled { opacity: .45; cursor: not-allowed; }
+#save-btn:not(:disabled):active { opacity: .8; }
+.save-spinner {
+  display: none; width: 16px; height: 16px;
+  border: 2px solid rgba(0,0,0,.3); border-top-color: #000;
+  border-radius: 50%; animation: spin .6s linear infinite;
+}
+.saving .save-spinner { display: block; }
+.saving .save-lbl { display: none; }
+
+/* SETUP MODAL */
+#setup-overlay {
+  display: none; position: fixed; inset: 0; z-index: 999;
+  background: rgba(0,0,0,.85);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  align-items: flex-end; justify-content: center;
+}
+#setup-overlay.open { display: flex; }
+.setup-sheet-modal {
+  background: var(--s1); border-top: 1px solid var(--bor2);
+  border-radius: 16px 16px 0 0;
+  padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
+  width: 100%; max-width: 480px;
+  animation: slideUp .25s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(40px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.setup-handle {
+  width: 36px; height: 4px; border-radius: 2px;
+  background: var(--bor2); margin: 0 auto 20px;
+}
+.setup-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900; font-size: 22px;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--acc); margin-bottom: 16px;
+}
+.setup-lbl { font-size: 9px; color: var(--tx3); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px; }
+.setup-inp {
+  width: 100%; background: var(--s3);
+  border: 1px solid var(--bor2); border-radius: var(--r);
+  color: var(--tx); font-family: 'DM Mono', monospace;
+  font-size: 11px; padding: 11px 12px; outline: none; margin-bottom: 14px;
+  transition: border-color .15s;
+}
+.setup-inp:focus { border-color: var(--acc); }
+.setup-save {
+  width: 100%; background: var(--acc); color: #000;
+  border: none; border-radius: var(--r);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900; font-size: 17px;
+  letter-spacing: .14em; padding: 13px; cursor: pointer; margin-bottom: 8px;
+}
+.setup-cancel {
+  width: 100%; background: none; border: 1px solid var(--bor2);
+  border-radius: var(--r); color: var(--tx3);
+  font-family: 'DM Mono', monospace; font-size: 11px; padding: 11px; cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<!-- LOAD SCREEN -->
+<div id="load-screen">
+  <div class="load-logo">PB</div>
+  <div class="load-spinner"></div>
+  <div id="load-msg">Verbinde…</div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- SETUP MODAL -->
+<div id="setup-overlay">
+  <div class="setup-sheet-modal">
+    <div class="setup-handle"></div>
+    <div class="setup-title">Setup</div>
+    <div class="setup-lbl">Tabellenblatt (Sheet-Name)</div>
+    <input class="setup-inp" id="setup-sheet-inp" type="text" placeholder="ZYKLUS MASTER">
+    <div class="setup-lbl">Apps Script URL</div>
+    <input class="setup-inp" id="setup-url-inp" type="url" placeholder="https://script.google.com/macros/s/…/exec">
+    <button class="setup-save" onclick="setupSave()">SPEICHERN & NEU LADEN</button>
+    <button class="setup-cancel" onclick="setupClose()">Abbrechen</button>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="wordmark">Plateau Brecher<sub>v8.1</sub></div>
+  <div class="hdr-right">
+    <span id="hdr-date"></span>
+    <div id="status-dot"></div>
+  </div>
+</header>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" id="tab-training" onclick="switchTab('training')">Training</button>
+  <button class="tab"        id="tab-plan"     onclick="switchTab('plan')">Planung</button>
+  <button class="tab"        id="tab-setup"    onclick="setupOpen()">Setup</button>
+</div>
+
+<!-- META ROW -->
+<div class="meta-row">
+  <div class="meta-box">
+    <div class="meta-lbl">Körpergewicht</div>
+    <div class="meta-inputs">
+      <input class="meta-inp" type="number" step="0.1" id="bwIn" placeholder="—" inputmode="decimal">
+      <span class="meta-unit">kg</span>
+    </div>
+  </div>
+  <div class="meta-box">
+    <div class="meta-lbl">Session Stats</div>
+    <div class="stats-inputs">
+      <div class="stat-grp">
+        <div class="stat-lbl">kcal</div>
+        <input class="stat-inp" type="number" id="kcalIn" placeholder="—" inputmode="numeric">
+      </div>
+      <div class="stat-grp">
+        <div class="stat-lbl">bpm</div>
+        <input class="stat-inp" type="number" id="bpmIn" placeholder="—" inputmode="numeric">
+      </div>
+      <div class="stat-grp">
+        <div class="stat-lbl">min</div>
+        <input class="stat-inp" type="number" id="minIn" placeholder="—" inputmode="numeric">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DAY NAV -->
+<div class="day-scroll" id="day-nav"></div>
+
+<!-- MAIN -->
+<main>
+  <div id="view-training" class="view active"></div>
+  <div id="view-plan"     class="view"></div>
+</main>
+
+<!-- SAVE FOOTER -->
+<div id="save-footer">
+  <button id="save-btn" onclick="saveAll()">
+    <div class="save-spinner"></div>
+    <span class="save-lbl">Training sichern</span>
+  </button>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  KONFIGURATION
+// ══════════════════════════════════════════
+let API         = localStorage.getItem('pb_api')   || '';
+let activeSheet = localStorage.getItem('pb_sheet') || 'ZYKLUS MASTER';
+let rawData     = [];
+let currentDay  = '';
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+document.getElementById('hdr-date').textContent =
+  new Date().toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: '2-digit' });
+
+async function init() {
+  setLoadMsg('Verbinde…');
+
+  if (!API) {
+    hideLoad();
+    setupOpen();
+    return;
+  }
+
+  try {
+    // FIX: Standard fetch (NICHT no-cors) für GET — sonst kann JSON nicht gelesen werden
+    const url = `${API}?sheet=${encodeURIComponent(activeSheet)}&v=${Date.now()}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    rawData = await res.json();
+    setStatus('ok');
+    renderNav();
+    hideLoad();
+  } catch (e) {
+    setStatus('err');
+    setLoadMsg('Fehler — ' + e.message);
+    setTimeout(hideLoad, 2200);
+    showToast('Verbindungsfehler', 'err');
+  }
+}
+
+// ══════════════════════════════════════════
+//  NAV
+//  FIX: Spalte D (Index 3) als Tages-Anker,
+//       NICHT Spalte B (Datum) — war der Hauptbug
+// ══════════════════════════════════════════
+function renderNav() {
+  const nav = document.getElementById('day-nav');
+  nav.innerHTML = '';
+
+  // Einmalig alle unique Werte aus Spalte D sammeln (Reihenfolge bleibt)
+  const days = [];
+  rawData.forEach(row => {
+    const d = (row[3] || '').trim();
+    if (d && !days.includes(d)) days.push(d);
+  });
+
+  if (!days.length) {
+    nav.innerHTML = '<span style="font-size:10px;color:var(--tx3);padding:4px 2px;">Keine Trainingstage in Spalte D gefunden</span>';
+    return;
+  }
+
+  days.forEach((name, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'dbtn' + (i === 0 ? ' active' : '');
+    btn.textContent = name;
+    btn.dataset.day = name;
+    btn.onclick = () => selectDay(name);
+    nav.appendChild(btn);
+  });
+
+  currentDay = days[0];
+  renderContent();
+}
+
+function selectDay(name) {
+  currentDay = name;
+  document.querySelectorAll('.dbtn').forEach(b =>
+    b.classList.toggle('active', b.dataset.day === name)
+  );
+  renderContent();
+}
+
+// ══════════════════════════════════════════
+//  CONTENT
+// ══════════════════════════════════════════
+function renderContent() {
+  const tList = document.getElementById('view-training');
+  const pList = document.getElementById('view-plan');
+  tList.innerHTML = '';
+  pList.innerHTML = '';
+
+  let inDay = false;
+  let trainCount = 0;
+
+  rawData.forEach((row, i) => {
+    // Tag-Erkennung über Spalte D
+    const colD = (row[3] || '').trim();
+    if (colD) inDay = (colD === currentDay);
+    if (!inDay) return;
+
+    const exName = (row[4] || '').trim();
+    if (!exName) return;
+
+    const rowIdx  = i + 3;            // Sheet-Zeilennummer (Daten ab Zeile 3)
+    const isNamed = exName !== 'Übung eintragen...';
+    const progRaw = (row[15] || '').trim(); // Spalte P = Index 15
+
+    // ── PLANUNG: jede Zeile anzeigen
+    const pItem = document.createElement('div');
+    pItem.className = 'plan-item';
+    pItem.innerHTML = `
+      <span class="plan-idx">${rowIdx}</span>
+      <span class="plan-name ${isNamed ? 'named' : ''}">${escHtml(exName)}</span>
+      <button class="edit-btn" onclick="renameEx(${rowIdx}, \`${exName.replace(/`/g,'\\`').replace(/\\/g,'\\\\')}\`)">EDIT</button>
+    `;
+    pList.appendChild(pItem);
+
+    // ── TRAINING: nur benannte Übungen (FIX: kein Overload)
+    if (!isNamed) return;
+    trainCount++;
+
+    const progClass = progRaw === '▲' ? 'up' : progRaw === '▼' ? 'dn' : 'eq';
+    const progLabel = progRaw || '►';
+
+    const card = document.createElement('div');
+    card.className = 'excard';
+    card.style.animationDelay = Math.min(trainCount * 0.05, 0.3) + 's';
+    card.innerHTML = `
+      <div class="excard-head">
+        <div class="ex-name">${escHtml(exName)}</div>
+        <div class="prog-chip ${progClass}">${progLabel}</div>
+      </div>
+      <div class="set-header">
+        <div></div>
+        <div class="sh-lbl">kg</div>
+        <div class="sh-lbl">wdh</div>
+      </div>
+      <div class="sets-wrap">
+        ${[1,2,3].map(s => `
+          <div class="set-row">
+            <div class="set-lbl">S${s}</div>
+            <input class="sinput" type="number" step="0.5" inputmode="decimal"
+                   id="g${s}-${rowIdx}" value="${escAttr(row[6+(s-1)*2])}" placeholder="—">
+            <input class="sinput" type="number" inputmode="numeric"
+                   id="r${s}-${rowIdx}" value="${escAttr(row[7+(s-1)*2])}" placeholder="—">
+          </div>
+        `).join('')}
+      </div>
+    `;
+    tList.appendChild(card);
+  });
+
+  if (trainCount === 0) {
+    tList.innerHTML = `<div class="empty-state"><big>LEER</big>Noch keine Übungen für diesen Tag benannt.<br>→ Wechsle zu „Planung".</div>`;
+  }
+  if (!pList.children.length) {
+    pList.innerHTML = `<div class="empty-state"><big>?</big>Keine Zeilen für diesen Tag gefunden.</div>`;
+  }
+}
+
+// ══════════════════════════════════════════
+//  SAVE ALL
+//  FIX 1: '2-digit' mit Bindestrich (nicht '2.digit')
+//  FIX 2: kcal/bpm/duration werden mitgesendet
+// ══════════════════════════════════════════
+async function saveAll() {
+  const cards = document.querySelectorAll('#view-training .excard');
+  if (!cards.length) { showToast('Keine Übungen zum Sichern', 'err'); return; }
+
+  const btn = document.getElementById('save-btn');
+  btn.classList.add('saving');
+  btn.disabled = true;
+
+  // Datum: '2-digit' (Bindestrich!) — FIX für RangeError
+  const date = new Date().toLocaleDateString('de-DE', {
+    day: '2-digit', month: '2-digit'
+  }) + '.';
+
+  const kg   = $v('bwIn');
+  const kcal = $v('kcalIn');
+  const bpm  = $v('bpmIn');
+  const dur  = $v('minIn');
+
+  let saved = 0;
+  for (const card of cards) {
+    const firstInp = card.querySelector('input.sinput');
+    if (!firstInp) continue;
+    const rowIdx = parseInt(firstInp.id.split('-')[1]);
+    const exName = card.querySelector('.ex-name').textContent.trim();
+
+    const payload = {
+      sheet:    activeSheet,
+      rowIdx,
+      date,
+      kg,
+      uebung:   exName,
+      g1: $v(`g1-${rowIdx}`), r1: $v(`r1-${rowIdx}`),
+      g2: $v(`g2-${rowIdx}`), r2: $v(`r2-${rowIdx}`),
+      g3: $v(`g3-${rowIdx}`), r3: $v(`r3-${rowIdx}`),
+      kcal,
+      bpm,
+      duration: dur
+    };
+
+    try {
+      // POST bleibt no-cors (wir brauchen den Response nicht zu lesen)
+      await fetch(API, {
+        method: 'POST',
+        mode:   'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body:   JSON.stringify(payload)
+      });
+      saved++;
+    } catch (_) {}
+  }
+
+  btn.classList.remove('saving');
+  btn.disabled = false;
+  showToast(`${saved}/${cards.length} gesichert ✓`, 'ok');
+}
+
+// ══════════════════════════════════════════
+//  RENAME
+// ══════════════════════════════════════════
+async function renameEx(rowIdx, old) {
+  const def = old === 'Übung eintragen...' ? '' : old;
+  const n = prompt('Übungsname:', def);
+  if (n === null || !n.trim()) return;
+
+  try {
+    await fetch(API, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ sheet: activeSheet, rowIdx, action: 'rename', newName: n.trim() })
+    });
+    showToast('Gespeichert — lade neu…', 'ok');
+    setTimeout(() => location.reload(), 900);
+  } catch (e) {
+    showToast('Fehler beim Umbenennen', 'err');
+  }
+}
+
+// ══════════════════════════════════════════
+//  TAB SWITCH
+// ══════════════════════════════════════════
+function switchTab(id) {
+  ['training','plan'].forEach(t => {
+    document.getElementById('view-' + t).classList.toggle('active', t === id);
+    document.getElementById('tab-' + t)?.classList.toggle('active', t === id);
+  });
+  document.getElementById('tab-setup').classList.remove('active');
+  document.getElementById('save-footer').style.display = id === 'training' ? 'block' : 'none';
+}
+
+// ══════════════════════════════════════════
+//  SETUP
+// ══════════════════════════════════════════
+function setupOpen() {
+  document.getElementById('setup-sheet-inp').value = activeSheet;
+  document.getElementById('setup-url-inp').value   = API;
+  document.getElementById('setup-overlay').classList.add('open');
+  document.getElementById('tab-setup').classList.add('active');
+}
+function setupClose() {
+  document.getElementById('setup-overlay').classList.remove('open');
+  document.getElementById('tab-setup').classList.remove('active');
+}
+function setupSave() {
+  const sh  = document.getElementById('setup-sheet-inp').value.trim();
+  const url = document.getElementById('setup-url-inp').value.trim();
+  if (sh)  { activeSheet = sh;  localStorage.setItem('pb_sheet', sh); }
+  if (url) { API = url;         localStorage.setItem('pb_api',   url); }
+  setupClose();
+  location.reload();
+}
+
+// ══════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════
+function $v(id)       { return (document.getElementById(id)?.value || '').trim(); }
+function escHtml(s)   { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escAttr(s)   { return String(s||'').replace(/"/g,'&quot;'); }
+function setLoadMsg(m){ document.getElementById('load-msg').textContent = m; }
+function hideLoad()   { setTimeout(() => document.getElementById('load-screen').classList.add('gone'), 280); }
+function setStatus(t) { document.getElementById('status-dot').className = t; }
+
+let _tt;
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (type ? ' ' + type : '');
+  clearTimeout(_tt);
+  _tt = setTimeout(() => { t.className = ''; }, 2600);
+}
+
+// ── START
+init();
+</script>
+</body>
+</html>

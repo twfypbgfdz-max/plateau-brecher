@@ -1,0 +1,1201 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Kalorien App v0.2 Test</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #080b10;
+      --panel: #111722;
+      --panel-soft: #151c29;
+      --line: rgba(255, 255, 255, 0.08);
+      --text: #f3f6fb;
+      --muted: #8792a3;
+      --accent: #6ee7b7;
+      --accent-2: #7dd3fc;
+      --warn: #fbbf24;
+      --danger: #fb7185;
+      --radius: 22px;
+      --shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      scroll-behavior: smooth;
+      background: var(--bg);
+    }
+
+    body {
+      min-height: 100%;
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 0%, rgba(125, 211, 252, 0.12), transparent 26rem),
+        linear-gradient(180deg, #0d121a 0%, var(--bg) 44%);
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .app {
+      width: min(100%, 520px);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: max(14px, env(safe-area-inset-top)) 14px calc(92px + env(safe-area-inset-bottom));
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .eyebrow {
+      margin: 0 0 4px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(1.7rem, 7vw, 2.45rem);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      font-size: 1.1rem;
+      line-height: 1.25;
+    }
+
+    .date-pill {
+      flex: 0 0 auto;
+      padding: 10px 13px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.04);
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .top-meta {
+      display: grid;
+      gap: 7px;
+      justify-items: end;
+    }
+
+    .save-status {
+      color: var(--muted);
+      font-size: 0.74rem;
+      font-weight: 800;
+    }
+
+    .tab-panel {
+      display: none;
+      animation: fadeIn 160ms ease-out;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .stack {
+      display: grid;
+      gap: 14px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.025));
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .card-inner {
+      padding: 16px;
+    }
+
+    .hero-card {
+      background:
+        linear-gradient(135deg, rgba(110, 231, 183, 0.16), transparent 42%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.025));
+    }
+
+    .progress-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .metric {
+      min-height: 108px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(0, 0, 0, 0.17);
+    }
+
+    .metric .label,
+    .input-card label,
+    .setting label {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 1.58rem;
+      line-height: 1;
+    }
+
+    .bar {
+      height: 7px;
+      margin-top: 16px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+    }
+
+    .bar span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width 180ms ease;
+    }
+
+    .weight-chip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 12px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.14);
+    }
+
+    .weight-chip span {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    .weight-chip strong {
+      font-size: 1.05rem;
+    }
+
+    .input-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .input-card {
+      display: grid;
+      gap: 8px;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel);
+    }
+
+    .input-wrap {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    input {
+      width: 100%;
+      min-height: 52px;
+      border: 0;
+      outline: 0;
+      border-radius: 16px;
+      color: var(--text);
+      background: var(--panel-soft);
+      padding: 10px 14px;
+      font-size: 1.32rem;
+      font-weight: 800;
+    }
+
+    .quick-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .preset-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .quick-btn {
+      min-height: 52px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.055);
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .preset-btn {
+      display: grid;
+      gap: 4px;
+      min-height: 64px;
+      padding: 11px 12px;
+      text-align: left;
+    }
+
+    .preset-btn span {
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 800;
+    }
+
+    .quick-btn:active {
+      transform: translateY(1px);
+      background: rgba(255, 255, 255, 0.09);
+    }
+
+    .entry-form {
+      display: grid;
+      gap: 10px;
+    }
+
+    .entry-form .input-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .entry-form .input-card:first-child {
+      grid-column: span 2;
+    }
+
+    .primary-btn {
+      min-height: 52px;
+      border: 0;
+      border-radius: 16px;
+      color: #06110d;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .entry-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .entry-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    .entry-row strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .delete-btn {
+      width: 42px;
+      height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      color: var(--danger);
+      background: rgba(255, 255, 255, 0.04);
+      font-size: 1.25rem;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    input:focus {
+      box-shadow: 0 0 0 2px rgba(110, 231, 183, 0.42);
+    }
+
+    .unit {
+      width: 54px;
+      color: var(--muted);
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 6px 2px 10px;
+    }
+
+    .summary-card {
+      margin-bottom: 12px;
+      padding: 14px 15px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(110, 231, 183, 0.08);
+    }
+
+    .summary-card strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 1.16rem;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .week-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .day-row {
+      display: grid;
+      grid-template-columns: 48px 1fr auto;
+      gap: 12px;
+      align-items: center;
+      min-height: 58px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    .day-row.today {
+      border-color: rgba(110, 231, 183, 0.36);
+      background: rgba(110, 231, 183, 0.065);
+    }
+
+    .day-name {
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    .day-bars {
+      display: grid;
+      gap: 7px;
+    }
+
+    .mini-bar {
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+    }
+
+    .mini-bar span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+    }
+
+    .mini-bar.kcal span {
+      background: var(--accent);
+    }
+
+    .mini-bar.protein span {
+      background: var(--accent-2);
+    }
+
+    .day-values {
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .chart-card {
+      padding: 16px 12px 10px;
+    }
+
+    .weight-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .weight-stat {
+      min-height: 72px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .weight-stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 800;
+    }
+
+    .weight-stat strong {
+      display: block;
+      margin-top: 7px;
+      font-size: 1rem;
+      white-space: nowrap;
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      height: 220px;
+    }
+
+    .empty {
+      padding: 26px 18px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .settings-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .setting {
+      display: grid;
+      gap: 9px;
+    }
+
+    .save-note {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 10;
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(8, 11, 16, 0.82);
+      -webkit-backdrop-filter: blur(18px);
+      backdrop-filter: blur(18px);
+    }
+
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+      .bottom-nav {
+        background: rgba(8, 11, 16, 0.96);
+      }
+    }
+
+    .nav-inner {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      width: min(100%, 520px);
+      margin: 0 auto;
+    }
+
+    .nav-btn {
+      min-height: 54px;
+      border: 1px solid transparent;
+      border-radius: 18px;
+      color: var(--muted);
+      background: transparent;
+      font-size: 0.82rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .nav-btn.active {
+      color: var(--text);
+      border-color: var(--line);
+      background: rgba(255, 255, 255, 0.075);
+    }
+
+    @media (min-width: 680px) {
+      .app {
+        padding-top: 34px;
+      }
+
+      .input-grid,
+      .settings-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .input-card:first-child {
+        grid-column: span 2;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Kalorien App v0.2</p>
+        <h1 id="pageTitle">Heute</h1>
+      </div>
+      <div class="top-meta">
+        <div class="date-pill" id="todayLabel"></div>
+        <div class="save-status" id="saveStatus">Lokal bereit</div>
+      </div>
+    </header>
+
+    <section class="tab-panel active" data-panel="today">
+      <div class="stack">
+        <article class="card hero-card">
+          <div class="card-inner">
+            <p class="muted">Tagesstatus</p>
+            <div class="progress-row">
+              <div class="metric">
+                <span class="label">Kalorien</span>
+                <strong><span id="kcalTotal">0</span></strong>
+                <div class="bar"><span id="kcalBar"></span></div>
+              </div>
+              <div class="metric">
+                <span class="label">Protein</span>
+                <strong><span id="proteinTotal">0</span>g</strong>
+                <div class="bar"><span id="proteinBar"></span></div>
+              </div>
+            </div>
+            <div class="weight-chip">
+              <span>Gewicht heute</span>
+              <strong id="weightToday">Noch offen</strong>
+            </div>
+          </div>
+        </article>
+
+        <section class="card">
+          <div class="card-inner">
+            <div class="section-head">
+              <div>
+                <h2>Quick-Presets</h2>
+                <p class="muted">Ein Tap, sofort im Tag</p>
+              </div>
+            </div>
+            <div class="preset-grid" id="presetGrid"></div>
+            <button class="quick-btn" type="button" id="copyYesterday">Gestern kopieren</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-inner entry-form">
+            <div class="section-head">
+              <div>
+                <h2>Neuer Eintrag</h2>
+                <p class="muted">Name, kcal, Protein</p>
+              </div>
+            </div>
+            <div class="input-grid">
+              <label class="input-card">
+                <span>Name</span>
+                <span class="input-wrap">
+                  <input id="entryNameInput" type="text" autocomplete="off" placeholder="z. B. Mittag">
+                </span>
+              </label>
+
+              <label class="input-card">
+                <span>Kalorien</span>
+                <span class="input-wrap">
+                  <input id="entryKcalInput" type="number" inputmode="numeric" min="0" step="1" placeholder="0">
+                  <span class="unit">kcal</span>
+                </span>
+              </label>
+
+              <label class="input-card">
+                <span>Protein</span>
+                <span class="input-wrap">
+                  <input id="entryProteinInput" type="number" inputmode="decimal" min="0" step="1" placeholder="0">
+                  <span class="unit">g</span>
+                </span>
+              </label>
+            </div>
+            <button class="primary-btn" type="button" id="addEntry">Eintrag hinzufügen</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-inner">
+            <div class="section-head">
+              <div>
+                <h2>Heute geloggt</h2>
+                <p class="muted" id="entrySummary">Noch keine Einträge</p>
+              </div>
+            </div>
+            <div class="entry-list" id="entryList"></div>
+          </div>
+        </section>
+
+        <div class="input-grid">
+          <label class="input-card">
+            <span>Gewicht</span>
+            <span class="input-wrap">
+              <input id="weightInput" type="number" inputmode="decimal" min="0" step="0.1" placeholder="0.0">
+              <span class="unit">kg</span>
+            </span>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <section class="tab-panel" data-panel="week">
+      <div class="section-head">
+        <div>
+          <h2>Letzte 7 Tage</h2>
+        </div>
+      </div>
+      <div class="summary-card">
+        <p class="muted">Wochenschnitt</p>
+        <strong id="weekSummary">Noch keine Daten</strong>
+      </div>
+      <div class="card">
+        <div class="card-inner week-list" id="weekList"></div>
+      </div>
+    </section>
+
+    <section class="tab-panel" data-panel="weight">
+      <div class="section-head">
+        <div>
+          <h2>Gewicht</h2>
+          <p class="muted" id="weightSummary">Trend erscheint nach mehreren Eintraegen</p>
+        </div>
+      </div>
+      <div class="card chart-card">
+        <div class="weight-stats">
+          <div class="weight-stat">
+            <span>Start</span>
+            <strong id="weightStart">-</strong>
+          </div>
+          <div class="weight-stat">
+            <span>Aktuell</span>
+            <strong id="weightCurrent">-</strong>
+          </div>
+          <div class="weight-stat">
+            <span>Differenz</span>
+            <strong id="weightDiff">-</strong>
+          </div>
+        </div>
+        <svg id="weightChart" viewBox="0 0 360 220" role="img" aria-label="Gewichtsdiagramm"></svg>
+      </div>
+    </section>
+
+    <section class="tab-panel" data-panel="settings">
+      <div class="card">
+        <div class="card-inner">
+          <div class="settings-grid">
+            <label class="setting">
+              <span>Ziel-kcal</span>
+              <input id="goalKcalInput" type="number" inputmode="numeric" min="0" step="50">
+            </label>
+            <label class="setting">
+              <span>Ziel-Protein</span>
+              <input id="goalProteinInput" type="number" inputmode="numeric" min="0" step="5">
+            </label>
+          </div>
+          <p class="save-note">Speichert automatisch lokal auf diesem Geraet.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Hauptnavigation">
+    <div class="nav-inner">
+      <button class="nav-btn active" type="button" data-tab="today">Heute</button>
+      <button class="nav-btn" type="button" data-tab="week">Woche</button>
+      <button class="nav-btn" type="button" data-tab="weight">Gewicht</button>
+      <button class="nav-btn" type="button" data-tab="settings">Einstellungen</button>
+    </div>
+  </nav>
+
+  <script>
+    const STORAGE_KEY = "kalorien-app-v0_2-test";
+    const PRESETS = [
+      { name: "Proteinshake", kcal: 180, protein: 30 },
+      { name: "Frühstück", kcal: 520, protein: 28 },
+      { name: "Reis + Hähnchen", kcal: 650, protein: 48 },
+      { name: "Snack", kcal: 250, protein: 15 }
+    ];
+    const DEFAULT_STATE = {
+      goals: { kcal: 2500, protein: 160 },
+      days: {}
+    };
+
+    const els = {
+      pageTitle: document.getElementById("pageTitle"),
+      todayLabel: document.getElementById("todayLabel"),
+      presetGrid: document.getElementById("presetGrid"),
+      copyYesterday: document.getElementById("copyYesterday"),
+      entryNameInput: document.getElementById("entryNameInput"),
+      entryKcalInput: document.getElementById("entryKcalInput"),
+      entryProteinInput: document.getElementById("entryProteinInput"),
+      addEntry: document.getElementById("addEntry"),
+      entryList: document.getElementById("entryList"),
+      entrySummary: document.getElementById("entrySummary"),
+      weightInput: document.getElementById("weightInput"),
+      goalKcalInput: document.getElementById("goalKcalInput"),
+      goalProteinInput: document.getElementById("goalProteinInput"),
+      kcalTotal: document.getElementById("kcalTotal"),
+      proteinTotal: document.getElementById("proteinTotal"),
+      kcalBar: document.getElementById("kcalBar"),
+      proteinBar: document.getElementById("proteinBar"),
+      weightToday: document.getElementById("weightToday"),
+      weekList: document.getElementById("weekList"),
+      weekSummary: document.getElementById("weekSummary"),
+      weightChart: document.getElementById("weightChart"),
+      weightSummary: document.getElementById("weightSummary"),
+      saveStatus: document.getElementById("saveStatus"),
+      weightStart: document.getElementById("weightStart"),
+      weightCurrent: document.getElementById("weightCurrent"),
+      weightDiff: document.getElementById("weightDiff")
+    };
+
+    let state = loadState();
+    let activeDayKey = toDateKey(new Date());
+    let saveStatusTimer;
+
+    function createDefaultState() {
+      return {
+        goals: { ...DEFAULT_STATE.goals },
+        days: {}
+      };
+    }
+
+    function loadState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        return {
+          ...DEFAULT_STATE,
+          ...saved,
+          goals: { ...DEFAULT_STATE.goals, ...(saved && saved.goals) },
+          days: (saved && saved.days) || {}
+        };
+      } catch {
+        return createDefaultState();
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        setSaveStatus("Gespeichert");
+        return true;
+      } catch {
+        setSaveStatus("Speichern blockiert");
+        return false;
+      }
+    }
+
+    function setSaveStatus(text) {
+      els.saveStatus.textContent = text;
+      clearTimeout(saveStatusTimer);
+      if (text === "Gespeichert") {
+        saveStatusTimer = setTimeout(() => {
+          els.saveStatus.textContent = "Lokal bereit";
+        }, 1400);
+      }
+    }
+
+    function toDateKey(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function getDay(key) {
+      if (!state.days[key]) {
+        state.days[key] = { entries: [], weight: "" };
+      }
+      if (!Array.isArray(state.days[key].entries)) {
+        state.days[key].entries = [];
+      }
+      return state.days[key];
+    }
+
+    function ensureCurrentDay() {
+      const latestDayKey = toDateKey(new Date());
+      if (latestDayKey !== activeDayKey) {
+        activeDayKey = latestDayKey;
+      }
+      return getDay(activeDayKey);
+    }
+
+    function hasRealDayData(day) {
+      const totals = dayTotals(day);
+      return totals.kcal > 0 || totals.protein > 0 || numberValue(day.weight) > 0;
+    }
+
+    function numberValue(value) {
+      const parsed = Number(String(value).replace(",", "."));
+      return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+    }
+
+    function dayTotals(day) {
+      const entries = Array.isArray(day.entries) ? day.entries : [];
+      return entries.reduce((totals, entry) => {
+        totals.kcal += numberValue(entry.kcal);
+        totals.protein += numberValue(entry.protein);
+        return totals;
+      }, { kcal: 0, protein: 0 });
+    }
+
+    function createEntry(name, kcal, protein) {
+      return {
+        id: String(Date.now()) + "-" + Math.random().toString(16).slice(2),
+        name: String(name || "Eintrag").trim() || "Eintrag",
+        kcal: Math.round(numberValue(kcal)),
+        protein: Math.round(numberValue(protein))
+      };
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, (char) => {
+        return {
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#039;"
+        }[char];
+      });
+    }
+
+    function percent(value, goal) {
+      if (!goal) return 0;
+      return Math.min(100, Math.round((value / goal) * 100));
+    }
+
+    function lastDays(count) {
+      return Array.from({ length: count }, (_, index) => {
+        const date = new Date();
+        date.setDate(date.getDate() - (count - 1 - index));
+        return { key: toDateKey(date), date };
+      });
+    }
+
+    function formatDay(date) {
+      return new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(date).replace(".", "");
+    }
+
+    function renderToday() {
+      const day = ensureCurrentDay();
+      const totals = dayTotals(day);
+      const kcal = totals.kcal;
+      const protein = totals.protein;
+      const weight = numberValue(day.weight);
+
+      els.todayLabel.textContent = new Intl.DateTimeFormat("de-DE", {
+        day: "2-digit",
+        month: "short"
+      }).format(new Date());
+      els.weightInput.value = day.weight;
+      els.goalKcalInput.value = state.goals.kcal;
+      els.goalProteinInput.value = state.goals.protein;
+      els.kcalTotal.textContent = Math.round(kcal).toLocaleString("de-DE");
+      els.proteinTotal.textContent = Math.round(protein).toLocaleString("de-DE");
+      els.kcalBar.style.width = `${percent(kcal, state.goals.kcal)}%`;
+      els.proteinBar.style.width = `${percent(protein, state.goals.protein)}%`;
+      els.weightToday.textContent = weight > 0 ? `${weight.toFixed(1)} kg` : "Noch offen";
+      renderEntries(day);
+    }
+
+    function renderPresets() {
+      els.presetGrid.innerHTML = PRESETS.map((preset, index) => `
+        <button class="quick-btn preset-btn" type="button" data-preset="${index}">
+          <strong>${escapeHtml(preset.name)}</strong>
+          <span>${preset.kcal} kcal / ${preset.protein}g</span>
+        </button>
+      `).join("");
+    }
+
+    function renderEntries(day) {
+      const entries = Array.isArray(day.entries) ? day.entries : [];
+      const totals = dayTotals(day);
+      els.entrySummary.textContent = entries.length
+        ? `${entries.length} Einträge, ${Math.round(totals.kcal)} kcal, ${Math.round(totals.protein)}g Protein`
+        : "Noch keine Einträge";
+
+      if (!entries.length) {
+        els.entryList.innerHTML = '<p class="empty">Noch nichts geloggt.</p>';
+        return;
+      }
+
+      els.entryList.innerHTML = entries.map((entry) => `
+        <div class="entry-row">
+          <div>
+            <strong>${escapeHtml(entry.name)}</strong>
+            <p class="muted">${Math.round(numberValue(entry.kcal))} kcal / ${Math.round(numberValue(entry.protein))}g Protein</p>
+          </div>
+          <button class="delete-btn" type="button" data-delete-entry="${escapeHtml(entry.id)}" aria-label="Eintrag löschen">×</button>
+        </div>
+      `).join("");
+    }
+
+    function renderWeek() {
+      const days = lastDays(7);
+      let kcalSum = 0;
+      let proteinSum = 0;
+      let realDayCount = 0;
+
+      els.weekList.innerHTML = days.map(({ key, date }) => {
+        const day = state.days[key] || {};
+        const totals = dayTotals(day);
+        const kcal = totals.kcal;
+        const protein = totals.protein;
+        if (hasRealDayData(day)) {
+          kcalSum += kcal;
+          proteinSum += protein;
+          realDayCount += 1;
+        }
+
+        return `
+          <div class="day-row ${key === activeDayKey ? "today" : ""}">
+            <div class="day-name">${formatDay(date)}</div>
+            <div class="day-bars">
+              <div class="mini-bar kcal"><span style="width:${percent(kcal, state.goals.kcal)}%"></span></div>
+              <div class="mini-bar protein"><span style="width:${percent(protein, state.goals.protein)}%"></span></div>
+            </div>
+            <div class="day-values">${Math.round(kcal)} kcal<br>${Math.round(protein)}g</div>
+          </div>
+        `;
+      }).join("");
+
+      if (!realDayCount) {
+        els.weekSummary.textContent = "Noch keine echten Tagesdaten";
+        return;
+      }
+
+      const avgKcal = Math.round(kcalSum / realDayCount);
+      const avgProtein = Math.round(proteinSum / realDayCount);
+      els.weekSummary.textContent = `${avgKcal} kcal / ${avgProtein}g Protein im Schnitt (${realDayCount} Tage)`;
+    }
+
+    function renderWeightChart() {
+      const days = lastDays(7);
+      const points = days
+        .map(({ key, date }) => ({ date, value: numberValue((state.days[key] || {}).weight) }))
+        .filter((point) => point.value > 0);
+
+      els.weightStart.textContent = "-";
+      els.weightCurrent.textContent = "-";
+      els.weightDiff.textContent = "-";
+
+      if (!points.length) {
+        els.weightChart.innerHTML = '<text x="180" y="112" text-anchor="middle" fill="#8792a3" font-size="14">Noch kein Gewicht eingetragen</text>';
+        els.weightSummary.textContent = "Trend erscheint nach mehreren Eintraegen";
+        return;
+      }
+
+      const values = points.map((point) => point.value);
+      const first = values[0];
+      const last = values[values.length - 1];
+      const diff = last - first;
+      const diffText = `${diff >= 0 ? "+" : ""}${diff.toFixed(1)} kg`;
+
+      els.weightStart.textContent = `${first.toFixed(1)} kg`;
+      els.weightCurrent.textContent = `${last.toFixed(1)} kg`;
+      els.weightDiff.textContent = points.length > 1 ? diffText : "-";
+
+      if (points.length === 1) {
+        els.weightChart.innerHTML = `
+          <circle cx="180" cy="110" r="7" fill="#7dd3fc"></circle>
+          <text x="180" y="142" text-anchor="middle" fill="#8792a3" font-size="14">${last.toFixed(1)} kg eingetragen</text>
+        `;
+        els.weightSummary.textContent = `Ein Gewichtseintrag: ${last.toFixed(1)} kg`;
+        return;
+      }
+
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      const range = Math.max(1, max - min);
+      const width = 320;
+      const height = 150;
+      const left = 22;
+      const top = 30;
+      const step = points.length > 1 ? width / (points.length - 1) : width;
+
+      const coords = points.map((point, index) => {
+        const x = left + index * step;
+        const y = top + height - ((point.value - min) / range) * height;
+        return { ...point, x, y };
+      });
+
+      const path = coords.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`).join(" ");
+      const trendText = diff < -0.2 ? "leichter Trend nach unten" : diff > 0.2 ? "leichter Trend nach oben" : "stabiler Trend";
+
+      els.weightSummary.textContent = `${first.toFixed(1)} kg zu ${last.toFixed(1)} kg (${diffText}), ${trendText}`;
+      els.weightChart.innerHTML = `
+        <path d="M 22 180 H 342" stroke="rgba(255,255,255,0.08)" stroke-width="1"></path>
+        <path d="${path}" fill="none" stroke="#6ee7b7" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>
+        ${coords.map((point) => `<circle cx="${point.x}" cy="${point.y}" r="5" fill="#7dd3fc"></circle>`).join("")}
+        <text x="22" y="18" fill="#8792a3" font-size="13">${max.toFixed(1)} kg</text>
+        <text x="22" y="206" fill="#8792a3" font-size="13">${min.toFixed(1)} kg</text>
+      `;
+    }
+
+    function renderAll() {
+      renderPresets();
+      renderToday();
+      renderWeek();
+      renderWeightChart();
+    }
+
+    function bindInputs() {
+      els.weightInput.addEventListener("input", () => {
+        const today = ensureCurrentDay();
+        today.weight = els.weightInput.value;
+        saveState();
+        renderAll();
+      });
+
+      els.addEntry.addEventListener("click", () => {
+        const today = ensureCurrentDay();
+        const added = addEntryToDay(today, {
+          name: els.entryNameInput.value,
+          kcal: els.entryKcalInput.value,
+          protein: els.entryProteinInput.value
+        });
+        if (!added) return;
+        els.entryNameInput.value = "";
+        els.entryKcalInput.value = "";
+        els.entryProteinInput.value = "";
+        saveState();
+        renderAll();
+      });
+
+      els.presetGrid.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-preset]");
+        if (!button) return;
+        const preset = PRESETS[Number(button.dataset.preset)];
+        if (!preset) return;
+        if (!addEntryToDay(ensureCurrentDay(), preset)) return;
+        saveState();
+        renderAll();
+      });
+
+      els.entryList.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-delete-entry]");
+        if (!button) return;
+        const today = ensureCurrentDay();
+        today.entries = today.entries.filter((entry) => entry.id !== button.dataset.deleteEntry);
+        saveState();
+        renderAll();
+      });
+
+      els.copyYesterday.addEventListener("click", () => {
+        const today = ensureCurrentDay();
+        const yesterday = getDay(offsetDateKey(-1));
+        const yesterdayEntries = Array.isArray(yesterday.entries) ? yesterday.entries : [];
+        if (!yesterdayEntries.length) {
+          setSaveStatus("Gestern leer");
+          return;
+        }
+
+        if (today.entries.length && !confirm("Heute hat schon Einträge. Gestern zusätzlich kopieren?")) {
+          return;
+        }
+
+        today.entries = today.entries.concat(yesterdayEntries.map((entry) => createEntry(entry.name, entry.kcal, entry.protein)));
+        saveState();
+        renderAll();
+      });
+
+      els.goalKcalInput.addEventListener("input", () => {
+        state.goals.kcal = numberValue(els.goalKcalInput.value);
+        saveState();
+        renderAll();
+      });
+
+      els.goalProteinInput.addEventListener("input", () => {
+        state.goals.protein = numberValue(els.goalProteinInput.value);
+        saveState();
+        renderAll();
+      });
+    }
+
+    function addEntryToDay(day, entry) {
+      const created = createEntry(entry.name, entry.kcal, entry.protein);
+      if (!created.kcal && !created.protein) {
+        setSaveStatus("Keine Werte");
+        return false;
+      }
+      day.entries.push(created);
+      return true;
+    }
+
+    function offsetDateKey(offset) {
+      const date = new Date();
+      date.setDate(date.getDate() + offset);
+      return toDateKey(date);
+    }
+
+    function bindTabs() {
+      document.querySelectorAll(".nav-btn").forEach((button) => {
+        button.addEventListener("click", () => {
+          const tab = button.dataset.tab;
+          document.querySelectorAll(".nav-btn").forEach((item) => item.classList.toggle("active", item === button));
+          document.querySelectorAll(".tab-panel").forEach((panel) => panel.classList.toggle("active", panel.dataset.panel === tab));
+          els.pageTitle.textContent = button.textContent;
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+      });
+    }
+
+    window.addEventListener("focus", renderAll);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) {
+        renderAll();
+      }
+    });
+
+    bindInputs();
+    bindTabs();
+    renderAll();
+  </script>
+</body>
+</html>

@@ -18,3 +18,31 @@ Thumbs.db
 # VS Code optional
 .vscode/*
 !.vscode/settings.json
+
+# OneDrive
+*.lnk
+
+# macOS / Windows
+Desktop.ini
+
+# VS Code
+.history/
+
+# Lokale Claude/Codex-Worktrees
+.claude/
+.clasp.json
+
+# Node optional
+node_modules/
+
+# Local / duplicate Apps Script drafts
+03_APPS_SCRIPT/Code*.gs
+03_APPS_SCRIPT/Maintenance*.gs
+03_APPS_SCRIPT/persönlich*Code.gs
+03_APPS_SCRIPT/sheet-format-v6.gs
+
+# Local stable/live duplicate copies
+00_AKTUELL/public_latest/
+
+# Deployment drafts until reviewed
+06_DEPLOYMENT/

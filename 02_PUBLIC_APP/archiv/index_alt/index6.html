@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#080808">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>PB V10.0</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════════════
+   PLATEAU BRECHER V10.0
+   Barlow Condensed + DM Mono
+   + RPE · PR-Seite · 4 Tabs
+   ════════════════════════════════════════ */
+:root {
+  --bg:  #080808;
+  --s1:  #111111;
+  --s2:  #181818;
+  --s3:  #1f1f1f;
+  --bor: #2a2a2a;
+  --b2:  #333333;
+  --acc: #c8ff00;
+  --tx:  #f0f0f0;
+  --tx2: #888888;
+  --tx3: #444444;
+  --ok:  #00e676;
+  --err: #ff4444;
+  --warn:#ffaa00;
+  --r:   10px;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box; margin: 0; padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+html { -webkit-text-size-adjust: 100%; }
+body {
+  background: var(--bg); color: var(--tx);
+  font-family: 'DM Mono', monospace;
+  min-height: 100dvh; padding-bottom: 100px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── LOAD SCREEN ─────────────────────── */
+#ls {
+  position: fixed; inset: 0; z-index: 999;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 18px;
+  transition: opacity .3s, visibility .3s;
+}
+#ls.off { opacity: 0; visibility: hidden; }
+.ls-logo {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900; font-size: 58px;
+  letter-spacing: .14em; color: var(--acc);
+}
+.ls-sub {
+  font-size: 9px; color: var(--tx3);
+  letter-spacing: .18em; text-transform: uppercase;
+  margin-top: -14px;
+}
+.ls-spin {
+  width: 24px; height: 24px;
+  border: 2px solid var(--bor); border-top-color: var(--acc);
+  border-radius: 50%; animation: spin .7s linear infinite;
+}
+#ls-msg { font-size: 9px; color: var(--tx3); letter-spacing: .14em; text-transform: uppercase; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── DIAGNOSTICS ─────────────────────── */
+#diag-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,.92); backdrop-filter: blur(10px);
+  display: none; align-items: flex-end; justify-content: center;
+}
+#diag-overlay.open { display: flex; }
+.diag-sheet {
+  background: var(--s1); border-top: 2px solid var(--warn);
+  border-radius: 16px 16px 0 0;
+  padding: 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  width: 100%; max-width: 480px;
+  animation: slideUp .25s ease;
+  max-height: 80dvh; overflow-y: auto;
+}
+@keyframes slideUp {
+  from { transform: translateY(40px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.diag-handle { width: 34px; height: 4px; border-radius: 2px; background: var(--warn); margin: 0 auto 16px; opacity: .5; }
+.diag-title {
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 20px;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--warn); margin-bottom: 4px;
+}
+.diag-subtitle { font-size: 9px; color: var(--tx3); letter-spacing: .08em; margin-bottom: 14px; }
+.diag-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 12px; border-radius: var(--r); margin-bottom: 6px; border: 1px solid;
+}
+.diag-item.ok   { border-color: rgba(0,230,118,.2); background: rgba(0,230,118,.05); }
+.diag-item.warn { border-color: rgba(255,170,0,.2); background: rgba(255,170,0,.05); }
+.diag-item.err  { border-color: rgba(255,68,68,.2); background: rgba(255,68,68,.05); }
+.diag-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.diag-text { flex: 1; }
+.diag-label { font-size: 10px; font-weight: 500; color: var(--tx); letter-spacing: .04em; margin-bottom: 2px; }
+.diag-detail { font-size: 9px; color: var(--tx3); line-height: 1.5; word-break: break-all; }
+.diag-actions { display: flex; gap: 8px; margin-top: 16px; }
+.diag-btn-ok {
+  flex: 1; background: var(--acc); color: #000; border: none;
+  border-radius: var(--r); padding: 13px;
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 16px;
+  letter-spacing: .12em; cursor: pointer;
+}
+.diag-btn-setup {
+  flex: 1; background: none; border: 1px solid var(--b2);
+  border-radius: var(--r); color: var(--tx3);
+  font-family: 'DM Mono', monospace; font-size: 10px; padding: 13px; cursor: pointer;
+}
+
+/* ── TOAST ───────────────────────────── */
+#toast {
+  position: fixed; top: 58px; left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  background: var(--s2); border: 1px solid var(--b2);
+  border-radius: 20px; padding: 8px 16px;
+  font-size: 10px; color: var(--tx); letter-spacing: .06em;
+  opacity: 0; pointer-events: none;
+  transition: opacity .2s, transform .2s; z-index: 800; white-space: nowrap;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#toast.ok   { border-color: var(--ok);  color: var(--ok); }
+#toast.err  { border-color: var(--err); color: var(--err); }
+#toast.warn { border-color: var(--warn); color: var(--warn); }
+
+/* ── HEADER ──────────────────────────── */
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px;
+  padding-top: calc(10px + env(safe-area-inset-top));
+  background: rgba(8,8,8,.97); backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--bor);
+  position: sticky; top: 0; z-index: 100;
+}
+.logo {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900; font-size: 28px;
+  letter-spacing: .1em; color: var(--acc); line-height: 1;
+}
+.logo sub {
+  font-family: 'DM Mono', monospace; font-size: 9px;
+  font-weight: 400; color: var(--tx3); margin-left: 5px; vertical-align: baseline;
+}
+.hdr-r { display: flex; align-items: center; gap: 10px; }
+#hdr-date { font-size: 9px; color: var(--tx3); letter-spacing: .06em; }
+#dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--tx3); transition: background .4s; flex-shrink: 0; cursor: pointer;
+}
+#dot.ok   { background: var(--ok);  box-shadow: 0 0 7px var(--ok); }
+#dot.err  { background: var(--err); }
+#dot.warn { background: var(--warn); box-shadow: 0 0 7px var(--warn); }
+
+/* ── TABS ────────────────────────────── */
+.tabs {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  border-bottom: 1px solid var(--bor); background: var(--s1);
+  position: sticky; top: 49px; z-index: 99;
+}
+.tab {
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 13px;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--tx3); background: none; border: none;
+  padding: 12px 8px; cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color .15s, border-color .15s;
+}
+.tab.active { color: var(--acc); border-bottom-color: var(--acc); }
+
+/* ════════════════════════════════════════
+   TRAINING — WOCHEN-AKKORDEON
+   ════════════════════════════════════════ */
+.week-list { padding: 8px 14px 4px; }
+
+.week-row {
+  display: flex; align-items: center; padding: 10px 13px;
+  background: var(--s2); border: 1px solid var(--bor);
+  border-radius: var(--r); margin-bottom: 4px;
+  cursor: pointer; user-select: none;
+  transition: border-color .15s, background .15s;
+}
+.week-row.open {
+  border-color: var(--b2); border-radius: var(--r) var(--r) 0 0;
+  margin-bottom: 0; background: var(--s3);
+}
+.week-row:active { opacity: .8; }
+.week-icon { font-size: 14px; margin-right: 9px; flex-shrink: 0; }
+.week-info { flex: 1; min-width: 0; }
+.week-label {
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 16px;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--tx2); line-height: 1;
+}
+.week-row.open .week-label { color: var(--acc); }
+.week-sub { font-size: 8px; color: var(--tx3); letter-spacing: .1em; text-transform: uppercase; margin-top: 2px; }
+.week-chevron { font-size: 12px; color: var(--tx3); transition: transform .22s, color .15s; flex-shrink: 0; }
+.week-row.open .week-chevron { transform: rotate(180deg); color: var(--acc); }
+
+.day-list {
+  display: none; border: 1px solid var(--b2); border-top: none;
+  border-radius: 0 0 var(--r) var(--r); overflow: hidden; margin-bottom: 4px;
+}
+.day-list.open { display: block; }
+
+.dbtn {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; padding: 11px 13px;
+  background: var(--s1); border: none; border-bottom: 1px solid var(--bor);
+  cursor: pointer; text-align: left; transition: background .12s;
+}
+.dbtn:last-child { border-bottom: none; }
+.dbtn:active { background: var(--s3); }
+.dbtn.active { background: var(--s2); }
+.dbtn-left { display: flex; align-items: center; gap: 9px; }
+.dbtn-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--bor); flex-shrink: 0; transition: background .15s;
+}
+.dbtn.active .dbtn-dot { background: var(--acc); box-shadow: 0 0 5px var(--acc); }
+.dbtn-label {
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 15px;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--tx2);
+}
+.dbtn.active .dbtn-label { color: var(--acc); }
+.dbtn-count { font-size: 9px; color: var(--tx3); letter-spacing: .06em; }
+
+/* ── VIEWS ───────────────────────────── */
+main { padding: 8px 14px; }
+.view { display: none; }
+.view.active { display: block; }
+
+/* Breadcrumb Training */
+.cur-day-banner {
+  display: flex; align-items: center; gap: 8px; padding: 5px 2px 9px;
+}
+.cur-day-title {
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 21px;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--tx);
+}
+.cur-day-week {
+  font-size: 9px; color: var(--tx3); letter-spacing: .1em; text-transform: uppercase;
+  background: var(--s2); border: 1px solid var(--bor); border-radius: 4px; padding: 3px 7px;
+}
+
+/* ════════════════════════════════════════
+   TRAINING CARDS
+   ════════════════════════════════════════ */
+.excard {
+  background: var(--s1); border: 1px solid var(--bor);
+  border-radius: var(--r); margin-bottom: 7px;
+  overflow: hidden; animation: fadeUp .18s ease both;
+  box-shadow: 0 4px 16px rgba(0,0,0,.35);
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.excard[data-muscle="Schultern"] { border-left: 3px solid #ffd54f; }
+.excard[data-muscle="Brust"]     { border-left: 3px solid #ef5350; }
+.excard[data-muscle="Trizeps"]   { border-left: 3px solid #ab47bc; }
+.excard[data-muscle="Rücken"]    { border-left: 3px solid #42a5f5; }
+.excard[data-muscle="Bizeps"]    { border-left: 3px solid #26c6da; }
+.excard[data-muscle="Beine"]     { border-left: 3px solid #66bb6a; }
+.excard[data-muscle="Bauch"]     { border-left: 3px solid #ff7043; }
+.excard[data-muscle="default"]   { border-left: 3px solid var(--acc); }
+
+.card-top {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 11px 13px 0; gap: 8px;
+}
+.card-meta { flex: 1; min-width: 0; }
+.ex-title {
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 20px;
+  letter-spacing: .05em; text-transform: uppercase; color: var(--tx); line-height: 1.1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ex-muscle { font-size: 8px; color: var(--tx3); letter-spacing: .1em; text-transform: uppercase; margin-top: 2px; }
+.prog-wrap { display: flex; flex-direction: column; align-items: center; gap: 2px; flex-shrink: 0; }
+.prog-chip {
+  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  border-radius: 6px; font-size: 17px; border: 1px solid transparent;
+}
+.prog-chip.up { color: var(--ok); background: rgba(0,230,118,.12); border-color: rgba(0,230,118,.25); box-shadow: 0 0 10px rgba(0,230,118,.15); }
+.prog-chip.dn { color: var(--err); background: rgba(255,68,68,.12); border-color: rgba(255,68,68,.25); }
+.prog-chip.eq { color: var(--tx3); background: var(--s3); border-color: var(--bor); }
+.prog-lbl { font-size: 7px; color: var(--tx3); letter-spacing: .08em; text-transform: uppercase; }
+
+.col-hdr { display: grid; grid-template-columns: 30px 1fr 1fr 46px; gap: 5px; padding: 8px 13px 2px; }
+.ch { font-size: 7px; color: var(--tx3); letter-spacing: .12em; text-align: center; text-transform: uppercase; }
+.sets-wrap { padding: 0 13px 12px; }
+.set-row { display: grid; grid-template-columns: 30px 1fr 1fr 46px; gap: 5px; align-items: center; margin-bottom: 4px; }
+.set-row:last-child { margin-bottom: 0; }
+.slbl { font-size: 8px; color: var(--tx3); letter-spacing: .1em; text-align: center; text-transform: uppercase; }
+.sinput {
+  background: var(--s3); border: 1px solid var(--bor);
+  border-radius: 5px; color: var(--tx);
+  font-family: 'DM Mono', monospace; font-size: 15px; font-weight: 500;
+  padding: 8px 4px; text-align: center; outline: none; width: 100%;
+  transition: border-color .12s, background .12s; -moz-appearance: textfield;
+}
+.sinput::-webkit-outer-spin-button,
+.sinput::-webkit-inner-spin-button { -webkit-appearance: none; }
+.sinput:focus { border-color: var(--acc); background: #222; }
+.sinput::placeholder { color: var(--tx3); font-size: 10px; }
+.rpeinput {
+  background: var(--s3); border: 1px solid rgba(255,170,0,.3);
+  border-radius: 5px; color: var(--warn);
+  font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500;
+  padding: 8px 3px; text-align: center; outline: none; width: 100%;
+  transition: border-color .12s, background .12s; -moz-appearance: textfield;
+}
+.rpeinput::-webkit-outer-spin-button,
+.rpeinput::-webkit-inner-spin-button { -webkit-appearance: none; }
+.rpeinput:focus { border-color: var(--warn); background: #221a00; }
+.rpeinput::placeholder { color: var(--tx3); font-size: 9px; }
+
+/* ════════════════════════════════════════
+   PLANUNG — 3-STUFEN HIERARCHIE
+   Woche → Tag → Übungen
+   Klare Liste, kein Dashboard-Overhead
+   ════════════════════════════════════════ */
+
+/* Breadcrumb Navigation */
+.plan-crumb {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 14px 6px;
+  font-size: 9px; letter-spacing: .1em; text-transform: uppercase;
+}
+.plan-crumb-link {
+  color: var(--acc); cursor: pointer; opacity: .7;
+  transition: opacity .15s;
+}
+.plan-crumb-link:active { opacity: 1; }
+.plan-crumb-sep { color: var(--tx3); }
+.plan-crumb-cur { color: var(--tx2); }
+
+/* Gemeinsame List-Box für alle 3 Stufen */
+.plan-box {
+  background: var(--s1); border: 1px solid var(--bor);
+  border-radius: var(--r); overflow: hidden;
+  margin: 0 14px;
+}
+
+/* ── STUFE 1: Wochen ─────────────────── */
+.pw-item {
+  display: flex; align-items: center;
+  padding: 14px 14px; cursor: pointer;
+  border-bottom: 1px solid var(--bor);
+  transition: background .12s;
+}
+.pw-item:last-child { border-bottom: none; }
+.pw-item:active { background: var(--s3); }
+.pw-left { flex: 1; }
+.pw-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900; font-size: 18px;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--tx);
+}
+.pw-meta { font-size: 8px; color: var(--tx3); letter-spacing: .06em; margin-top: 3px; }
+.pw-arr { font-size: 16px; color: var(--tx3); margin-left: 8px; }
+
+/* ── STUFE 2: Tage ───────────────────── */
+.pd-item {
+  display: flex; align-items: center;
+  padding: 13px 14px; cursor: pointer;
+  border-bottom: 1px solid var(--bor);
+  transition: background .12s;
+}
+.pd-item:last-child { border-bottom: none; }
+.pd-item:active { background: var(--s3); }
+.pd-left { flex: 1; display: flex; align-items: center; gap: 10px; }
+.pd-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--bor); flex-shrink: 0;
+}
+.pd-dot.has { background: var(--acc); box-shadow: 0 0 5px var(--acc); }
+.pd-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 16px;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--tx2);
+}
+.pd-count { font-size: 9px; color: var(--tx3); letter-spacing: .06em; }
+.pd-arr { font-size: 14px; color: var(--tx3); margin-left: 8px; }
+
+/* ── STUFE 3: Übungen ────────────────── */
+.pe-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-bottom: 1px solid var(--bor);
+}
+.pe-item:last-child { border-bottom: none; }
+.pe-num { font-size: 9px; color: var(--tx3); width: 18px; text-align: right; flex-shrink: 0; }
+.pe-info { flex: 1; min-width: 0; }
+.pe-name {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase; color: var(--tx3);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pe-name.named { color: var(--tx); }
+.pe-muscle { font-size: 8px; color: var(--tx3); letter-spacing: .08em; text-transform: uppercase; margin-top: 1px; }
+.pe-muscle.has { color: var(--acc); opacity: .7; }
+.pe-prog {
+  font-size: 13px; flex-shrink: 0;
+  width: 22px; height: 22px;
+  display: flex; align-items: center; justify-content: center; border-radius: 4px;
+}
+.pe-prog.up { color: var(--ok);  background: rgba(0,230,118,.1); }
+.pe-prog.dn { color: var(--err); background: rgba(255,68,68,.1); }
+.pe-prog.eq { color: var(--tx3); background: var(--s3); }
+.edit-btn {
+  background: var(--s3); border: 1px solid var(--b2); color: var(--tx2);
+  font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: .08em;
+  padding: 5px 8px; border-radius: 4px; cursor: pointer; flex-shrink: 0;
+  transition: border-color .12s, color .12s;
+}
+.edit-btn:active { border-color: var(--acc); color: var(--acc); }
+
+/* ── LEERZUSTÄNDE ─────────────────────── */
+.empty {
+  text-align: center; padding: 40px 20px;
+  color: var(--tx3); font-size: 10px; letter-spacing: .1em; line-height: 1.8;
+}
+.empty big {
+  display: block; font-family: 'Barlow Condensed', sans-serif;
+  font-size: 38px; font-weight: 900; color: var(--s3); letter-spacing: .06em; margin-bottom: 6px;
+}
+.empty-nav { font-size: 10px; color: var(--tx3); padding: 8px 2px; letter-spacing: .06em; }
+
+/* ════════════════════════════════════════
+   PR-SEITE
+   ════════════════════════════════════════ */
+.pr-filter {
+  display: flex; gap: 6px; padding: 8px 14px 4px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+}
+.pr-filter::-webkit-scrollbar { display: none; }
+.pr-chip {
+  flex-shrink: 0; background: var(--s2); border: 1px solid var(--bor);
+  border-radius: 20px; padding: 5px 12px;
+  font-family: 'DM Mono', monospace; font-size: 9px;
+  color: var(--tx3); letter-spacing: .06em; cursor: pointer;
+  transition: border-color .12s, color .12s;
+}
+.pr-chip.active { border-color: var(--acc); color: var(--acc); }
+.pr-list { padding: 4px 14px; }
+.pr-card {
+  background: var(--s1); border: 1px solid var(--bor);
+  border-radius: var(--r); padding: 11px 13px;
+  margin-bottom: 6px; display: flex; align-items: center; gap: 10px;
+  animation: fadeUp .15s ease both;
+}
+.pr-card[data-muscle="Schultern"] { border-left: 3px solid #ffd54f; }
+.pr-card[data-muscle="Brust"]     { border-left: 3px solid #ef5350; }
+.pr-card[data-muscle="Trizeps"]   { border-left: 3px solid #ab47bc; }
+.pr-card[data-muscle="Rücken"]    { border-left: 3px solid #42a5f5; }
+.pr-card[data-muscle="Bizeps"]    { border-left: 3px solid #26c6da; }
+.pr-card[data-muscle="Beine"]     { border-left: 3px solid #66bb6a; }
+.pr-card[data-muscle="Bauch"]     { border-left: 3px solid #ff7043; }
+.pr-card[data-muscle="default"]   { border-left: 3px solid var(--acc); }
+.pr-info { flex: 1; min-width: 0; }
+.pr-name {
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 17px;
+  letter-spacing: .05em; text-transform: uppercase; color: var(--tx);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pr-muscle { font-size: 8px; color: var(--tx3); letter-spacing: .08em; text-transform: uppercase; margin-top: 2px; }
+.pr-val {
+  display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; gap: 2px;
+}
+.pr-kg {
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 22px;
+  color: var(--ok); letter-spacing: .04em; line-height: 1;
+}
+.pr-kg-unit { font-size: 10px; color: var(--tx3); }
+.pr-date { font-size: 8px; color: var(--tx3); letter-spacing: .06em; }
+.pr-sets { font-size: 8px; color: var(--tx3); letter-spacing: .04em; margin-top: 1px; }
+
+.empty-sm { padding: 24px 20px; }
+/* 4 Tabs */
+.tabs-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+#save-footer {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 110;
+  padding: 10px 14px;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  background: rgba(8,8,8,.97);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--bor);
+}
+#save-btn {
+  width: 100%; background: var(--acc); color: #000; border: none;
+  border-radius: var(--r); padding: 14px;
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 19px;
+  letter-spacing: .18em; text-transform: uppercase;
+  cursor: pointer; transition: opacity .15s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+#save-btn:disabled { opacity: .4; cursor: not-allowed; }
+#save-btn:not(:disabled):active { opacity: .8; }
+.spin-sm {
+  display: none; width: 15px; height: 15px;
+  border: 2px solid rgba(0,0,0,.3); border-top-color: #000;
+  border-radius: 50%; animation: spin .6s linear infinite;
+}
+#save-btn.saving .spin-sm { display: block; }
+#save-btn.saving .btn-lbl { display: none; }
+
+/* ── SETUP MODAL ─────────────────────── */
+#setup-ov {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,.88); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  display: none; align-items: flex-end; justify-content: center;
+}
+#setup-ov.open { display: flex; }
+.modal-sheet {
+  background: var(--s1); border-top: 1px solid var(--b2);
+  border-radius: 16px 16px 0 0; padding: 20px;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  width: 100%; max-width: 480px; animation: slideUp .22s ease;
+}
+.modal-handle { width: 34px; height: 4px; border-radius: 2px; background: var(--b2); margin: 0 auto 18px; }
+.modal-title {
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 22px;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--acc); margin-bottom: 14px;
+}
+.setup-lbl { font-size: 8px; color: var(--tx3); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 5px; }
+.setup-inp {
+  width: 100%; background: var(--s3); border: 1px solid var(--b2); border-radius: var(--r);
+  color: var(--tx); font-family: 'DM Mono', monospace; font-size: 11px;
+  padding: 11px 12px; outline: none; margin-bottom: 12px; transition: border-color .15s;
+}
+.setup-inp:focus { border-color: var(--acc); }
+.modal-save {
+  width: 100%; background: var(--acc); color: #000; border: none; border-radius: var(--r);
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 17px;
+  letter-spacing: .14em; padding: 13px; cursor: pointer; margin-bottom: 8px;
+}
+.modal-cancel {
+  width: 100%; background: none; border: 1px solid var(--b2); border-radius: var(--r);
+  color: var(--tx3); font-family: 'DM Mono', monospace; font-size: 11px;
+  padding: 11px; cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<!-- LOAD SCREEN -->
+<div id="ls">
+  <div class="ls-logo">PB</div>
+  <div class="ls-sub">Plateau Brecher</div>
+  <div class="ls-spin"></div>
+  <div id="ls-msg">Verbinde…</div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- DIAGNOSTICS -->
+<div id="diag-overlay">
+  <div class="diag-sheet">
+    <div class="diag-handle"></div>
+    <div class="diag-title">⚙ System-Check</div>
+    <div class="diag-subtitle" id="diag-subtitle"></div>
+    <div id="diag-list"></div>
+    <div class="diag-actions">
+      <button class="diag-btn-ok" onclick="diagClose()">VERSTANDEN</button>
+      <button class="diag-btn-setup" onclick="diagClose(); setupOpen();">Setup öffnen</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETUP MODAL -->
+<div id="setup-ov">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Setup</div>
+    <div class="setup-lbl">Tabellenblatt</div>
+    <input class="setup-inp" id="si-sheet" type="text" placeholder="ZYKLUS MASTER">
+    <div class="setup-lbl">Apps Script URL</div>
+    <input class="setup-inp" id="si-url" type="url" placeholder="https://script.google.com/macros/s/…/exec">
+    <button class="modal-save"   onclick="setupSave()">SPEICHERN & NEU LADEN</button>
+    <button class="modal-cancel" onclick="setupClose()">Abbrechen</button>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">PB<sub>v10.0</sub></div>
+  <div class="hdr-r">
+    <span id="hdr-date"></span>
+    <div id="dot" title="System-Check" onclick="runDiag(true)"></div>
+  </div>
+</header>
+
+<!-- TABS -->
+<div class="tabs tabs-4">
+  <button class="tab active" id="t-tr"  onclick="switchTab('training', this)">Training</button>
+  <button class="tab"        id="t-pl"  onclick="switchTab('plan', this)">Planung</button>
+  <button class="tab"        id="t-pr"  onclick="switchTab('pr', this)">PR</button>
+  <button class="tab"        id="t-set" onclick="setupOpen()">Setup</button>
+</div>
+
+<!-- WOCHEN-AKKORDEON (Training) -->
+<div id="week-list" class="week-list"></div>
+
+<!-- MAIN -->
+<main>
+  <div id="view-training" class="view active"></div>
+  <div id="view-plan"     class="view"></div>
+  <div id="view-pr"       class="view"></div>
+</main>
+
+<!-- SAVE FOOTER -->
+<div id="save-footer">
+  <button id="save-btn" onclick="saveAll()">
+    <div class="spin-sm"></div>
+    <span class="btn-lbl">Training sichern</span>
+  </button>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════
+let API   = localStorage.getItem('pb_api')   || '';
+let SHEET = localStorage.getItem('pb_sheet') || 'ZYKLUS MASTER';
+let rawData = [], curDay = '', curWeek = '';
+
+// Planung: 3-Stufen Navigation State
+const PS = { level: 'weeks', week: '', day: '' };
+
+// ════════════════════════════════════════════════════
+//  DIAGNOSTICS — 7 Checks
+// ════════════════════════════════════════════════════
+const DIAG = { results: [], hasError: false, hasWarn: false };
+
+function diagAdd(level, label, detail) {
+  DIAG.results.push({ level, label, detail });
+  if (level === 'err')  DIAG.hasError = true;
+  if (level === 'warn') DIAG.hasWarn  = true;
+}
+
+async function runDiag(manual = false) {
+  DIAG.results = []; DIAG.hasError = false; DIAG.hasWarn = false;
+
+  // 1: API-URL
+  if (!API) {
+    diagAdd('err', 'Kein API-Endpunkt konfiguriert', 'Gehe zu Setup und trage die Apps Script URL ein.');
+  } else if (!API.startsWith('https://script.google.com/macros/s/')) {
+    diagAdd('warn', 'API-URL sieht ungewöhnlich aus',
+      'Erwartet: https://script.google.com/macros/s/…/exec\nGefunden: ' + API.slice(0, 60));
+  } else {
+    diagAdd('ok', 'API-URL vorhanden', API.slice(0, 55) + '…');
+  }
+
+  // 2: Sheet-Name
+  if (!SHEET || SHEET === 'DEINE_TABELLE') {
+    diagAdd('err', 'Kein Tabellenblatt konfiguriert', 'Standard: "ZYKLUS MASTER".');
+  } else {
+    diagAdd('ok', 'Tabellenblatt gesetzt', SHEET);
+  }
+
+  // 3: Datum — manuell gebaut, Safari-sicher
+  try {
+    const _now = new Date();
+    const _d = String(_now.getDate()).padStart(2, '0');
+    const _m = String(_now.getMonth() + 1).padStart(2, '0');
+    const testDate = _d + '.' + _m + '.';
+    if (!/^\d{2}\.\d{2}\.$/.test(testDate)) throw new Error('Format falsch: ' + testDate);
+    diagAdd('ok', 'Datumsformat korrekt', 'Heute: ' + testDate);
+  } catch (e) {
+    diagAdd('err', 'Datumsformat-Fehler', e.message);
+  }
+
+  // 4: localStorage
+  try {
+    localStorage.setItem('_pb_test', '1'); localStorage.removeItem('_pb_test');
+    diagAdd('ok', 'localStorage verfügbar', 'Einstellungen können gespeichert werden.');
+  } catch (e) {
+    diagAdd('err', 'localStorage nicht verfügbar', 'Privater Modus oder Browser-Einschränkung.');
+  }
+
+  // 5: Internet
+  try {
+    await Promise.race([
+      fetch('https://www.google.com/favicon.ico', { mode: 'no-cors', cache: 'no-store' }),
+      new Promise((_, r) => setTimeout(() => r(new Error('Timeout')), 4000))
+    ]);
+    diagAdd('ok', 'Internetverbindung aktiv', 'Verbindung erfolgreich getestet.');
+  } catch (_) {
+    diagAdd('warn', 'Keine Internetverbindung', 'Daten können nicht geladen oder gespeichert werden.');
+  }
+
+  // 6: API Erreichbarkeit + Format + Header-Check
+  if (API && API.startsWith('https://')) {
+    try {
+      const ctrl = new AbortController();
+      const tid  = setTimeout(() => ctrl.abort(), 6000);
+      const res  = await fetch(`${API}?sheet=${encodeURIComponent(SHEET)}&v=${Date.now()}`, { signal: ctrl.signal });
+      clearTimeout(tid);
+      if (!res.ok) {
+        diagAdd('err', `API antwortet mit HTTP ${res.status}`, 'Prüfe Deployment (Bereitstellen → Web-App → Jeder).');
+      } else {
+        const json = await res.json();
+        let data = null;
+        if      (Array.isArray(json))        data = json;
+        else if (Array.isArray(json?.data))  data = json.data;
+        else if (Array.isArray(json?.values))data = json.values;
+
+        if (!data) {
+          diagAdd('err', 'API gibt kein Array zurück', JSON.stringify(json).slice(0, 100));
+        } else {
+          const hasHeader = (data[0]?.[3] || '').trim() === 'Trainingstag';
+          const dataRows  = hasHeader ? data.slice(1) : data;
+          if (hasHeader) {
+            diagAdd('warn', 'API liefert Header-Zeile mit — wird übersprungen',
+              `${data.length} Zeilen total, ${dataRows.length} Datenzeilen.`);
+          }
+          if (!dataRows.length) {
+            diagAdd('warn', 'Leeres Sheet', '"' + SHEET + '" hat keine Daten.');
+          } else {
+            const named = dataRows.filter(r =>
+              (r[4] || '').trim() && r[4] !== 'Übung eintragen...' && r[4] !== 'Übung'
+            ).length;
+            if (!hasHeader) diagAdd('ok', `API OK — ${data.length} Zeilen geladen`, '');
+            diagAdd('ok', `${named} benannte Übungen erkannt`, 'Spalte E ausgewertet.');
+          }
+        }
+      }
+    } catch (e) {
+      diagAdd('err',
+        e.name === 'AbortError' ? 'API-Timeout (>6s)' : 'API nicht erreichbar: ' + e.message,
+        'Script als Web-App für "Jeder" deployen.');
+    }
+  }
+
+  // 7: Daten im Speicher
+  if (rawData.length > 0) {
+    diagAdd('ok', `Daten im Speicher: ${rawData.length} Zeilen`, `rowIdx 3 – ${rawData.length + 3}`);
+  }
+
+  const errCount  = DIAG.results.filter(r => r.level === 'err').length;
+  const warnCount = DIAG.results.filter(r => r.level === 'warn').length;
+  const okCount   = DIAG.results.filter(r => r.level === 'ok').length;
+
+  if      (DIAG.hasError) setDot('err');
+  else if (DIAG.hasWarn)  setDot('warn');
+  else                    setDot('ok');
+
+  if (DIAG.hasError || DIAG.hasWarn || manual) {
+    document.getElementById('diag-subtitle').textContent =
+      `${okCount} OK · ${warnCount} Hinweis${warnCount !== 1 ? 'e' : ''} · ${errCount} Fehler`;
+    document.getElementById('diag-list').innerHTML = DIAG.results.map(r => {
+      const icon = r.level === 'ok' ? '✓' : r.level === 'warn' ? '⚠' : '✕';
+      return `<div class="diag-item ${r.level}">
+        <div class="diag-icon">${icon}</div>
+        <div class="diag-text">
+          <div class="diag-label">${esc(r.label)}</div>
+          <div class="diag-detail">${esc(r.detail)}</div>
+        </div></div>`;
+    }).join('');
+    document.getElementById('diag-overlay').classList.add('open');
+  }
+  return !DIAG.hasError;
+}
+
+function diagClose() { document.getElementById('diag-overlay').classList.remove('open'); }
+
+// ════════════════════════════════════════════════════
+//  BOOT
+// ════════════════════════════════════════════════════
+document.getElementById('hdr-date').textContent = (() => {
+  const mo = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+  const n = new Date();
+  return String(n.getDate()).padStart(2,'0') + '. ' + mo[n.getMonth()];
+})();
+
+async function init() {
+  lmsg('Verbinde…');
+  if (!API) { hideLS(); return setupOpen(); }
+
+  lmsg('System-Check…');
+  const ok = await runDiag(false);
+  if (!ok) { hideLS(); return; }
+
+  lmsg('Lade Plan…');
+  try {
+    const res  = await fetch(`${API}?sheet=${encodeURIComponent(SHEET)}&v=${Date.now()}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    if      (Array.isArray(json))        rawData = json;
+    else if (Array.isArray(json?.data))  rawData = json.data;
+    else if (Array.isArray(json?.values))rawData = json.values;
+    else throw new Error('Unbekanntes Format');
+    setDot('ok');
+    renderWeekAccordion();
+    hideLS();
+  } catch (e) {
+    setDot('err'); lmsg('Fehler: ' + e.message);
+    setTimeout(hideLS, 2500); toast('Verbindungsfehler', 'err');
+  }
+}
+
+// ════════════════════════════════════════════════════
+//  DATENSTRUKTUR
+// ════════════════════════════════════════════════════
+function buildStructure() {
+  const weeks = [], weekMap = {};
+  let lastWeek = '', lastDay = '';
+  rawData.forEach(row => {
+    const w = (row[0] || '').trim();
+    const d = (row[3] || '').trim();
+    const e = (row[4] || '').trim();
+    // Header-Zeilen überspringen
+    if (w === 'Woche' || d === 'Trainingstag' || e === 'Übung') return;
+    const week = w || lastWeek;
+    const day  = d || lastDay;
+    if (!week || !day) return;
+    lastWeek = week; lastDay = day;
+    if (!weekMap[week]) { weekMap[week] = { week, days: {}, order: weeks.length }; weeks.push(weekMap[week]); }
+    if (!weekMap[week].days[day]) weekMap[week].days[day] = { day, named: 0, total: 0 };
+    if (e) {
+      weekMap[week].days[day].total++;
+      if (e !== 'Übung eintragen...') weekMap[week].days[day].named++;
+    }
+  });
+  return weeks.map(w => ({ week: w.week, days: Object.values(w.days) }));
+}
+
+// ════════════════════════════════════════════════════
+//  TRAINING: WOCHEN-AKKORDEON
+// ════════════════════════════════════════════════════
+function renderWeekAccordion() {
+  const container = document.getElementById('week-list');
+  container.innerHTML = '';
+  const structure = buildStructure();
+  if (!structure.length) { container.innerHTML = '<div class="empty-nav">Keine Daten</div>'; return; }
+
+  structure.forEach((wObj, wi) => {
+    const isFirst = wi === 0;
+    const wRow = document.createElement('div');
+    wRow.className = 'week-row' + (isFirst ? ' open' : '');
+    wRow.dataset.week = wObj.week;
+    const named = wObj.days.reduce((a, d) => a + d.named, 0);
+    wRow.innerHTML =
+      `<span class="week-icon">${isFirst ? '📂' : '📁'}</span>
+       <div class="week-info">
+         <div class="week-label">${esc(wObj.week)}</div>
+         <div class="week-sub">${wObj.days.length} Tage · ${named} Übungen</div>
+       </div>
+       <span class="week-chevron">▾</span>`;
+
+    const dList = document.createElement('div');
+    dList.className = 'day-list' + (isFirst ? ' open' : '');
+    dList.dataset.week = wObj.week;
+
+    wObj.days.forEach((dObj, di) => {
+      const isFirstDay = isFirst && di === 0;
+      const btn = document.createElement('button');
+      btn.className = 'dbtn' + (isFirstDay ? ' active' : '');
+      btn.dataset.day = dObj.day; btn.dataset.week = wObj.week;
+      const cs = dObj.named > 0 ? `${dObj.named} benannt` : dObj.total > 0 ? `${dObj.total} leer` : 'leer';
+      btn.innerHTML =
+        `<div class="dbtn-left"><div class="dbtn-dot"></div><span class="dbtn-label">${esc(dObj.day)}</span></div>
+         <span class="dbtn-count">${cs}</span>`;
+      btn.onclick = () => selectDay(dObj.day, wObj.week, btn);
+      dList.appendChild(btn);
+      if (isFirstDay) { curDay = dObj.day; curWeek = wObj.week; }
+    });
+
+    wRow.onclick = () => toggleWeek(wRow, dList);
+    container.appendChild(wRow);
+    container.appendChild(dList);
+  });
+  renderContent();
+}
+
+function toggleWeek(wRow, dList) {
+  const open = wRow.classList.contains('open');
+  wRow.classList.toggle('open', !open); dList.classList.toggle('open', !open);
+  wRow.querySelector('.week-icon').textContent = !open ? '📂' : '📁';
+}
+
+function selectDay(day, week, btnEl) {
+  curDay = day; curWeek = week;
+  document.querySelectorAll('.dbtn').forEach(b => b.classList.remove('active'));
+  btnEl.classList.add('active');
+  const wRow  = document.querySelector(`.week-row[data-week="${CSS.escape(week)}"]`);
+  const dList = document.querySelector(`.day-list[data-week="${CSS.escape(week)}"]`);
+  if (wRow && !wRow.classList.contains('open')) toggleWeek(wRow, dList);
+  renderContent();
+  const main = document.getElementById('view-training');
+  if (main.classList.contains('active'))
+    setTimeout(() => main.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+}
+
+// ════════════════════════════════════════════════════
+//  TRAINING: CONTENT
+// ════════════════════════════════════════════════════
+function muscleKey(m) {
+  if (!m) return 'default';
+  const ml = m.toLowerCase();
+  if (ml.includes('schulter'))                          return 'Schultern';
+  if (ml.includes('brust'))                             return 'Brust';
+  if (ml.includes('trizeps'))                           return 'Trizeps';
+  if (ml.includes('rücken') || ml.includes('ruecken'))  return 'Rücken';
+  if (ml.includes('bizeps'))                            return 'Bizeps';
+  if (ml.includes('bein') || ml.includes('leg'))        return 'Beine';
+  if (ml.includes('bauch') || ml.includes('core'))      return 'Bauch';
+  return 'default';
+}
+
+function renderContent() {
+  const tL = document.getElementById('view-training');
+  tL.innerHTML =
+    `<div class="cur-day-banner">
+       <div class="cur-day-title">${esc(curDay)}</div>
+       <div class="cur-day-week">${esc(curWeek)}</div>
+     </div>`;
+
+  let inDay = false, tCount = 0, lastWeekCol = '';
+
+  rawData.forEach((row, i) => {
+    const w = (row[0] || '').trim();
+    const d = (row[3] || '').trim();
+    // Header-Zeilen überspringen
+    if (w === 'Woche' || d === 'Trainingstag') return;
+    if (w) lastWeekCol = w;
+    if (d) inDay = (d === curDay && lastWeekCol === curWeek);
+    if (!inDay) return;
+    const name = (row[4] || '').trim();
+    if (!name || name === 'Übung' || name === 'Übung eintragen...') return;
+    tCount++;
+    const muscle  = (row[5]  || '').trim();
+    const progRaw = (row[15] || '').trim();
+    const ri      = i + 3;
+    const pCls    = progRaw === '▲' ? 'up' : progRaw === '▼' ? 'dn' : 'eq';
+    const pLabel  = progRaw || '►';
+    const pText   = progRaw === '▲' ? 'PR' : progRaw === '▼' ? 'Rück' : 'Neu';
+    const mk      = muscleKey(muscle);
+    const card = document.createElement('div');
+    card.className = 'excard'; card.dataset.muscle = mk;
+    card.style.animationDelay = Math.min(tCount * .05, .3) + 's';
+    card.innerHTML =
+      `<div class="card-top">
+         <div class="card-meta">
+           <div class="ex-title">${esc(name)}</div>
+           ${muscle ? `<div class="ex-muscle">${esc(muscle)}</div>` : ''}
+         </div>
+         <div class="prog-wrap">
+           <div class="prog-chip ${pCls}">${pLabel}</div>
+           <div class="prog-lbl">${pText}</div>
+         </div>
+       </div>
+       <div class="col-hdr"><div></div><div class="ch">kg</div><div class="ch">wdh</div><div class="ch">rpe</div></div>
+       <div class="sets-wrap">` +
+      [1,2,3].map(s => {
+        const g   = escA(row[6+(s-1)*2]);
+        const r   = escA(row[7+(s-1)*2]);
+        // RPE: Index 14 = Spalte O, ein Wert pro Übung — nur im ersten Satz vorhanden
+        const rpe = s === 1 ? escA(row[14]) : '';
+        return `<div class="set-row">
+          <div class="slbl">S${s}</div>
+          <input class="sinput" type="number" step="0.5" inputmode="decimal"
+                 id="g${s}-${ri}" value="${g}" placeholder="—">
+          <input class="sinput" type="number" inputmode="numeric"
+                 id="r${s}-${ri}" value="${r}" placeholder="—">
+          <input class="rpeinput" type="number" step="0.5" inputmode="decimal"
+                 id="rpe${s}-${ri}" value="${rpe}" placeholder="—">
+        </div>`;
+      }).join('') + `</div>`;
+    tL.appendChild(card);
+  });
+
+  if (!tCount)
+    tL.innerHTML += `<div class="empty"><big>LEER</big>Noch keine Übungen benannt.<br>→ Tab „Planung" zum Eintragen.</div>`;
+}
+
+// ════════════════════════════════════════════════════
+//  PLANUNG: 3-STUFEN HIERARCHIE
+//  Woche → Tag → Übungen
+// ════════════════════════════════════════════════════
+function renderPlan() {
+  const container = document.getElementById('view-plan');
+  container.innerHTML = '';
+  const structure = buildStructure();
+  if (!structure.length) {
+    container.innerHTML = '<div class="empty"><big>?</big>Keine Daten.</div>';
+    return;
+  }
+
+  // ── STUFE 1: Wochen ──────────────────────────────
+  if (PS.level === 'weeks') {
+    const box = document.createElement('div');
+    box.className = 'plan-box';
+    structure.forEach(wObj => {
+      const named = wObj.days.reduce((a, d) => a + d.named, 0);
+      const el = document.createElement('div');
+      el.className = 'pw-item';
+      el.innerHTML =
+        `<div class="pw-left">
+           <div class="pw-name">${esc(wObj.week)}</div>
+           <div class="pw-meta">${wObj.days.length} Tage · ${named} benannte Übungen</div>
+         </div>
+         <span class="pw-arr">›</span>`;
+      el.onclick = () => { PS.level = 'days'; PS.week = wObj.week; renderPlan(); };
+      box.appendChild(el);
+    });
+    container.appendChild(box);
+    return;
+  }
+
+  // ── STUFE 2: Tage ────────────────────────────────
+  if (PS.level === 'days') {
+    const wObj = structure.find(w => w.week === PS.week);
+    if (!wObj) { PS.level = 'weeks'; renderPlan(); return; }
+
+    // Breadcrumb
+    const crumb = document.createElement('div');
+    crumb.className = 'plan-crumb';
+    crumb.innerHTML =
+      `<span class="plan-crumb-link" onclick="PS.level='weeks';renderPlan()">${esc(PS.week)}</span>`;
+    container.appendChild(crumb);
+
+    const box = document.createElement('div');
+    box.className = 'plan-box';
+    wObj.days.forEach(dObj => {
+      const cs = dObj.named > 0 ? `${dObj.named} benannt` : dObj.total > 0 ? `${dObj.total} Slots` : 'leer';
+      const el = document.createElement('div');
+      el.className = 'pd-item';
+      el.innerHTML =
+        `<div class="pd-left">
+           <div class="pd-dot${dObj.named > 0 ? ' has' : ''}"></div>
+           <span class="pd-name">${esc(dObj.day)}</span>
+         </div>
+         <span class="pd-count">${cs}</span>
+         <span class="pd-arr">›</span>`;
+      el.onclick = () => { PS.level = 'exercises'; PS.day = dObj.day; renderPlan(); };
+      box.appendChild(el);
+    });
+    container.appendChild(box);
+    return;
+  }
+
+  // ── STUFE 3: Übungen ─────────────────────────────
+  if (PS.level === 'exercises') {
+    // Breadcrumb mit beiden Ebenen
+    const crumb = document.createElement('div');
+    crumb.className = 'plan-crumb';
+    crumb.innerHTML =
+      `<span class="plan-crumb-link" onclick="PS.level='weeks';renderPlan()">${esc(PS.week)}</span>
+       <span class="plan-crumb-sep">›</span>
+       <span class="plan-crumb-link" onclick="PS.level='days';renderPlan()">${esc(PS.day)}</span>`;
+    container.appendChild(crumb);
+
+    const box = document.createElement('div');
+    box.className = 'plan-box';
+    let inDay = false, lastWeekCol = '', found = false;
+
+    rawData.forEach((row, i) => {
+      const w = (row[0] || '').trim();
+      const d = (row[3] || '').trim();
+      if (w === 'Woche' || d === 'Trainingstag') return;
+      if (w) lastWeekCol = w;
+      if (d) inDay = (d === PS.day && lastWeekCol === PS.week);
+      if (!inDay) return;
+      const name = (row[4] || '').trim();
+      if (!name || name === 'Übung') return;
+      const muscle  = (row[5]  || '').trim();
+      const progRaw = (row[15] || '').trim();
+      const ri      = i + 3;
+      const isNamed = name !== 'Übung eintragen...';
+      const pCls    = progRaw === '▲' ? 'up' : progRaw === '▼' ? 'dn' : 'eq';
+      const pLabel  = progRaw || '►';
+      found = true;
+
+      const el = document.createElement('div');
+      el.className = 'pe-item';
+      el.innerHTML =
+        `<span class="pe-num">${ri}</span>
+         <div class="pe-info">
+           <div class="pe-name${isNamed ? ' named' : ''}">${esc(name)}</div>
+           ${muscle
+             ? `<div class="pe-muscle has">${esc(muscle)}</div>`
+             : `<div class="pe-muscle">—</div>`}
+         </div>
+         <div class="pe-prog ${pCls}">${pLabel}</div>
+         <button class="edit-btn"
+           onclick="renameEx(${ri},\`${name.replace(/`/g,'\\`')}\`)">EDIT</button>`;
+      box.appendChild(el);
+    });
+
+    if (!found) {
+      box.innerHTML = '<div class="empty empty-sm"><big>LEER</big>Keine Übungen.</div>';
+    }
+    container.appendChild(box);
+  }
+}
+
+// ════════════════════════════════════════════════════
+//  SAVE — Payload-Validierung + Sicherheits-Checks
+// ════════════════════════════════════════════════════
+async function saveAll() {
+  const cards = [...document.querySelectorAll('#view-training .excard')];
+  if (!cards.length) return toast('Keine Übungen zum Sichern', 'err');
+
+  // Mindestens ein Wert muss eingetragen sein
+  const hasAnyValue = cards.some(c => {
+    const ri = parseInt(c.querySelector('input').id.split('-')[1]);
+    return v(`g1-${ri}`) || v(`r1-${ri}`);
+  });
+  if (!hasAnyValue) { toast('Keine Gewichte eingetragen', 'warn'); return; }
+
+  // Datum manuell — Safari-sicher, kein toLocaleDateString
+  let date;
+  try {
+    const _n = new Date();
+    date = String(_n.getDate()).padStart(2,'0') + '.' + String(_n.getMonth()+1).padStart(2,'0') + '.';
+    if (!/^\d{2}\.\d{2}\.$/.test(date)) throw new Error('Format: ' + date);
+  } catch (e) { toast('Datumsfehler: ' + e.message, 'err'); return; }
+
+  const btn = document.getElementById('save-btn');
+  btn.classList.add('saving'); btn.disabled = true;
+
+  let ok = 0, skipped = 0;
+  for (const card of cards) {
+    const ri = parseInt(card.querySelector('input').id.split('-')[1]);
+    // rowIdx muss gültig sein
+    if (isNaN(ri) || ri < 3) { skipped++; continue; }
+    const payload = {
+      sheet: SHEET, date, rowIdx: ri,
+      uebung: card.querySelector('.ex-title').textContent.trim(),
+      g1: v(`g1-${ri}`), r1: v(`r1-${ri}`),
+      g2: v(`g2-${ri}`), r2: v(`r2-${ri}`),
+      g3: v(`g3-${ri}`), r3: v(`r3-${ri}`),
+      rpe: v(`rpe1-${ri}`),
+    };
+    // Übungsname darf nicht leer sein
+    if (!payload.uebung) { skipped++; continue; }
+    try {
+      await fetch(API, {
+        method: 'POST', mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(payload)
+      });
+      ok++;
+    } catch (_) { skipped++; }
+  }
+
+  btn.classList.remove('saving'); btn.disabled = false;
+  if (skipped > 0) toast(`${ok} gesichert · ${skipped} übersprungen`, 'warn');
+  else             toast(`${ok}/${cards.length} gesichert ✓`, 'ok');
+}
+
+// ════════════════════════════════════════════════════
+//  RENAME — XSS-geschützt
+// ════════════════════════════════════════════════════
+async function renameEx(ri, old) {
+  const def = old === 'Übung eintragen...' ? '' : old;
+  const n = prompt('Übungsname:', def);
+  if (!n?.trim()) return;
+  // XSS-Schutz
+  if (/<|>|script/i.test(n)) { toast('Ungültiger Name', 'err'); return; }
+  try {
+    await fetch(API, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ sheet: SHEET, rowIdx: ri, action: 'rename', newName: n.trim() })
+    });
+    toast('Gespeichert — lade neu…', 'ok');
+    setTimeout(() => location.reload(), 900);
+  } catch (_) { toast('Fehler', 'err'); }
+}
+
+// ════════════════════════════════════════════════════
+//  TABS
+// ════════════════════════════════════════════════════
+function switchTab(id, el) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  el.classList.add('active');
+  document.getElementById('save-footer').style.display = id === 'training' ? 'block' : 'none';
+  if (id === 'plan') { PS.level = 'weeks'; renderPlan(); }
+  if (id === 'pr')   { renderPR(); }
+}
+
+// ════════════════════════════════════════════════════
+//  SETUP
+// ════════════════════════════════════════════════════
+function setupOpen() {
+  document.getElementById('si-sheet').value = SHEET;
+  document.getElementById('si-url').value   = API;
+  document.getElementById('setup-ov').classList.add('open');
+  document.getElementById('t-set').classList.add('active');
+}
+function setupClose() {
+  document.getElementById('setup-ov').classList.remove('open');
+  document.getElementById('t-set').classList.remove('active');
+}
+function setupSave() {
+  const sh  = document.getElementById('si-sheet').value.trim();
+  const url = document.getElementById('si-url').value.trim();
+  // HTTPS-Pflicht
+  if (url && !url.startsWith('https://')) { toast('URL muss mit https:// beginnen', 'err'); return; }
+  if (sh)  { SHEET = sh;  localStorage.setItem('pb_sheet', sh); }
+  if (url) { API   = url; localStorage.setItem('pb_api',   url); }
+  setupClose(); location.reload();
+}
+
+// ════════════════════════════════════════════════════
+//  PR-SEITE — Bestleistungen pro Übung
+//  Liest alle Zeilen durch, findet pro Übungsname
+//  das höchste Einzelgewicht (max von G1-G3) + Datum
+// ════════════════════════════════════════════════════
+function buildPRMap() {
+  // Map: übungsname → { kg, date, sets, muscle }
+  const map = {};
+  rawData.forEach(row => {
+    const w = (row[0] || '').trim();
+    const d = (row[3] || '').trim();
+    if (w === 'Woche' || d === 'Trainingstag') return;
+    const name = (row[4] || '').trim();
+    if (!name || name === 'Übung eintragen...' || name === 'Übung') return;
+    const muscle = (row[5]  || '').trim();
+    const date   = (row[12] || '').trim(); // Index 12 = Spalte M (Datum der letzten Eintragung)
+    // Höchstes Gewicht aus G1-G3 (Index 6,8,10)
+    const weights = [row[6], row[8], row[10]]
+      .map(x => parseFloat((String(x || '').replace(',', '.'))))
+      .filter(x => !isNaN(x) && x > 0);
+    if (!weights.length) return;
+    const maxKg = Math.max(...weights);
+    // Sätze-Info: alle ausgefüllten Paare
+    const sets = [[row[6],row[7]],[row[8],row[9]],[row[10],row[11]]]
+      .filter(([g]) => parseFloat(String(g||'').replace(',','.')) > 0)
+      .map(([g,r]) => `${g}kg×${r||'?'}`)
+      .join(' · ');
+    // Nur updaten wenn höheres Gewicht oder neu
+    if (!map[name] || maxKg > map[name].kg) {
+      map[name] = { kg: maxKg, date, sets, muscle };
+    }
+  });
+  return map;
+}
+
+let prFilter = 'Alle';
+
+function renderPR() {
+  const container = document.getElementById('view-pr');
+  container.innerHTML = '';
+  const map = buildPRMap();
+  const entries = Object.entries(map); // [name, {kg,date,sets,muscle}]
+
+  if (!entries.length) {
+    container.innerHTML = '<div class="empty"><big>PR</big>Noch keine Trainingsdaten.<br>Sätze eintragen & sichern.</div>';
+    return;
+  }
+
+  // Eindeutige Muskelgruppen für Filter
+  const muscles = ['Alle', ...new Set(
+    entries.map(([,v]) => muscleKey(v.muscle)).filter(m => m !== 'default')
+  )];
+
+  // Filter-Chips
+  const filterBar = document.createElement('div');
+  filterBar.className = 'pr-filter';
+  muscles.forEach(m => {
+    const chip = document.createElement('button');
+    chip.className = 'pr-chip' + (m === prFilter ? ' active' : '');
+    chip.textContent = m;
+    chip.onclick = () => { prFilter = m; renderPR(); };
+    filterBar.appendChild(chip);
+  });
+  container.appendChild(filterBar);
+
+  // Gefilterte + sortierte Einträge (nach kg desc)
+  const filtered = entries
+    .filter(([,val]) => prFilter === 'Alle' || muscleKey(val.muscle) === prFilter)
+    .sort((a, b) => b[1].kg - a[1].kg);
+
+  if (!filtered.length) {
+    const empty = document.createElement('div');
+    empty.className = 'empty';
+    empty.innerHTML = '<big>—</big>Keine Einträge für diesen Filter.';
+    container.appendChild(empty);
+    return;
+  }
+
+  const list = document.createElement('div');
+  list.className = 'pr-list';
+
+  filtered.forEach(([name, val], idx) => {
+    const mk = muscleKey(val.muscle);
+    const card = document.createElement('div');
+    card.className = 'pr-card';
+    card.dataset.muscle = mk;
+    card.style.animationDelay = Math.min(idx * .03, .25) + 's';
+    card.innerHTML =
+      `<div class="pr-info">
+         <div class="pr-name">${esc(name)}</div>
+         ${val.muscle ? `<div class="pr-muscle">${esc(val.muscle)}</div>` : ''}
+         ${val.sets   ? `<div class="pr-sets">${esc(val.sets)}</div>` : ''}
+       </div>
+       <div class="pr-val">
+         <div class="pr-kg">${val.kg}<span class="pr-kg-unit"> kg</span></div>
+         ${val.date ? `<div class="pr-date">${esc(val.date)}</div>` : ''}
+       </div>`;
+    list.appendChild(card);
+  });
+  container.appendChild(list);
+}
+
+// ════════════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════════════
+const v    = id => (document.getElementById(id)?.value || '').trim();
+const esc  = s  => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const escA = s  => String(s||'').replace(/"/g,'&quot;');
+
+function lmsg(m)   { document.getElementById('ls-msg').textContent = m; }
+function hideLS()  { setTimeout(() => document.getElementById('ls').classList.add('off'), 260); }
+function setDot(c) { document.getElementById('dot').className = c; }
+
+let _tt;
+function toast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'show' + (type ? ' '+type : '');
+  clearTimeout(_tt); _tt = setTimeout(() => { t.className = ''; }, 2800);
+}
+
+init();
+</script>
+</body>
+</html>

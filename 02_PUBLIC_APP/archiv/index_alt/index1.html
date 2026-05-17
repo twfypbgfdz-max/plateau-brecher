@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#080808">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>PB V8.2</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:  #080808;
+  --s1:  #111111;
+  --s2:  #181818;
+  --s3:  #1f1f1f;
+  --bor: #2a2a2a;
+  --b2:  #333;
+  --acc: #c8ff00;
+  --tx:  #f0f0f0;
+  --tx2: #888;
+  --tx3: #444;
+  --ok:  #00e676;
+  --err: #ff4444;
+  --r:   8px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  background: var(--bg); color: var(--tx);
+  font-family: 'DM Mono', monospace;
+  min-height: 100dvh; padding-bottom: 130px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── HEADER ──────────────────────────────── */
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(8,8,8,.97); backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--bor);
+  position: sticky; top: 0; z-index: 100;
+}
+.logo {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900; font-size: 30px;
+  letter-spacing: .1em; color: var(--acc); line-height: 1;
+}
+.logo sub {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; font-weight: 400;
+  color: var(--tx3); letter-spacing: .06em;
+  margin-left: 5px; vertical-align: baseline;
+}
+.hdr-r { display: flex; align-items: center; gap: 9px; }
+#hdr-date { font-size: 9px; color: var(--tx3); letter-spacing: .06em; }
+#dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--tx3); transition: background .4s;
+  flex-shrink: 0;
+}
+#dot.ok  { background: var(--ok);  box-shadow: 0 0 7px var(--ok); }
+#dot.err { background: var(--err); }
+
+/* ── TABS ────────────────────────────────── */
+.tabs {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  border-bottom: 1px solid var(--bor);
+  background: var(--s1);
+  position: sticky; top: 53px; z-index: 99;
+}
+.tab {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 13px;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--tx3); background: none; border: none;
+  padding: 13px 8px; cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color .15s, border-color .15s;
+}
+.tab.active { color: var(--acc); border-bottom-color: var(--acc); }
+
+/* ── META ROW ────────────────────────────── */
+.meta-row {
+  display: grid; grid-template-columns: 1fr 1.2fr;
+  gap: 8px; padding: 14px 16px 0;
+}
+.meta-box {
+  background: var(--s1); border: 1px solid var(--bor);
+  border-radius: var(--r); padding: 11px 13px;
+}
+.meta-lbl {
+  font-size: 8px; color: var(--tx3);
+  letter-spacing: .12em; text-transform: uppercase; margin-bottom: 8px;
+}
+.bw-wrap { display: flex; align-items: baseline; gap: 5px; }
+.bw-inp {
+  background: transparent; border: none;
+  border-bottom: 1px solid var(--bor);
+  color: var(--tx); font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 24px; width: 64px; outline: none;
+  -moz-appearance: textfield;
+}
+.bw-inp::-webkit-outer-spin-button,
+.bw-inp::-webkit-inner-spin-button { -webkit-appearance: none; }
+.bw-inp:focus { border-bottom-color: var(--acc); }
+.bw-unit { font-size: 9px; color: var(--tx3); }
+
+.stat-row { display: flex; gap: 10px; }
+.stat-grp { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.stat-inp {
+  background: transparent; border: none;
+  border-bottom: 1px solid var(--bor);
+  color: var(--tx); font-family: 'DM Mono', monospace;
+  font-size: 14px; font-weight: 500;
+  width: 38px; text-align: center; outline: none;
+  -moz-appearance: textfield;
+}
+.stat-inp::-webkit-outer-spin-button,
+.stat-inp::-webkit-inner-spin-button { -webkit-appearance: none; }
+.stat-inp:focus { border-bottom-color: var(--acc); }
+.stat-lbl { font-size: 7px; color: var(--tx3); letter-spacing: .1em; }
+
+/* ── DAY NAV ─────────────────────────────── */
+.day-nav {
+  display: flex; gap: 6px;
+  padding: 10px 16px 8px;
+  overflow-x: auto; scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.day-nav::-webkit-scrollbar { display: none; }
+.dbtn {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 12px;
+  letter-spacing: .12em; text-transform: uppercase;
+  background: var(--s2); border: 1px solid var(--bor);
+  color: var(--tx2); border-radius: var(--r);
+  padding: 7px 13px; cursor: pointer; white-space: nowrap;
+  flex-shrink: 0; transition: background .12s, color .12s, border-color .12s;
+}
+.dbtn.active { background: var(--acc); border-color: var(--acc); color: #000; }
+.dbtn:active { opacity: .7; }
+
+/* ── MAIN ────────────────────────────────── */
+main { padding: 8px 16px; }
+.view { display: none; }
+.view.active { display: block; }
+
+/* ── EXERCISE CARD ───────────────────────── */
+.excard {
+  background: var(--s1); border: 1px solid var(--bor);
+  border-left: 3px solid var(--acc);
+  border-radius: var(--r); margin-bottom: 8px;
+  padding: 14px 14px 14px 13px;
+  animation: up .18s ease both;
+}
+@keyframes up {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.ex-head {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; margin-bottom: 13px;
+}
+.ex-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900; font-size: 21px;
+  letter-spacing: .05em; text-transform: uppercase;
+  color: var(--tx); line-height: 1.1; flex: 1;
+}
+.prog {
+  font-size: 15px; width: 26px; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 4px; flex-shrink: 0; margin-left: 8px;
+}
+.prog.up { color: var(--ok);  background: rgba(0,230,118,.1); }
+.prog.dn { color: var(--err); background: rgba(255,68,68,.1); }
+.prog.eq { color: var(--tx3); background: var(--s3); }
+
+/* ── SETS ────────────────────────────────── */
+.col-hdr {
+  display: grid; grid-template-columns: 32px 1fr 1fr;
+  gap: 6px; margin-bottom: 4px;
+}
+.ch { font-size: 7px; color: var(--tx3); letter-spacing: .12em; text-align: center; text-transform: uppercase; }
+.set-row {
+  display: grid; grid-template-columns: 32px 1fr 1fr;
+  gap: 6px; align-items: center; margin-bottom: 5px;
+}
+.set-row:last-child { margin-bottom: 0; }
+.slbl { font-size: 8px; color: var(--tx3); letter-spacing: .1em; text-align: center; text-transform: uppercase; }
+.sinput {
+  background: var(--s3); border: 1px solid var(--bor);
+  border-radius: 5px; color: var(--tx);
+  font-family: 'DM Mono', monospace;
+  font-size: 15px; font-weight: 500;
+  padding: 9px 5px; text-align: center;
+  outline: none; width: 100%;
+  transition: border-color .12s;
+  -moz-appearance: textfield;
+}
+.sinput::-webkit-outer-spin-button,
+.sinput::-webkit-inner-spin-button { -webkit-appearance: none; }
+.sinput:focus { border-color: var(--acc); }
+.sinput::placeholder { color: var(--tx3); font-size: 10px; }
+
+/* ── PLANUNG ─────────────────────────────── */
+.plan-item {
+  background: var(--s1); border: 1px solid var(--bor);
+  border-radius: var(--r); padding: 11px 13px; margin-bottom: 6px;
+  display: flex; align-items: center; gap: 10px;
+}
+.plan-row { font-size: 9px; color: var(--tx3); width: 22px; text-align: right; flex-shrink: 0; }
+.plan-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px; letter-spacing: .04em;
+  color: var(--tx2); flex: 1;
+}
+.plan-name.named { color: var(--acc); }
+.edit-btn {
+  background: var(--s3); border: 1px solid var(--b2); color: var(--tx2);
+  font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: .08em;
+  padding: 5px 9px; border-radius: 4px; cursor: pointer; flex-shrink: 0;
+  transition: border-color .12s, color .12s;
+}
+.edit-btn:active { border-color: var(--acc); color: var(--acc); }
+
+/* ── EMPTY ───────────────────────────────── */
+.empty {
+  text-align: center; padding: 44px 20px;
+  color: var(--tx3); font-size: 10px; letter-spacing: .1em; line-height: 1.8;
+}
+.empty big {
+  display: block;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 40px; font-weight: 900;
+  color: var(--s3); letter-spacing: .06em; margin-bottom: 6px;
+}
+
+/* ── LOAD SCREEN ─────────────────────────── */
+#ls {
+  position: fixed; inset: 0; z-index: 999;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 18px;
+  transition: opacity .3s, visibility .3s;
+}
+#ls.off { opacity: 0; visibility: hidden; }
+.ls-logo {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900; font-size: 58px;
+  letter-spacing: .14em; color: var(--acc);
+}
+.ls-spin {
+  width: 24px; height: 24px;
+  border: 2px solid var(--bor); border-top-color: var(--acc);
+  border-radius: 50%; animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+#ls-msg { font-size: 9px; color: var(--tx3); letter-spacing: .14em; text-transform: uppercase; }
+
+/* ── TOAST ───────────────────────────────── */
+#toast {
+  position: fixed; top: 68px; left: 50%;
+  transform: translateX(-50%) scale(.94);
+  background: var(--s2); border: 1px solid var(--b2);
+  border-radius: 20px; padding: 9px 18px;
+  font-size: 10px; color: var(--tx); letter-spacing: .06em;
+  opacity: 0; pointer-events: none;
+  transition: opacity .2s, transform .2s; z-index: 800;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) scale(1); }
+#toast.ok   { border-color: var(--ok);  color: var(--ok); }
+#toast.err  { border-color: var(--err); color: var(--err); }
+
+/* ── SAVE FOOTER ─────────────────────────── */
+#save-footer {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 110;
+  padding: 11px 16px;
+  padding-bottom: calc(11px + env(safe-area-inset-bottom));
+  background: rgba(8,8,8,.97);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--bor);
+}
+#save-btn {
+  width: 100%; background: var(--acc); color: #000; border: none;
+  border-radius: var(--r); padding: 15px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900; font-size: 20px;
+  letter-spacing: .18em; text-transform: uppercase;
+  cursor: pointer; transition: opacity .15s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+#save-btn:disabled { opacity: .4; cursor: not-allowed; }
+#save-btn:not(:disabled):active { opacity: .8; }
+.spin-sm {
+  display: none; width: 15px; height: 15px;
+  border: 2px solid rgba(0,0,0,.3); border-top-color: #000;
+  border-radius: 50%; animation: spin .6s linear infinite;
+}
+.saving .spin-sm { display: block; }
+.saving .btn-lbl { display: none; }
+
+/* ── SETUP MODAL ─────────────────────────── */
+#setup-ov {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,.88);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  display: none; align-items: flex-end; justify-content: center;
+}
+#setup-ov.open { display: flex; }
+.modal-sheet {
+  background: var(--s1); border-top: 1px solid var(--b2);
+  border-radius: 16px 16px 0 0;
+  padding: 20px 20px;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  width: 100%; max-width: 480px;
+  animation: slideUp .22s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(36px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.modal-handle {
+  width: 34px; height: 4px; border-radius: 2px;
+  background: var(--b2); margin: 0 auto 18px;
+}
+.modal-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900; font-size: 22px;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--acc); margin-bottom: 14px;
+}
+.setup-lbl { font-size: 8px; color: var(--tx3); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 5px; }
+.setup-inp {
+  width: 100%; background: var(--s3);
+  border: 1px solid var(--b2); border-radius: var(--r);
+  color: var(--tx); font-family: 'DM Mono', monospace;
+  font-size: 11px; padding: 11px 12px; outline: none; margin-bottom: 12px;
+  transition: border-color .15s;
+}
+.setup-inp:focus { border-color: var(--acc); }
+.modal-save {
+  width: 100%; background: var(--acc); color: #000; border: none;
+  border-radius: var(--r);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900; font-size: 17px;
+  letter-spacing: .14em; padding: 13px;
+  cursor: pointer; margin-bottom: 8px;
+}
+.modal-cancel {
+  width: 100%; background: none; border: 1px solid var(--b2);
+  border-radius: var(--r); color: var(--tx3);
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  padding: 11px; cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<!-- LOAD SCREEN -->
+<div id="ls">
+  <div class="ls-logo">PB</div>
+  <div class="ls-spin"></div>
+  <div id="ls-msg">Verbinde…</div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- SETUP MODAL -->
+<div id="setup-ov">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Setup</div>
+    <div class="setup-lbl">Tabellenblatt</div>
+    <input class="setup-inp" id="si-sheet" type="text" placeholder="ZYKLUS MASTER">
+    <div class="setup-lbl">Apps Script URL</div>
+    <input class="setup-inp" id="si-url" type="url" placeholder="https://script.google.com/macros/s/…/exec">
+    <button class="modal-save" onclick="setupSave()">SPEICHERN & NEU LADEN</button>
+    <button class="modal-cancel" onclick="setupClose()">Abbrechen</button>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">PB<sub>v8.2</sub></div>
+  <div class="hdr-r">
+    <span id="hdr-date"></span>
+    <div id="dot"></div>
+  </div>
+</header>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" id="t-training" onclick="switchTab('training',this)">Training</button>
+  <button class="tab"        id="t-plan"     onclick="switchTab('plan',this)">Planung</button>
+  <button class="tab"        id="t-setup"    onclick="setupOpen()">Setup</button>
+</div>
+
+<!-- META -->
+<div class="meta-row">
+  <div class="meta-box">
+    <div class="meta-lbl">Körpergewicht</div>
+    <div class="bw-wrap">
+      <input class="bw-inp" type="number" step="0.1" id="bwIn" placeholder="—" inputmode="decimal">
+      <span class="bw-unit">kg</span>
+    </div>
+  </div>
+  <div class="meta-box">
+    <div class="meta-lbl">Session Stats</div>
+    <div class="stat-row">
+      <div class="stat-grp">
+        <input class="stat-inp" type="number" id="kcalIn" placeholder="—" inputmode="numeric">
+        <span class="stat-lbl">kcal</span>
+      </div>
+      <div class="stat-grp">
+        <input class="stat-inp" type="number" id="bpmIn" placeholder="—" inputmode="numeric">
+        <span class="stat-lbl">bpm</span>
+      </div>
+      <div class="stat-grp">
+        <input class="stat-inp" type="number" id="minIn" placeholder="—" inputmode="numeric">
+        <span class="stat-lbl">min</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DAY NAV -->
+<div id="day-nav" class="day-nav"></div>
+
+<!-- MAIN -->
+<main>
+  <div id="view-training" class="view active"></div>
+  <div id="view-plan"     class="view"></div>
+</main>
+
+<!-- SAVE FOOTER -->
+<div id="save-footer">
+  <button id="save-btn" onclick="saveAll()">
+    <div class="spin-sm"></div>
+    <span class="btn-lbl">Training sichern</span>
+  </button>
+</div>
+
+<script>
+// ════════════════════════════════════
+//  STATE
+// ════════════════════════════════════
+let API       = localStorage.getItem('pb_api')   || '';
+let SHEET     = localStorage.getItem('pb_sheet') || 'ZYKLUS MASTER';
+let rawData   = [];
+let curDay    = '';
+
+// ════════════════════════════════════
+//  BOOT
+// ════════════════════════════════════
+document.getElementById('hdr-date').textContent =
+  new Date().toLocaleDateString('de-DE', { day: '2-digit', month: 'short' });
+
+async function init() {
+  lmsg('Verbinde…');
+  if (!API) { hideLS(); return setupOpen(); }
+  try {
+    // FIX CORS: Standard-fetch (kein no-cors) für GET → JSON lesbar
+    const r = await fetch(`${API}?sheet=${encodeURIComponent(SHEET)}&v=${Date.now()}`);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    rawData = await r.json();
+    setDot('ok');
+    renderNav();
+    hideLS();
+  } catch (e) {
+    setDot('err');
+    lmsg('Fehler: ' + e.message);
+    setTimeout(hideLS, 2000);
+    toast('Verbindungsfehler', 'err');
+  }
+}
+
+// ════════════════════════════════════
+//  NAV — FIX: Spalte D (Index 3) als Anker
+// ════════════════════════════════════
+function renderNav() {
+  const nav = document.getElementById('day-nav');
+  nav.innerHTML = '';
+  const days = [];
+  // Spalte D = row[3]: jeder unique, nicht-leere Wert wird ein Button
+  rawData.forEach(row => {
+    const d = (row[3] || '').trim();
+    if (d && !days.includes(d)) days.push(d);
+  });
+
+  if (!days.length) {
+    nav.innerHTML = '<span style="font-size:10px;color:var(--tx3)">Keine Trainingstage in Spalte D gefunden</span>';
+    return;
+  }
+  days.forEach((name, i) => {
+    const b = document.createElement('button');
+    b.className = 'dbtn' + (i === 0 ? ' active' : '');
+    b.textContent = name;
+    b.dataset.day = name;
+    b.onclick = () => selectDay(name);
+    nav.appendChild(b);
+  });
+  curDay = days[0];
+  renderContent();
+}
+
+function selectDay(name) {
+  curDay = name;
+  document.querySelectorAll('.dbtn')
+    .forEach(b => b.classList.toggle('active', b.dataset.day === name));
+  renderContent();
+}
+
+// ════════════════════════════════════
+//  CONTENT — FIX: kein Übungs-Overload
+// ════════════════════════════════════
+function renderContent() {
+  const tL = document.getElementById('view-training');
+  const pL = document.getElementById('view-plan');
+  tL.innerHTML = ''; pL.innerHTML = '';
+  let inDay = false, tCount = 0;
+
+  rawData.forEach((row, i) => {
+    // Tages-Erkennung über Spalte D
+    const d = (row[3] || '').trim();
+    if (d) inDay = (d === curDay);
+    if (!inDay) return;
+
+    const name = (row[4] || '').trim();
+    if (!name) return;
+
+    const ri      = i + 3;  // 1-basierte Sheet-Zeile (Daten ab Zeile 3)
+    const named   = name !== 'Übung eintragen...';
+    const progRaw = (row[15] || '').trim(); // Spalte P = Index 15
+    const pCls    = progRaw === '▲' ? 'up' : progRaw === '▼' ? 'dn' : 'eq';
+    const pLabel  = progRaw || '►';
+
+    // ── PLANUNG
+    const pi = document.createElement('div');
+    pi.className = 'plan-item';
+    pi.innerHTML =
+      `<span class="plan-row">${ri}</span>` +
+      `<span class="plan-name${named ? ' named' : ''}">${esc(name)}</span>` +
+      `<button class="edit-btn" onclick="renameEx(${ri},\`${name.replace(/`/g,'\\`')}\`)">EDIT</button>`;
+    pL.appendChild(pi);
+
+    // ── TRAINING: nur benannte Übungen
+    if (!named) return;
+    tCount++;
+    const card = document.createElement('div');
+    card.className = 'excard';
+    card.style.animationDelay = Math.min(tCount * .05, .3) + 's';
+    card.innerHTML =
+      `<div class="ex-head">
+         <div class="ex-title">${esc(name)}</div>
+         <div class="prog ${pCls}">${pLabel}</div>
+       </div>
+       <div class="col-hdr"><div></div><div class="ch">kg</div><div class="ch">wdh</div></div>` +
+      [1,2,3].map(s => {
+        const g = escA(row[6 + (s-1)*2]);
+        const r = escA(row[7 + (s-1)*2]);
+        return `<div class="set-row">
+          <div class="slbl">S${s}</div>
+          <input class="sinput" type="number" step="0.5" inputmode="decimal"
+                 id="g${s}-${ri}" value="${g}" placeholder="—">
+          <input class="sinput" type="number" inputmode="numeric"
+                 id="r${s}-${ri}" value="${r}" placeholder="—">
+        </div>`;
+      }).join('');
+    tL.appendChild(card);
+  });
+
+  if (!tCount)
+    tL.innerHTML = `<div class="empty"><big>LEER</big>Keine benannten Übungen.<br>→ Tab „Planung" zum Eintragen.</div>`;
+  if (!pL.children.length)
+    pL.innerHTML = `<div class="empty"><big>?</big>Keine Zeilen für diesen Tag.</div>`;
+}
+
+// ════════════════════════════════════
+//  SAVE — FIX: '2-digit' (Bindestrich!), alle Felder
+// ════════════════════════════════════
+async function saveAll() {
+  const cards = [...document.querySelectorAll('#view-training .excard')];
+  if (!cards.length) return toast('Keine Übungen zum Sichern', 'err');
+
+  const btn = document.getElementById('save-btn');
+  btn.classList.add('saving'); btn.disabled = true;
+
+  // Datum: 2-digit mit Bindestrich — FIX für RangeError
+  const date = new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }) + '.';
+  const base = {
+    sheet: SHEET, date,
+    kg:       v('bwIn'),
+    kcal:     v('kcalIn'),
+    bpm:      v('bpmIn'),
+    duration: v('minIn'),
+  };
+
+  let ok = 0;
+  for (const card of cards) {
+    const ri = parseInt(card.querySelector('input').id.split('-')[1]);
+    const payload = {
+      ...base,
+      rowIdx: ri,
+      uebung: card.querySelector('.ex-title').textContent.trim(),
+      g1: v(`g1-${ri}`), r1: v(`r1-${ri}`),
+      g2: v(`g2-${ri}`), r2: v(`r2-${ri}`),
+      g3: v(`g3-${ri}`), r3: v(`r3-${ri}`),
+    };
+    try {
+      // POST bleibt no-cors (kein Response-Body nötig)
+      await fetch(API, { method:'POST', mode:'no-cors',
+        headers:{'Content-Type':'text/plain'}, body: JSON.stringify(payload) });
+      ok++;
+    } catch (_) {}
+  }
+
+  btn.classList.remove('saving'); btn.disabled = false;
+  toast(`${ok}/${cards.length} gesichert ✓`, 'ok');
+}
+
+// ════════════════════════════════════
+//  RENAME
+// ════════════════════════════════════
+async function renameEx(ri, old) {
+  const def = old === 'Übung eintragen...' ? '' : old;
+  const n = prompt('Übungsname:', def);
+  if (!n?.trim()) return;
+  try {
+    await fetch(API, { method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({ sheet:SHEET, rowIdx:ri, action:'rename', newName:n.trim() }) });
+    toast('Gespeichert — lade neu…', 'ok');
+    setTimeout(() => location.reload(), 900);
+  } catch (_) { toast('Fehler', 'err'); }
+}
+
+// ════════════════════════════════════
+//  TABS
+// ════════════════════════════════════
+function switchTab(id, el) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  el.classList.add('active');
+  document.getElementById('save-footer').style.display = id === 'training' ? 'block' : 'none';
+}
+
+// ════════════════════════════════════
+//  SETUP
+// ════════════════════════════════════
+function setupOpen() {
+  document.getElementById('si-sheet').value = SHEET;
+  document.getElementById('si-url').value   = API;
+  document.getElementById('setup-ov').classList.add('open');
+  document.getElementById('t-setup').classList.add('active');
+}
+function setupClose() {
+  document.getElementById('setup-ov').classList.remove('open');
+  document.getElementById('t-setup').classList.remove('active');
+}
+function setupSave() {
+  const sh  = document.getElementById('si-sheet').value.trim();
+  const url = document.getElementById('si-url').value.trim();
+  if (sh)  { SHEET = sh;  localStorage.setItem('pb_sheet', sh); }
+  if (url) { API   = url; localStorage.setItem('pb_api',   url); }
+  setupClose();
+  location.reload();
+}
+
+// ════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════
+const v    = id => (document.getElementById(id)?.value || '').trim();
+const esc  = s  => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const escA = s  => String(s||'').replace(/"/g,'&quot;');
+
+function lmsg(m) { document.getElementById('ls-msg').textContent = m; }
+function hideLS() { setTimeout(() => document.getElementById('ls').classList.add('off'), 260); }
+function setDot(c){ document.getElementById('dot').className = c; }
+
+let _tt;
+function toast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (type ? ' '+type : '');
+  clearTimeout(_tt);
+  _tt = setTimeout(() => t.className = '', 2600);
+}
+
+init();
+</script>
+</body>
+</html>
