@@ -916,6 +916,24 @@
       if (!state.days[key]) {
         state.days[key] = { entries: [], weight: "" };
       }
+      return normalizeStoredDay(key);
+    }
+
+    function peekDay(key) {
+      if (!state.days[key]) {
+        return { entries: [], weight: "" };
+      }
+      return normalizeStoredDay(key);
+    }
+
+    function updateActiveDayKey() {
+      const latestDayKey = toDateKey(new Date());
+      if (latestDayKey !== activeDayKey) {
+        activeDayKey = latestDayKey;
+      }
+    }
+
+    function normalizeStoredDay(key) {
       if (!Array.isArray(state.days[key].entries)) {
         state.days[key].entries = [];
       }
@@ -924,10 +942,7 @@
     }
 
     function ensureCurrentDay() {
-      const latestDayKey = toDateKey(new Date());
-      if (latestDayKey !== activeDayKey) {
-        activeDayKey = latestDayKey;
-      }
+      updateActiveDayKey();
       return getDay(activeDayKey);
     }
 
@@ -991,17 +1006,25 @@
     }
 
     function normalizeEntry(entry, fallbackDate) {
-      return createEntry(entry.name, entry.kcal, entry.protein, {
-        id: entry.id || entry.clientEntryId,
-        clientEntryId: entry.clientEntryId || entry.id,
+      const clientEntryId = entry.clientEntryId || entry.id || createClientEntryId();
+      const now = new Date().toISOString();
+      return {
+        schemaVersion: entry.schemaVersion || 1,
+        clientEntryId,
+        id: entry.id || clientEntryId,
         date: entry.date || fallbackDate,
         meal: entry.meal || "Log",
-        grams: entry.grams,
-        createdAt: entry.createdAt,
-        updatedAt: entry.updatedAt,
-        sourceDate: entry.sourceDate,
-        copiedAt: entry.copiedAt
-      });
+        name: String(entry.name || "Eintrag").trim() || "Eintrag",
+        grams: nullableNumber(entry.grams),
+        kcal: Math.round(numberValue(entry.kcal)),
+        protein: Math.round(numberValue(entry.protein)),
+        createdAt: entry.createdAt || now,
+        updatedAt: entry.updatedAt || entry.createdAt || now,
+        sourceDate: entry.sourceDate || null,
+        copiedAt: entry.copiedAt || null,
+        syncStatus: entry.syncStatus || "local",
+        lastSyncedAt: entry.lastSyncedAt || null
+      };
     }
 
     function escapeHtml(value) {
@@ -1034,7 +1057,8 @@
     }
 
     function renderToday() {
-      const day = ensureCurrentDay();
+      updateActiveDayKey();
+      const day = peekDay(activeDayKey);
       const totals = dayTotals(day);
       const kcal = totals.kcal;
       const protein = totals.protein;
@@ -1088,7 +1112,7 @@
     }
 
     function buildSheetPayload(dateKey = activeDayKey) {
-      const day = getDay(dateKey);
+      const day = peekDay(dateKey);
       const totals = dayTotals(day);
       const entries = day.entries.map((entry) => normalizeEntry(entry, dateKey)).map((entry) => ({
         schemaVersion: entry.schemaVersion,
@@ -1305,15 +1329,15 @@
       els.syncSheet.addEventListener("click", syncTodayToSheet);
 
       els.copyYesterday.addEventListener("click", () => {
-        const today = ensureCurrentDay();
         const yesterdayKey = offsetDateKey(-1);
-        const yesterday = getDay(yesterdayKey);
+        const yesterday = peekDay(yesterdayKey);
         const yesterdayEntries = Array.isArray(yesterday.entries) ? yesterday.entries : [];
         if (!yesterdayEntries.length) {
           setSaveStatus("Gestern leer");
           return;
         }
 
+        const today = ensureCurrentDay();
         if (today.entries.length && !confirm("Heute hat schon Einträge. Gestern zusätzlich kopieren?")) {
           return;
         }
