@@ -183,6 +183,14 @@
       line-height: 1;
     }
 
+    .metric-hint {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
     .bar {
       height: 7px;
       margin-top: 16px;
@@ -542,6 +550,13 @@
       text-align: center;
     }
 
+    .empty strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--text);
+      font-size: 1rem;
+    }
+
     .settings-grid {
       display: grid;
       gap: 12px;
@@ -556,6 +571,28 @@
       margin-top: 12px;
       color: var(--muted);
       font-size: 0.86rem;
+    }
+
+    .info-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .info-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 0.86rem;
+      font-weight: 800;
+    }
+
+    .info-row strong,
+    .info-row code {
+      color: var(--text);
+      font: inherit;
+      text-align: right;
     }
 
     .bottom-nav {
@@ -640,11 +677,13 @@
               <div class="metric">
                 <span class="label">Kalorien</span>
                 <strong><span id="kcalTotal">0</span></strong>
+                <span class="metric-hint" id="kcalRemaining">Noch kein Zielstatus</span>
                 <div class="bar"><span id="kcalBar"></span></div>
               </div>
               <div class="metric">
                 <span class="label">Protein</span>
                 <strong><span id="proteinTotal">0</span>g</strong>
+                <span class="metric-hint" id="proteinRemaining">Noch kein Zielstatus</span>
                 <div class="bar"><span id="proteinBar"></span></div>
               </div>
             </div>
@@ -801,6 +840,23 @@
           <p class="save-note">Speichert automatisch lokal auf diesem Geraet.</p>
         </div>
       </div>
+      <div class="card" style="margin-top:12px">
+        <div class="card-inner">
+          <div class="section-head">
+            <div>
+              <h2>App-Info</h2>
+              <p class="muted">Lokaler Stand und Sync-Konfiguration</p>
+            </div>
+          </div>
+          <div class="info-list">
+            <div class="info-row"><span>Version</span><strong id="appVersionInfo">v0.5 Test</strong></div>
+            <div class="info-row"><span>Storage-Key</span><code id="storageKeyInfo"></code></div>
+            <div class="info-row"><span>Gespeicherte Tage</span><strong id="storedDaysInfo">0</strong></div>
+            <div class="info-row"><span>Eintraege gesamt</span><strong id="storedEntriesInfo">0</strong></div>
+            <div class="info-row"><span>Sync</span><strong id="settingsSyncInfo">Sheet Sync nicht konfiguriert</strong></div>
+          </div>
+        </div>
+      </div>
     </section>
   </main>
 
@@ -848,6 +904,8 @@
       proteinTotal: document.getElementById("proteinTotal"),
       kcalBar: document.getElementById("kcalBar"),
       proteinBar: document.getElementById("proteinBar"),
+      kcalRemaining: document.getElementById("kcalRemaining"),
+      proteinRemaining: document.getElementById("proteinRemaining"),
       weightToday: document.getElementById("weightToday"),
       weekList: document.getElementById("weekList"),
       weekSummary: document.getElementById("weekSummary"),
@@ -856,7 +914,11 @@
       saveStatus: document.getElementById("saveStatus"),
       weightStart: document.getElementById("weightStart"),
       weightCurrent: document.getElementById("weightCurrent"),
-      weightDiff: document.getElementById("weightDiff")
+      weightDiff: document.getElementById("weightDiff"),
+      storageKeyInfo: document.getElementById("storageKeyInfo"),
+      storedDaysInfo: document.getElementById("storedDaysInfo"),
+      storedEntriesInfo: document.getElementById("storedEntriesInfo"),
+      settingsSyncInfo: document.getElementById("settingsSyncInfo")
     };
 
     let state = loadState();
@@ -887,10 +949,10 @@
     function saveState() {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-        setSaveStatus("Gespeichert");
+        setSaveStatus("Lokal gespeichert");
         return true;
       } catch {
-        setSaveStatus("Speichern blockiert");
+        setSaveStatus("Speichern lokal blockiert");
         return false;
       }
     }
@@ -898,7 +960,7 @@
     function setSaveStatus(text) {
       els.saveStatus.textContent = text;
       clearTimeout(saveStatusTimer);
-      if (text === "Gespeichert") {
+      if (text === "Lokal gespeichert") {
         saveStatusTimer = setTimeout(() => {
           els.saveStatus.textContent = "Lokal bereit";
         }, 1400);
@@ -1063,6 +1125,8 @@
       const kcal = totals.kcal;
       const protein = totals.protein;
       const weight = numberValue(day.weight);
+      const kcalRest = state.goals.kcal - kcal;
+      const proteinRest = state.goals.protein - protein;
 
       els.todayLabel.textContent = new Intl.DateTimeFormat("de-DE", {
         day: "2-digit",
@@ -1075,6 +1139,12 @@
       els.proteinTotal.textContent = Math.round(protein).toLocaleString("de-DE");
       els.kcalBar.style.width = `${percent(kcal, state.goals.kcal)}%`;
       els.proteinBar.style.width = `${percent(protein, state.goals.protein)}%`;
+      els.kcalRemaining.textContent = kcalRest >= 0
+        ? `Noch ${Math.round(kcalRest).toLocaleString("de-DE")} kcal uebrig`
+        : `${Math.round(Math.abs(kcalRest)).toLocaleString("de-DE")} kcal ueber Ziel`;
+      els.proteinRemaining.textContent = proteinRest > 0
+        ? `Noch ${Math.round(proteinRest).toLocaleString("de-DE")} g Protein`
+        : "Protein-Ziel erreicht";
       els.weightToday.textContent = weight > 0 ? `${weight.toFixed(1)} kg` : "Noch offen";
       renderEntries(day);
     }
@@ -1093,10 +1163,10 @@
       const totals = dayTotals(day);
       els.entrySummary.textContent = entries.length
         ? `${entries.length} Einträge, ${Math.round(totals.kcal)} kcal, ${Math.round(totals.protein)}g Protein`
-        : "Noch keine Einträge";
+        : "Heute noch nichts eingetragen";
 
       if (!entries.length) {
-        els.entryList.innerHTML = '<p class="empty">Noch nichts geloggt.</p>';
+        els.entryList.innerHTML = '<p class="empty"><strong>Noch nichts geloggt</strong>Starte mit einem Quick-Preset oder trage unten eine Mahlzeit ein.</p>';
         return;
       }
 
@@ -1180,12 +1250,25 @@
 
       if (!realDayCount) {
         els.weekSummary.textContent = "Noch keine echten Tagesdaten";
+        els.weekList.innerHTML = '<p class="empty"><strong>Noch keine Wochendaten</strong>Sobald du Mahlzeiten oder Gewicht speicherst, erscheint hier dein 7-Tage-Ueberblick.</p>';
         return;
       }
 
       const avgKcal = Math.round(kcalSum / realDayCount);
       const avgProtein = Math.round(proteinSum / realDayCount);
       els.weekSummary.textContent = `${avgKcal} kcal / ${avgProtein}g Protein im Schnitt (${realDayCount} Tage)`;
+    }
+
+    function renderSettingsInfo() {
+      const storedDays = Object.values(state.days).filter(hasRealDayData);
+      const entryCount = storedDays.reduce((sum, day) => {
+        return sum + (Array.isArray(day.entries) ? day.entries.length : 0);
+      }, 0);
+
+      els.storageKeyInfo.textContent = STORAGE_KEY;
+      els.storedDaysInfo.textContent = String(storedDays.length);
+      els.storedEntriesInfo.textContent = String(entryCount);
+      els.settingsSyncInfo.textContent = SHEET_SYNC_URL ? "Sheet Sync bereit" : "Sheet Sync nicht konfiguriert";
     }
 
     function renderWeightChart() {
@@ -1257,6 +1340,7 @@
       renderWeek();
       renderWeightChart();
       renderSyncControls();
+      renderSettingsInfo();
     }
 
     function renderSyncControls() {
