@@ -269,6 +269,10 @@
       gap: 10px;
     }
 
+    .entry-form .quick-row {
+      grid-template-columns: 1fr auto;
+    }
+
     .preset-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -348,16 +352,30 @@
       margin-bottom: 4px;
     }
 
-    .delete-btn {
+    .entry-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .delete-btn,
+    .edit-btn {
       width: 42px;
       height: 42px;
       border: 1px solid var(--line);
       border-radius: 14px;
-      color: var(--danger);
       background: rgba(255, 255, 255, 0.04);
-      font-size: 1.25rem;
+      font-size: 0.95rem;
       font-weight: 900;
       cursor: pointer;
+    }
+
+    .delete-btn {
+      color: var(--danger);
+      font-size: 1.25rem;
+    }
+
+    .edit-btn {
+      color: var(--accent-2);
     }
 
     .sync-strip {
@@ -748,7 +766,10 @@
                 </span>
               </label>
             </div>
-            <button class="primary-btn" type="button" id="addEntry">Eintrag hinzufügen</button>
+            <div class="quick-row">
+              <button class="primary-btn" type="button" id="addEntry">Eintrag hinzufügen</button>
+              <button class="quick-btn" type="button" id="cancelEdit" hidden>Abbrechen</button>
+            </div>
           </div>
         </section>
 
@@ -892,6 +913,7 @@
       entryKcalInput: document.getElementById("entryKcalInput"),
       entryProteinInput: document.getElementById("entryProteinInput"),
       addEntry: document.getElementById("addEntry"),
+      cancelEdit: document.getElementById("cancelEdit"),
       entryList: document.getElementById("entryList"),
       entrySummary: document.getElementById("entrySummary"),
       showPayload: document.getElementById("showPayload"),
@@ -923,6 +945,7 @@
 
     let state = loadState();
     let activeDayKey = toDateKey(new Date());
+    let editingEntryId = null;
     let saveStatusTimer;
 
     function createDefaultState() {
@@ -965,6 +988,15 @@
           els.saveStatus.textContent = "Lokal bereit";
         }, 1400);
       }
+    }
+
+    function resetEntryForm() {
+      editingEntryId = null;
+      els.entryNameInput.value = "";
+      els.entryKcalInput.value = "";
+      els.entryProteinInput.value = "";
+      els.addEntry.textContent = "Eintrag hinzufügen";
+      els.cancelEdit.hidden = true;
     }
 
     function toDateKey(date) {
@@ -1176,7 +1208,10 @@
             <strong>${escapeHtml(entry.name)}</strong>
             <p class="muted">${Math.round(numberValue(entry.kcal))} kcal / ${Math.round(numberValue(entry.protein))}g Protein</p>
           </div>
-          <button class="delete-btn" type="button" data-delete-entry="${escapeHtml(entry.id)}" aria-label="Eintrag löschen">×</button>
+          <div class="entry-actions">
+            <button class="edit-btn" type="button" data-edit-entry="${escapeHtml(entry.id)}" aria-label="Eintrag bearbeiten">Bearb.</button>
+            <button class="delete-btn" type="button" data-delete-entry="${escapeHtml(entry.id)}" aria-label="Eintrag löschen">×</button>
+          </div>
         </div>
       `).join("");
     }
@@ -1371,18 +1406,21 @@
 
       els.addEntry.addEventListener("click", () => {
         const today = ensureCurrentDay();
-        const added = addEntryToDay(today, {
+        const values = {
           name: els.entryNameInput.value,
           kcal: els.entryKcalInput.value,
           protein: els.entryProteinInput.value
-        });
-        if (!added) return;
-        els.entryNameInput.value = "";
-        els.entryKcalInput.value = "";
-        els.entryProteinInput.value = "";
+        };
+        const saved = editingEntryId
+          ? updateEntryInDay(today, editingEntryId, values)
+          : addEntryToDay(today, values);
+        if (!saved) return;
+        resetEntryForm();
         saveState();
         renderAll();
       });
+
+      els.cancelEdit.addEventListener("click", resetEntryForm);
 
       els.presetGrid.addEventListener("click", (event) => {
         const button = event.target.closest("[data-preset]");
@@ -1395,11 +1433,18 @@
       });
 
       els.entryList.addEventListener("click", (event) => {
+        const editButton = event.target.closest("[data-edit-entry]");
+        if (editButton) {
+          startEditEntry(editButton.dataset.editEntry);
+          return;
+        }
+
         const button = event.target.closest("[data-delete-entry]");
         if (!button) return;
         if (!confirm("Eintrag löschen?")) return;
         const today = ensureCurrentDay();
         today.entries = today.entries.filter((entry) => entry.id !== button.dataset.deleteEntry);
+        if (editingEntryId === button.dataset.deleteEntry) resetEntryForm();
         saveState();
         renderAll();
       });
@@ -1464,6 +1509,49 @@
         return false;
       }
       day.entries.push(created);
+      return true;
+    }
+
+    function startEditEntry(entryId) {
+      const today = ensureCurrentDay();
+      const entry = today.entries.find((item) => item.id === entryId);
+      if (!entry) {
+        setSaveStatus("Eintrag nicht gefunden");
+        return;
+      }
+
+      editingEntryId = entry.id;
+      els.entryNameInput.value = entry.name;
+      els.entryKcalInput.value = entry.kcal;
+      els.entryProteinInput.value = entry.protein;
+      els.addEntry.textContent = "Eintrag speichern";
+      els.cancelEdit.hidden = false;
+      els.entryNameInput.focus();
+    }
+
+    function updateEntryInDay(day, entryId, values) {
+      const index = day.entries.findIndex((entry) => entry.id === entryId);
+      if (index === -1) {
+        setSaveStatus("Eintrag nicht gefunden");
+        return false;
+      }
+
+      const existing = day.entries[index];
+      const kcal = Math.round(numberValue(values.kcal));
+      const protein = Math.round(numberValue(values.protein));
+      if (!kcal && !protein) {
+        setSaveStatus("Keine Werte");
+        return false;
+      }
+
+      day.entries[index] = {
+        ...existing,
+        name: String(values.name || "Eintrag").trim() || "Eintrag",
+        kcal,
+        protein,
+        syncStatus: "local",
+        updatedAt: new Date().toISOString()
+      };
       return true;
     }
 
