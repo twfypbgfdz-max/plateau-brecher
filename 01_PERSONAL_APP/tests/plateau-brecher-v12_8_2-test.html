@@ -2090,7 +2090,7 @@ async function syncAllFromSheet(manual=false){
     const day=PLAN[snapC].weeks[snapW].days[snapD];
     syncDate=day?.date||'';
     const matched=new Set();
-    const resp=await fetchSheetGetWithRetry(API_URL+'?action=getPlan&sheet='+encodeURIComponent(sheetName)+'&date='+encodeURIComponent(day.date),{scope:'syncAllFromSheet',cycle:snapC+1,week:snapW+1,day:snapD+1,date:day.date});
+    const resp=await fetchSheetGetWithRetry(API_URL+'?action=getPlan&sheet='+encodeURIComponent(sheetName),{scope:'syncAllFromSheet',cycle:snapC+1,week:snapW+1,day:snapD+1,date:day.date});
     if(!isCurrentSync(sync,snapC,snapW,snapD))return;
     if(!resp.ok){showStatus('err','Sheet erreichbar, aber API-Fehler '+resp.status);logSyncCode('API_HTTP','HTTP '+resp.status+' '+sheetName+' '+day.date);return;}
     let data;
@@ -3187,7 +3187,7 @@ function extractSheetRowsForDate(data,date){
 }
 
 async function fetchSheetRowsForDay(sheetName,date,c=C,w=W,d=D){
-  const resp=await fetchSheetGetWithRetry(API_URL+'?action=getPlan&sheet='+encodeURIComponent(sheetName)+'&date='+encodeURIComponent(date),{scope:'fetchSheetRowsForDay',cycle:c+1,week:w+1,day:d+1,date});
+  const resp=await fetchSheetGetWithRetry(API_URL+'?action=getPlan&sheet='+encodeURIComponent(sheetName),{scope:'fetchSheetRowsForDay',cycle:c+1,week:w+1,day:d+1,date});
   if(!resp.ok)throw new Error('Sheet-Fehler '+resp.status);
   const text=await resp.text();
   if(!text||!text.trim())throw new Error('Keine Sheet-Daten');
@@ -5232,7 +5232,7 @@ async function syncFromSheet(){
   try{
     const sheetName='ZYKLUS '+(snapC+1);
     const day=PLAN[snapC].weeks[snapW].days[snapD];
-    const resp=await fetchSheetGetWithRetry(API_URL+'?action=getPlan&sheet='+encodeURIComponent(sheetName)+'&date='+encodeURIComponent(day.date),{scope:'syncFromSheet',cycle:snapC+1,week:snapW+1,day:snapD+1,date:day.date});
+    const resp=await fetchSheetGetWithRetry(API_URL+'?action=getPlan&sheet='+encodeURIComponent(sheetName),{scope:'syncFromSheet',cycle:snapC+1,week:snapW+1,day:snapD+1,date:day.date});
     if(!isCurrentSync(sync,snapC,snapW,snapD))return;
     if(!resp.ok)return;
     const text=await resp.text();
