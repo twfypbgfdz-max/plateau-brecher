@@ -230,7 +230,7 @@ main{padding:16px;max-width:860px;}
 #histClose{float:right;background:none;border:none;color:var(--mu);font-size:16px;cursor:pointer;margin-top:-4px;}
 .hist-close-btn{float:right;background:none;border:none;color:var(--mu);font-size:16px;cursor:pointer;margin-top:-4px;}
 .excard.done::before{background:var(--ok);}
-.excard.open-ex{border-color:rgba(200,255,0,.35);background:linear-gradient(180deg,rgba(200,255,0,.035),var(--sur));box-shadow:0 0 0 1px rgba(200,255,0,.055);}
+.excard.open-ex{border-color:rgba(200,255,0,.48);background:linear-gradient(180deg,rgba(200,255,0,.055),var(--sur));box-shadow:0 0 0 1px rgba(200,255,0,.1);}
 .excard.open-ex::before{background:var(--acc);width:4px;}
 [data-theme="light"] .excard.open-ex::before{background:#111;}
 .excard.pr-card::after{
@@ -263,6 +263,15 @@ main{padding:16px;max-width:860px;}
 /* SETS GRID */
 .sets-grid{display:grid;grid-template-columns:44px 1fr 1fr auto;gap:5px 6px;align-items:center;margin:10px 0;}
 .slbl{font-family:'DM Mono',monospace;font-size:8px;color:var(--mu);letter-spacing:1px;}
+.set-progress-line{display:flex;align-items:center;justify-content:space-between;gap:8px;font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.8px;text-transform:uppercase;color:var(--mu);padding:5px 8px;margin:8px 0 7px;border:1px solid var(--bor);border-radius:var(--r);background:rgba(255,255,255,.018);}
+.set-progress-line b{color:var(--tx2);font-weight:600;}
+.set-cell{border-radius:5px;transition:background .15s,border-color .15s,color .15s;}
+.set-row-done{background:rgba(0,230,118,.035);}
+.set-row-done.set-label{color:var(--ok);}
+.set-row-done.set-label::after{content:' ✓';font-size:8px;}
+.set-row-current{background:rgba(200,255,0,.045);box-shadow:0 0 0 1px rgba(200,255,0,.12);}
+.set-row-current.set-label{color:var(--acc);font-weight:700;}
+.set-row-empty{opacity:.84;}
 .sinput{
   background:var(--sur2);border:1px solid var(--bor);color:var(--tx);
   font-family:'DM Mono',monospace;font-size:14px;font-weight:700;
@@ -824,7 +833,7 @@ main{padding:16px;max-width:860px;}
   .prog-bar{margin-bottom:12px;}
   .excard{margin-bottom:9px;border-radius:8px;}
   .excard.done{opacity:.86;}
-  .excard.open-ex{box-shadow:0 0 0 1px rgba(200,255,0,.08);}
+  .excard.open-ex{box-shadow:0 0 0 1px rgba(200,255,0,.14);}
   .exhead{padding:12px 11px 12px 15px;gap:8px;}
   .exname{font-size:13.5px;line-height:1.38;}
   .exmeta{gap:5px;max-width:42%;}
@@ -833,6 +842,8 @@ main{padding:16px;max-width:860px;}
   .exbody.open{padding:12px 10px 14px 15px;}
   .sets-grid{grid-template-columns:32px minmax(0,1fr) minmax(0,1fr) 52px;gap:5px;margin:8px 0 10px;}
   .slbl{font-size:7px;letter-spacing:.5px;}
+  .set-progress-line{font-size:7px;padding:5px 7px;margin:7px 0 6px;}
+  .set-row-current{box-shadow:0 0 0 1px rgba(200,255,0,.16);}
   .sinput{font-size:15px;padding:9px 7px;min-height:42px;}
   .sinput::placeholder{font-size:9px;}
   .orm-inline{font-size:7.5px;min-width:0;padding:2px 4px;color:var(--tx2);background:rgba(255,255,255,.035);}
@@ -2969,6 +2980,16 @@ function renderWorkout(){
     const wu=d.g1?parseFloat(d.g1):null;
     const isStag=checkStagnation(i);
     const visibleSetCount=getVisibleSetCountForExercise(i);
+    const setPairs=[['g1','r1'],['g2','r2'],['g3','r3']].slice(0,visibleSetCount);
+    const setFilled=setPairs.map(([g,r])=>!!(d[g]&&d[r]));
+    const filledSets=setFilled.filter(Boolean).length;
+    const nextSetIndex=setFilled.findIndex(filled=>!filled);
+    const setProgressLine='<div class="set-progress-line"><span>SÃ¤tze</span><b>'+filledSets+'/'+visibleSetCount+' erledigt</b></div>';
+    const setCls=(idx)=>{
+      if(setFilled[idx])return 'set-row-done';
+      if(idx===nextSetIndex)return 'set-row-current';
+      return 'set-row-empty';
+    };
 
     html+='<div class="excard '+(d.done?'done ':'')+( isOpen?'open-ex ':'')+( isPR?'pr-card':'')+( isStag?'stagnation-card':'')+'" id="ec'+i+'">'
       +'<div class="exhead" onclick="toggleEx('+i+')">'
@@ -2994,19 +3015,20 @@ function renderWorkout(){
       +loadSuggest
       +coachRecHtml
       +prevSetLine
+      +setProgressLine
       +'<div class="sets-grid">'
-      +'<div class="slbl">S1</div>'
-      +'<input class="sinput" type="number" placeholder="'+ph+'" value="'+d.g1+'" oninput="upd('+i+',\'g1\',this.value)" min="0" step="0.5">'
-      +'<input class="sinput" type="number" placeholder="Wdh" value="'+d.r1+'" oninput="upd('+i+',\'r1\',this.value)" min="0">'
-      +'<div class="orm-inline" id="orm1_'+i+'">'+(d.g1&&d.r1?Math.round(parseFloat(d.g1)*(1+parseFloat(d.r1)/30))+' kg':'—')+'</div>'
-      +'<div class="slbl">S2</div>'
-      +'<input class="sinput" type="number" placeholder="'+ph+'" value="'+d.g2+'" oninput="upd('+i+',\'g2\',this.value)" min="0" step="0.5">'
-      +'<input class="sinput" type="number" placeholder="Wdh" value="'+d.r2+'" oninput="upd('+i+',\'r2\',this.value)" min="0">'
-      +'<div class="orm-inline" id="orm2_'+i+'">'+(d.g2&&d.r2?Math.round(parseFloat(d.g2)*(1+parseFloat(d.r2)/30))+' kg':'—')+'</div>'
-      +(visibleSetCount>=3?'<div class="slbl">S3</div>'
-      +'<input class="sinput" type="number" placeholder="'+ph+'" value="'+d.g3+'" oninput="upd('+i+',\'g3\',this.value)" min="0" step="0.5">'
-      +'<input class="sinput" type="number" placeholder="Wdh" value="'+d.r3+'" oninput="upd('+i+',\'r3\',this.value)" min="0">'
-      +'<div class="orm-inline" id="orm3_'+i+'">'+(d.g3&&d.r3?Math.round(parseFloat(d.g3)*(1+parseFloat(d.r3)/30))+' kg':'—')+'</div>'
+      +'<div class="slbl set-cell set-label '+setCls(0)+'">S1</div>'
+      +'<input class="sinput set-cell '+setCls(0)+'" type="number" placeholder="'+ph+'" value="'+d.g1+'" oninput="upd('+i+',\'g1\',this.value)" min="0" step="0.5">'
+      +'<input class="sinput set-cell '+setCls(0)+'" type="number" placeholder="Wdh" value="'+d.r1+'" oninput="upd('+i+',\'r1\',this.value)" min="0">'
+      +'<div class="orm-inline set-cell '+setCls(0)+'" id="orm1_'+i+'">'+(d.g1&&d.r1?Math.round(parseFloat(d.g1)*(1+parseFloat(d.r1)/30))+' kg':'—')+'</div>'
+      +'<div class="slbl set-cell set-label '+setCls(1)+'">S2</div>'
+      +'<input class="sinput set-cell '+setCls(1)+'" type="number" placeholder="'+ph+'" value="'+d.g2+'" oninput="upd('+i+',\'g2\',this.value)" min="0" step="0.5">'
+      +'<input class="sinput set-cell '+setCls(1)+'" type="number" placeholder="Wdh" value="'+d.r2+'" oninput="upd('+i+',\'r2\',this.value)" min="0">'
+      +'<div class="orm-inline set-cell '+setCls(1)+'" id="orm2_'+i+'">'+(d.g2&&d.r2?Math.round(parseFloat(d.g2)*(1+parseFloat(d.r2)/30))+' kg':'—')+'</div>'
+      +(visibleSetCount>=3?'<div class="slbl set-cell set-label '+setCls(2)+'">S3</div>'
+      +'<input class="sinput set-cell '+setCls(2)+'" type="number" placeholder="'+ph+'" value="'+d.g3+'" oninput="upd('+i+',\'g3\',this.value)" min="0" step="0.5">'
+      +'<input class="sinput set-cell '+setCls(2)+'" type="number" placeholder="Wdh" value="'+d.r3+'" oninput="upd('+i+',\'r3\',this.value)" min="0">'
+      +'<div class="orm-inline set-cell '+setCls(2)+'" id="orm3_'+i+'">'+(d.g3&&d.r3?Math.round(parseFloat(d.g3)*(1+parseFloat(d.r3)/30))+' kg':'—')+'</div>'
       :'')
       +'</div>'
       +'<div class="rpe-row">'
