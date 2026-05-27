@@ -533,6 +533,14 @@ main{padding:16px;max-width:860px;}
 .update-status-title{font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:.8px;color:var(--tx2);line-height:1;margin-bottom:3px;}
 .update-status-meta{color:var(--mu);}
 .update-status-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:7px;}
+.setup-diag-card{background:rgba(255,255,255,.018);border:1px solid var(--bor);border-radius:var(--r);padding:10px;margin-top:9px;}
+.setup-diag-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+.setup-diag-item{background:var(--sur2);border:1px solid rgba(255,255,255,.055);border-radius:6px;padding:8px;min-width:0;}
+.setup-diag-k{font-family:'DM Mono',monospace;font-size:7.5px;color:var(--mu);letter-spacing:.8px;text-transform:uppercase;margin-bottom:4px;}
+.setup-diag-v{font-family:'DM Mono',monospace;font-size:9px;color:var(--tx2);line-height:1.35;overflow-wrap:anywhere;}
+.setup-diag-v.good{color:var(--ok);}
+.setup-diag-v.muted{color:var(--mu);}
+.setup-diag-log{grid-column:1/-1;}
 .danger-zone{border:1px solid rgba(255,111,64,.2);background:rgba(255,111,64,.035);border-radius:var(--r);padding:10px;margin-top:12px;}
 .danger-zone .setup-action-label{color:#d98a72;}
 .code-box{background:#000;border:1px solid var(--bor);padding:10px;margin:8px 0;font-family:'DM Mono',monospace;font-size:10px;overflow-x:auto;white-space:pre;color:var(--ok);max-height:150px;line-height:1.6;border-radius:4px;}
@@ -949,6 +957,7 @@ main{padding:16px;max-width:860px;}
   .coach-insight-card{padding:11px;margin-bottom:11px;}
   .coach-insight-list{display:grid;gap:7px;}
   .coach-insight-chip{border-radius:8px;padding:7px 8px;}
+  .setup-diag-grid{grid-template-columns:1fr;gap:7px;}
   .progress-timeline-card{padding:11px;margin-bottom:11px;}
   .progress-timeline-row{grid-template-columns:auto minmax(0,1fr) auto;gap:7px;padding:7px 0;}
   .progress-timeline-name{font-size:15px;}
@@ -1085,6 +1094,7 @@ main{padding:16px;max-width:860px;}
       <div id="updateStatus" class="update-status"></div>
       <div class="setup-inline-note">Versionsstatus wird beim Update-Check direkt hier angezeigt.</div>
     </div>
+    <div id="setupDiagnostics" class="setup-diag-card"></div>
     <div id="appLogBox" class="log-box-wrap">
       <div class="log-box-lbl">LIVE FEHLERPROTOKOLL</div>
       <div id="appLogContent" class="log-box-content"></div>
@@ -1827,6 +1837,45 @@ function testApi(){
   document.getElementById('setupStatus').appendChild(a);
 }
 
+function formatDiagTime(value){
+  if(!value)return '—';
+  const d=new Date(value);
+  if(!Number.isNaN(d.getTime()))return d.toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  return String(value);
+}
+
+function buildSetupDiagnostics(){
+  let offlineCount=0;
+  try{
+    const buf=JSON.parse(localStorage.getItem(OFFLINE_KEY)||'[]');
+    offlineCount=Array.isArray(buf)?buf.length:0;
+  }catch(e){}
+  let storeSize='—';
+  try{
+    const bytes=new Blob([JSON.stringify(store)]).size;
+    storeSize=bytes>=1024*1024?(bytes/1024/1024).toFixed(2)+' MB':Math.max(1,Math.round(bytes/1024))+' KB';
+  }catch(e){}
+  const prNames=Array.isArray(store.prBestleistungenNames)?store.prBestleistungenNames:[];
+  return[
+    {k:'API',v:API_URL?'verbunden':'nicht gesetzt',cls:API_URL?'good':'muted'},
+    {k:'Letzter Sync',v:store._lastSync||'—',cls:store._lastSync?'good':'muted'},
+    {k:'Bestleistungen',v:(prNames.length||0)+' importiert · '+formatDiagTime(store.prBestleistungenLastImport),cls:prNames.length?'good':'muted'},
+    {k:'Offline-Buffer',v:String(offlineCount),cls:offlineCount?'':'muted'},
+    {k:'Store-Größe',v:storeSize,cls:''},
+    {k:'Letzter Log-Eintrag',v:appLog[0]||'—',cls:appLog[0]?'':'muted',wide:true}
+  ];
+}
+
+function renderSetupDiagnostics(){
+  const el=document.getElementById('setupDiagnostics');
+  if(!el)return;
+  const items=buildSetupDiagnostics();
+  el.innerHTML='<div class="setup-action-label">Lokale Diagnose</div>'
+    +'<div class="setup-diag-grid">'
+    +items.map(item=>'<div class="setup-diag-item '+(item.wide?'setup-diag-log':'')+'"><div class="setup-diag-k">'+sanitize(item.k)+'</div><div class="setup-diag-v '+(item.cls||'')+'">'+sanitize(item.v)+'</div></div>').join('')
+    +'</div>';
+}
+
 // ============================================================
 // STATE
 // ============================================================
@@ -1892,6 +1941,7 @@ function init(){
   // Groq Key laden
   if(!store._consent){document.getElementById('consentOverlay').style.display='flex';}
   updateApiStatus();
+  renderSetupDiagnostics();
   document.getElementById('scriptCodeBox').textContent=SCRIPT_CODE;
   const bdt=document.getElementById('buildDateTxt');if(bdt)bdt.textContent=BUILD_DATE;
   if(store._lastSync){const el=document.getElementById('lastSyncTxt');if(el)el.textContent='Sync: '+store._lastSync;}
@@ -4785,6 +4835,7 @@ function showTab(id,btn){
   document.getElementById('saveFooter').style.display=(id==='workout')?'block':'none';
   if(id==='progress'){initProgressTab();}
   if(id==='records'){renderRecords();}
+  if(id==='setup'){renderSetupDiagnostics();}
   if(id==='ki'){initKiTab();}
 }
 
