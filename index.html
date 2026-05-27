@@ -194,17 +194,19 @@ main{padding:16px;max-width:860px;}
 .balance-row{font-family:'DM Mono',monospace;font-size:9px;color:var(--tx2);display:flex;justify-content:space-between;gap:8px;border-top:1px solid var(--bor);padding-top:7px;margin-top:7px;}
 @media(max-width:420px){.readiness-grid,.pain-grid,.weekly-grid,.pr-insight-grid{grid-template-columns:1fr;}}
 /* ── Hall of Fame ─────────────────────────────────── */
-.hof-podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:auto;gap:7px;margin:4px 0 14px;align-items:stretch;}
-.hof-card{background:rgba(255,255,255,.025);border-radius:var(--r);padding:8px 7px;text-align:center;position:relative;overflow:hidden;border:1px solid var(--bor);}
+.hof-podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:auto;gap:8px;margin:4px 0 16px;align-items:stretch;}
+.hof-card{background:rgba(255,255,255,.025);border-radius:var(--r);padding:11px 9px;text-align:center;position:relative;overflow:visible;border:1px solid var(--bor);min-height:116px;display:flex;flex-direction:column;align-items:center;justify-content:center;}
 .hof-card.rank-1{grid-column:auto;grid-row:auto;border-color:rgba(255,215,0,.32);box-shadow:none;background:rgba(255,215,0,.035);}
 .hof-card.rank-2{grid-column:auto;grid-row:auto;border-color:rgba(192,192,192,.18);box-shadow:none;}
 .hof-card.rank-3{grid-column:auto;grid-row:auto;border-color:rgba(205,127,50,.18);box-shadow:none;}
 .hof-medal{font-size:1rem;line-height:1;display:block;margin-bottom:4px;opacity:.78;}
 .hof-card.rank-1 .hof-medal{font-size:1.15rem;margin-bottom:4px;}
-.hof-name{font-family:'DM Mono',monospace;font-size:7px;color:var(--mu);margin:3px 0 3px;line-height:1.25;word-break:break-word;}
-.hof-orm{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:var(--tx2);line-height:1;}
-.hof-card.rank-1 .hof-orm{font-size:22px;color:var(--tx);}
-.hof-ratio{font-family:'DM Mono',monospace;font-size:8px;color:var(--mu);margin-top:3px;font-weight:700;}
+.hof-name{font-family:'DM Mono',monospace;font-size:7.5px;color:var(--mu);margin:3px 0 5px;line-height:1.35;overflow-wrap:anywhere;}
+.hof-orm{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--tx2);line-height:.95;}
+.hof-card.rank-1 .hof-orm{font-size:27px;color:var(--tx);}
+.hof-label{font-family:'DM Mono',monospace;font-size:6.5px;color:var(--mu);letter-spacing:1px;text-transform:uppercase;margin-top:4px;}
+.hof-set-line{font-family:'DM Mono',monospace;font-size:8px;color:var(--tx2);line-height:1.3;margin-top:5px;}
+.hof-ratio{font-family:'DM Mono',monospace;font-size:6.5px;color:var(--mu);margin-top:5px;font-weight:500;opacity:.58;}
 /* Metallische Badges */
 .hof-badge{display:inline-block;font-family:'DM Mono',monospace;font-size:6.5px;padding:2px 5px;border-radius:3px;margin-top:5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border:1px solid rgba(255,255,255,.14);}
 .hof-badge.bronze{background:rgba(205,127,50,.18);color:#d9b48a;}
@@ -538,39 +540,43 @@ main{padding:16px;max-width:860px;}
 [data-theme="light"] .pr-filter-chip.active{background:#111;border-color:#111;color:#fff;}
 .pr-filter-chip:active{opacity:.7;}
 /* PR Tier-Labels */
-.pr-group-title{display:flex;align-items:center;justify-content:space-between;font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:2px;color:var(--mu);padding:9px 0 6px;cursor:pointer;user-select:none;border-bottom:1px solid var(--bor);margin-bottom:8px;}
+.pr-group-title{display:flex;align-items:center;justify-content:space-between;gap:10px;font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:2px;color:var(--mu);padding:10px 0 7px;cursor:pointer;user-select:none;border-bottom:1px solid var(--bor);margin-bottom:10px;line-height:1.25;overflow-wrap:anywhere;}
 .pr-group-title.tier-1{color:var(--acc);}
 .pr-group-title.tier-2{color:var(--tx2);}
 .pr-group-title.tier-3{color:var(--mu);}
 .pr-group-meta{display:flex;align-items:center;gap:6px;font-size:11px;}
 .pr-count-badge{font-family:'DM Mono',monospace;font-size:8px;background:rgba(200,255,0,.08);color:var(--acc);padding:3px 8px;border-radius:3px;}
 .pr-chev{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s;}
-.pr-group-body{overflow:hidden;transition:max-height .3s cubic-bezier(.4,0,.2,1);}
-.pr-group-body.open{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:20px;}
+.pr-group-body{overflow:visible;transition:max-height .3s cubic-bezier(.4,0,.2,1);}
+.pr-group-body.open{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:24px;overflow:visible;}
 /* PR Card */
-.pr-card{background:linear-gradient(180deg,rgba(255,255,255,.025),var(--sur));border:1px solid var(--bor);border-radius:var(--r);padding:14px 15px;margin-bottom:8px;transition:border-color .16s ease,background .16s ease,transform .08s ease;}
+.pr-card{background:linear-gradient(180deg,rgba(255,255,255,.025),var(--sur));border:1px solid var(--bor);border-radius:var(--r);padding:17px 16px;margin-bottom:10px;min-height:158px;display:flex;flex-direction:column;transition:border-color .16s ease,background .16s ease,transform .08s ease;overflow:visible;}
 .pr-card:hover{border-color:rgba(255,255,255,.16);background:linear-gradient(180deg,rgba(255,255,255,.04),var(--sur));}
 .pr-card.has-pr{border-left:3px solid rgba(255,255,255,.18);}
 .pr-card.has-pr.tier-1{border-left:3px solid var(--acc);background:linear-gradient(90deg,rgba(200,255,0,.03) 0%,var(--sur) 58%);}
 .pr-card.has-pr.tier-2{border-left:3px solid rgba(255,255,255,.2);}
 .pr-card.no-pr{opacity:.58;background:rgba(255,255,255,.015);}
-.pr-card-top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:start;}
-.pr-ex-name{font-size:13px;font-weight:600;line-height:1.35;min-width:0;color:var(--tx2);}
+.pr-card-top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:start;}
+.pr-ex-name{font-size:14px;font-weight:700;line-height:1.45;min-width:0;color:var(--tx2);overflow-wrap:anywhere;word-break:normal;}
 .pr-card.tier-1 .pr-ex-name{font-size:15px;font-weight:800;color:var(--tx);}
-.pr-badge{font-family:'Barlow Condensed',sans-serif;font-size:30px;letter-spacing:.5px;line-height:.95;white-space:nowrap;flex-shrink:0;color:var(--tx);}
-.pr-card.tier-1.has-pr .pr-badge{font-size:38px;color:var(--acc);}
+.pr-value-wrap{text-align:right;min-width:88px;}
+.pr-badge{font-family:'Barlow Condensed',sans-serif;font-size:31px;letter-spacing:.5px;line-height:.95;white-space:nowrap;flex-shrink:0;color:var(--tx);}
+.pr-card.tier-1.has-pr .pr-badge{font-size:36px;color:var(--acc);}
+.pr-badge-unit{font-size:13px;color:var(--mu);margin-left:2px;font-weight:500;}
+.pr-value-label{font-family:'DM Mono',monospace;font-size:7px;color:var(--mu);letter-spacing:1.4px;text-transform:uppercase;margin-top:4px;}
+.pr-set-line{font-family:'DM Mono',monospace;font-size:10px;line-height:1.4;color:var(--tx2);margin-top:7px;overflow-wrap:anywhere;}
 .pr-badge.no-pr{font-family:'DM Mono',monospace;font-size:9px;color:var(--mu);}
-.pr-card-meta-row{display:flex;align-items:center;gap:8px;margin:7px 0 10px;flex-wrap:wrap;}
+.pr-card-meta-row{display:flex;align-items:center;gap:8px;margin:10px 0 12px;flex-wrap:wrap;}
 .pr-meta{font-family:'DM Mono',monospace;font-size:9px;color:var(--mu);}
 .pr-trend-up{font-family:'DM Mono',monospace;font-size:9px;color:var(--ok);}
 .pr-trend-down{font-family:'DM Mono',monospace;font-size:9px;color:var(--acc2);}
-.pr-edit-row{display:flex;gap:5px;align-items:center;margin-top:auto;padding-top:6px;border-top:1px solid rgba(255,255,255,.04);opacity:.46;flex-wrap:wrap;}
+.pr-edit-row{display:flex;gap:6px;align-items:center;margin-top:auto;padding-top:10px;border-top:1px solid rgba(255,255,255,.055);opacity:.58;flex-wrap:wrap;}
 .pr-card.no-pr .pr-edit-row{opacity:.68;}
 .pr-card:hover .pr-edit-row,.pr-edit-row:focus-within{opacity:1;}
-.pr-override-label{font-family:'DM Mono',monospace;font-size:7px;color:var(--mu);letter-spacing:1.2px;text-transform:uppercase;margin-right:auto;line-height:1;}
-.pr-edit-inp{background:transparent;border:1px solid var(--bor);color:var(--tx2);font-family:'DM Mono',monospace;font-size:9px;padding:4px 6px;border-radius:4px;width:58px;text-align:center;}
+.pr-override-label{font-family:'DM Mono',monospace;font-size:7px;color:var(--mu);letter-spacing:1.2px;text-transform:uppercase;margin-right:auto;line-height:1.25;min-width:82px;}
+.pr-edit-inp{background:rgba(255,255,255,.018);border:1px solid var(--bor);color:var(--tx2);font-family:'DM Mono',monospace;font-size:9px;padding:5px 7px;border-radius:4px;width:64px;text-align:center;}
 .pr-edit-inp:focus{outline:none;border-color:var(--acc);}
-.pr-edit-btn{background:var(--acc);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:1px;padding:7px 13px;border-radius:4px;cursor:pointer;flex-shrink:0;}
+.pr-edit-btn{background:transparent;color:var(--tx2);border:1px solid var(--bor);font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;padding:6px 11px;border-radius:4px;cursor:pointer;flex-shrink:0;}
 .pr-edit-btn:active{opacity:.8;}
 .pr-del-btn{background:none;border:1px solid var(--bor);color:var(--mu);font-size:10px;padding:7px 9px;border-radius:4px;cursor:pointer;flex-shrink:0;}
 .pr-spark-toggle{width:38px;height:38px;display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,.04);border:1px solid var(--bor);border-radius:6px;color:var(--mu);cursor:pointer;flex-shrink:0;opacity:.9;transition:background .16s ease,border-color .16s ease,color .16s ease,transform .08s ease;}
@@ -819,14 +825,17 @@ main{padding:16px;max-width:860px;}
   .pr-filter-row{gap:8px;margin-bottom:14px;}
   .pr-filter-chip{padding:8px 11px;}
   .pr-group-body.open{grid-template-columns:1fr;gap:10px;}
-  .pr-card{padding:14px;margin-bottom:9px;}
+  .pr-card{padding:16px;margin-bottom:10px;min-height:150px;}
   .pr-card-top{gap:9px;}
-  .pr-badge{font-size:31px;}
-  .pr-card.tier-1.has-pr .pr-badge{font-size:39px;}
-  .pr-card-meta-row{gap:7px;margin:7px 0 10px;}
+  .pr-value-wrap{min-width:78px;}
+  .pr-ex-name{font-size:14px;line-height:1.45;}
+  .pr-badge{font-size:30px;}
+  .pr-card.tier-1.has-pr .pr-badge{font-size:34px;}
+  .pr-set-line{font-size:10px;}
+  .pr-card-meta-row{gap:7px;margin:9px 0 11px;}
   .pr-edit-row{flex-wrap:wrap;gap:6px;opacity:.86;}
   .pr-override-label{width:100%;margin-right:0;}
-  .pr-edit-inp{width:64px;}
+  .pr-edit-inp{width:68px;}
   .prog-tab-section{margin-bottom:26px;}
   .prog-section-hd{flex-wrap:wrap;align-items:flex-start;line-height:1.35;font-size:9px;}
   .prog-ex-select{width:100%;max-width:none;}
@@ -931,7 +940,7 @@ main{padding:16px;max-width:860px;}
       <input class="url-input" id="apiUrlInput" type="url" placeholder="https://script.google.com/macros/s/…/exec">
       <button class="url-save-btn" onclick="saveApiUrl()">Speichern</button>
     </div>
-    <button class="test-btn" onclick="testApi()"><svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;"><polyline points="20 6 9 17 4 12"/></svg>Verbindung testen</button>
+    <button class="test-btn" onclick="testApi()"><svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:curren<tColor;fill:none;stroke-width:2;stroke-linecap:round;"><polyline points="20 6 9 17 4 12"/></svg>Verbindung testen</button>
     <div class="status" id="setupStatus"></div>
     <div style="font-family:'DM Mono',monospace;font-size:8px;color:var(--mu);margin-top:8px;padding:6px 8px;background:var(--sur2);border-radius:4px;border:1px solid var(--bor);">
       <b style="color:var(--tx);">Aktive Datenquelle:</b> <span style="color:var(--acc);">ZYKLUS 1–6</span><br>
@@ -1361,8 +1370,8 @@ const PLAN = [
 // STORAGE
 // ============================================================
 const SK='pb_v12_0_test';
-const APP_VERSION='V12.8.2-test';
-const BUILD_DATE='26.05.2026';
+const APP_VERSION='V12.8.4-test';
+const BUILD_DATE='27.05.2026';
 const GITHUB_RAW_URL='https://raw.githubusercontent.com/twfypbgfdz-max/Plateaubrecher/main/index.html';
 const errorLog=[];
 let store={};
@@ -1443,19 +1452,125 @@ if(Object.keys(store).length===0){try{const old=JSON.parse(localStorage.getItem(
 // (alte Keys pb_v7_4 etc. werden nicht mehr importiert)
 
 function persist(){try{localStorage.setItem(SK,JSON.stringify(store));}catch(e){}}
+function saveStore(){persist();}
 function getD(c,w,d,e){const k=c+'_'+w+'_'+d+'_'+e;if(!store[k])store[k]={g1:'',r1:'',g2:'',r2:'',g3:'',r3:'',notes:'',done:false};return store[k];}
 function getRecord(n){return store['rec_'+n]||null;}
-function setRecord(n,o,d,w){store['rec_'+n]={orm:Math.round(o*10)/10,date:d,weight:w||null};persist();}
-function checkPR(n,o,rawWeight){
+function getBestSetFromTrainingData(d){
+  let best=null;
+  const p=(v)=>parseFloat(String(v||0).replace(',','.'));
+  [['g1','r1'],['g2','r2'],['g3','r3']].forEach(([gKey,rKey])=>{
+    const g=p(d?.[gKey]),r=p(d?.[rKey]);
+    if(!g||!r)return;
+    const orm=g*(1+r/30);
+    if(!best||orm>best.orm)best={orm:Math.round(orm),weight:g,reps:r};
+  });
+  return best;
+}
+function setRecord(n,o,d,w,reps,source){
+  const prev=getRecord(n)||{};
+  store['rec_'+n]={...prev,orm:Math.round(o*10)/10,date:d,weight:w||null,reps:reps||null,source:source||prev.source||'local'};
+  persist();
+}
+function maybeUpdateRecord(n,o,d,w,reps,source){
   const r=getRecord(n);
-  if(!r||o>r.orm){setRecord(n,o,getCurrentDateStr(),rawWeight||null);return true;}
+  if(!r||o>(parseFloat(r.orm)||0)){setRecord(n,o,d,w,reps,source);return true;}
   // Bestes Rohgewicht auch ohne 1RM-PR aktualisieren
-  if(rawWeight&&(!r.weight||rawWeight>r.weight)){r.weight=rawWeight;persist();}
+  if(w&&(!r.weight||w>r.weight)){r.weight=w;if(reps)r.reps=reps;persist();}
   return false;
+}
+function checkPR(n,o,rawWeight,reps){
+  if(maybeUpdateRecord(n,o,getCurrentDateStr(),rawWeight||null,reps||null,'local'))return true;
+  return false;
+}
+
+function updateLocalPRFromTrainingData(exName,data,date,source){
+  const best=getBestSetFromTrainingData(data);
+  if(!best||!best.orm)return false;
+  return maybeUpdateRecord(exName,best.orm,date||getCurrentDateStr(),best.weight,best.reps,source||'local');
+}
+
+function parsePRNum(v){
+  return parseFloat(String(v||'').replace(',','.'))||0;
+}
+
+function importPRsFromBestleistungenRows(rows){
+  const valid=(Array.isArray(rows)?rows:[]).map(row=>{
+    const name=String(row[0]||'').trim();
+    const orm=parsePRNum(row[3]);
+    if(!name||orm<=0)return null;
+    return{
+      name,
+      orm,
+      weight:parsePRNum(row[1])||null,
+      reps:parsePRNum(row[2])||null,
+      date:row[4]||'',
+      source:'Bestleistungen'
+    };
+  }).filter(Boolean);
+  if(!valid.length)return 0;
+  valid.forEach(pr=>{
+    store['rec_'+pr.name]={orm:pr.orm,weight:pr.weight,reps:pr.reps,date:pr.date,source:pr.source};
+  });
+  store.prBestleistungenImportDone=true;
+  store.prBestleistungenNames=Array.from(new Set(valid.map(pr=>pr.name)));
+  store.prBestleistungenLastImport=new Date().toISOString();
+  saveStore();
+  if(typeof renderRecords==='function'&&document.getElementById('tab-records')?.classList.contains('active'))renderRecords();
+  console.info('Bestleistungen importiert: '+valid.length+' PRs');
+  if(typeof showStatus==='function')showStatus('ok','Bestleistungen importiert: '+valid.length+' PRs');
+  addToErrorLog('INFO','Bestleistungen-Import: '+valid.length+' PRs übernommen');
+  return valid.length;
+}
+
+async function importBestleistungenFromSheet(){
+  if(!API_URL)return false;
+  try{
+    const resp=await fetchSheetGetWithRetry(API_URL+'?action=getBestleistungen',{scope:'getBestleistungen'});
+    if(!resp.ok)return false;
+    const text=await resp.text();
+    if(!text||!text.trim())return false;
+    const rows=JSON.parse(text);
+    return importPRsFromBestleistungenRows(rows)>0;
+  }catch(e){
+    if(!(e&&e._adminLogged))addToErrorLog('INFO','Bestleistungen nicht geladen: '+(e&&e.message?e.message:e));
+    return false;
+  }
+}
+
+function importPRsFromSheetTrainingHistory(c,data){
+  if(store.prSheetImportDone)return 0;
+  // Fallback ist bewusst auf den aktuell geladenen Zyklus begrenzt.
+  const hist=buildSheetHistoryForCycle(c,data)||[];
+  const bestByExercise={};
+  hist.forEach(entry=>{
+    if(!entry?.name||!entry.orm)return;
+    const bestSet=getBestSetFromTrainingData(entry.data)||{};
+    const prev=bestByExercise[entry.name];
+    if(!prev||entry.orm>prev.orm){
+      bestByExercise[entry.name]={
+        name:entry.name,
+        orm:entry.orm,
+        date:entry.date,
+        weight:bestSet.weight||entry.g1||null,
+        reps:bestSet.reps||null
+      };
+    }
+  });
+  const candidates=Object.values(bestByExercise);
+  if(!candidates.length)return 0;
+  let updated=0;
+  candidates.forEach(pr=>{
+    if(maybeUpdateRecord(pr.name,pr.orm,pr.date,pr.weight,pr.reps,'sheet-import'))updated++;
+  });
+  store.prSheetImportDone=true;
+  persist();
+  if(updated)addToErrorLog('INFO','Sheet-PR-Import: '+updated+' lokale PRs aktualisiert');
+  return updated;
 }
 
 // ── PR Auto-Rebuild aus gespeicherter Trainingshistorie ───────
 function rebuildPRsFromHistory(silent=true) {
+  if(silent&&Array.isArray(store.prBestleistungenNames)&&store.prBestleistungenNames.length>0)return 0;
   let updated = 0;
   for(const key of Object.keys(store)){
     // Keys haben Format: c_w_d_e (alles Zahlen)
@@ -2090,7 +2205,9 @@ async function syncAllFromSheet(manual=false){
     const day=PLAN[snapC].weeks[snapW].days[snapD];
     syncDate=day?.date||'';
     const matched=new Set();
-    const resp=await fetchSheetGetWithRetry(API_URL+'?action=getPlan&sheet='+encodeURIComponent(sheetName),{scope:'syncAllFromSheet',cycle:snapC+1,week:snapW+1,day:snapD+1,date:day.date});
+    const bestleistungenImported=await importBestleistungenFromSheet();
+    if(!isCurrentSync(sync,snapC,snapW,snapD))return;
+    const resp=await fetchSheetGetWithRetry(API_URL+'?action=getPlan&sheet='+encodeURIComponent(sheetName)+'&date='+encodeURIComponent(day.date),{scope:'syncAllFromSheet',cycle:snapC+1,week:snapW+1,day:snapD+1,date:day.date});
     if(!isCurrentSync(sync,snapC,snapW,snapD))return;
     if(!resp.ok){showStatus('err','Sheet erreichbar, aber API-Fehler '+resp.status);logSyncCode('API_HTTP','HTTP '+resp.status+' '+sheetName+' '+day.date);return;}
     let data;
@@ -2098,6 +2215,7 @@ async function syncAllFromSheet(manual=false){
     catch(pe){showStatus('err','Sheet erreichbar, aber Antwort nicht lesbar');logSyncCode('JSON_PARSE',pe.message+' '+sheetName+' '+day.date);return;}
     if(!isCurrentSync(sync,snapC,snapW,snapD))return;
     if(!Array.isArray(data)||data.length===0){showStatus('ok','Sheet erreichbar, aber keine Rohzeilen erhalten');logSyncCode('API_EMPTY','0 Rohzeilen: '+sheetName+' '+day.date);return;}
+    if(!bestleistungenImported)importPRsFromSheetTrainingHistory(snapC,data);
     let changed=false,lastDate='';
     const dayRows=extractSheetRowsForDate(data,day.date);
     if(dayRows.length===0){
@@ -2899,7 +3017,7 @@ function toggleDone(idx){
   haptic(d.done?20:10);
   if(d.done){
     const orm=calc1RM(d);
-    if(orm){const exName=getExName(idx);const rawW=parseFloat(d.g1)||null;const isPR=checkPR(exName,orm,rawW);if(isPR&&API_URL)savePRToSheet(exName,orm);}
+    if(orm){const exName=getExName(idx);const best=getBestSetFromTrainingData(d)||{};const isPR=checkPR(exName,orm,best.weight||parseFloat(d.g1)||null,best.reps||null);if(isPR&&API_URL)savePRToSheet(exName,orm);}
   }
   renderWorkout();
   if(d.done){
@@ -3187,7 +3305,7 @@ function extractSheetRowsForDate(data,date){
 }
 
 async function fetchSheetRowsForDay(sheetName,date,c=C,w=W,d=D){
-  const resp=await fetchSheetGetWithRetry(API_URL+'?action=getPlan&sheet='+encodeURIComponent(sheetName),{scope:'fetchSheetRowsForDay',cycle:c+1,week:w+1,day:d+1,date});
+  const resp=await fetchSheetGetWithRetry(API_URL+'?action=getPlan&sheet='+encodeURIComponent(sheetName)+'&date='+encodeURIComponent(date),{scope:'fetchSheetRowsForDay',cycle:c+1,week:w+1,day:d+1,date});
   if(!resp.ok)throw new Error('Sheet-Fehler '+resp.status);
   const text=await resp.text();
   if(!text||!text.trim())throw new Error('Keine Sheet-Daten');
@@ -4673,6 +4791,11 @@ async function saveToSheet(){
     return rest;
   });
   const payload = JSON.stringify({sheet:sheetName, date:day.date, exercises});
+  const localPrUpdates=toSend.reduce((count,e)=>{
+    const data={g1:e.g1,r1:e.r1,g2:e.g2,r2:e.r2,g3:e.g3,r3:e.r3};
+    return count+(updateLocalPRFromTrainingData(e.uebung,data,day.date,'save')?1:0);
+  },0);
+  if(localPrUpdates&&document.getElementById('tab-records')?.classList.contains('active'))renderRecords();
 
   // Optimistisch: Dirty-State vor dem Fetch zurücksetzen
   const newPrev = JSON.parse(localStorage.getItem(prevKey)||'{}');
@@ -4935,8 +5058,23 @@ function formatPRDateForDisplay(rawDate){
   return raw;
 }
 
+function shouldHidePRDisplayName(name){
+  return /^chest press\b/i.test(String(name||'').trim());
+}
+
+function getBestleistungenNameSet(){
+  const names=Array.isArray(store.prBestleistungenNames)?store.prBestleistungenNames.filter(Boolean):[];
+  return names.length?new Set(names):null;
+}
+
+function shouldShowPRRecordName(name){
+  if(shouldHidePRDisplayName(name))return false;
+  const bestleistungenNames=getBestleistungenNameSet();
+  return !bestleistungenNames||bestleistungenNames.has(name);
+}
+
 function buildPrInsightSummary(){
-  const allPRs=Object.keys(store).filter(k=>k.startsWith('rec_'));
+  const allPRs=Object.keys(store).filter(k=>k.startsWith('rec_')).filter(k=>shouldShowPRRecordName(k.replace('rec_','')));
   const currentWeekDates=new Set((PLAN[C]?.weeks[W]?.days||[]).map(d=>d.date));
   const records=allPRs.map(k=>({name:k.replace('rec_',''),...store[k]})).filter(r=>r.orm>0);
   const newThisWeek=records.filter(r=>currentWeekDates.has(String(r.date||''))).length;
@@ -4989,7 +5127,7 @@ function renderRecords() {
     return null;
   }
 
-  const allPRs = Object.keys(store).filter(k => k.startsWith('rec_'));
+  const allPRs = Object.keys(store).filter(k => k.startsWith('rec_')).filter(k=>shouldShowPRRecordName(k.replace('rec_','')));
   const prCount = allPRs.length;
   const currentWeekDates=new Set((PLAN[C]?.weeks[W]?.days||[]).map(d=>d.date));
   const newThisWeek=allPRs.filter(k=>currentWeekDates.has(String((store[k]||{}).date||''))).length;
@@ -5002,7 +5140,7 @@ function renderRecords() {
       const name=k.replace('rec_','');
       const rec=getRecord(name);
       const ratio=rec?Math.round(rec.orm/bwVal*100)/100:0;
-      return{name,orm:rec?rec.orm:0,ratio};
+      return{name,orm:rec?rec.orm:0,ratio,weight:rec?rec.weight:null,reps:rec?rec.reps:null};
     }).filter(r=>r.orm>0).sort((a,b)=>b.ratio-a.ratio).slice(0,3);
 
     if(ranked.length>0){
@@ -5014,10 +5152,13 @@ function renderRecords() {
           const r=ranked[i];
           if(!r) return '<div></div>';
           const lv=getRelLevel(r.ratio);
+          const hofSetLine=(r.weight&&r.reps)?'<div class="hof-set-line">'+r.weight+' kg × '+r.reps+'</div>':'';
           return '<div class="hof-card '+rankCls[i]+'">'
             +'<span class="hof-medal">'+medals[i]+'</span>'
             +'<div class="hof-name">'+r.name.split('(')[0].trim()+'</div>'
             +'<div class="hof-orm">'+r.orm+'<span style="font-size:11px;font-weight:400;color:var(--mu);"> kg</span></div>'
+            +'<div class="hof-label">Bester 1RM</div>'
+            +hofSetLine
             +'<div class="hof-ratio">'+r.ratio+'× BW</div>'
             +(lv?'<div class="hof-badge '+lv.cls+'">'+lv.label+'</div>':'')
             +'</div>';
@@ -5074,6 +5215,7 @@ function renderRecords() {
   PR_GROUPS.forEach((group, gi) => {
     // Filter anwenden
     const filteredEx = group.exercises.filter(e => {
+      if(!shouldShowPRRecordName(e))return false;
       const has = !!getRecord(e);
       if(prFilter==='has_pr') return has;
       if(prFilter==='no_pr') return !has;
@@ -5083,11 +5225,12 @@ function renderRecords() {
 
     const tier = group.tier || 3;
     const tierCls = 'tier-'+tier;
-    const groupPRCount = group.exercises.filter(e => !!getRecord(e)).length;
+    const groupPRCount = group.exercises.filter(e => shouldShowPRRecordName(e)&&!!getRecord(e)).length;
+    const visibleGroupTotal = group.exercises.filter(e=>shouldShowPRRecordName(e)).length;
     const gid = 'prg_' + gi;
     const badge = groupPRCount > 0
-      ? '<span class="pr-count-badge">'+groupPRCount+'/'+group.exercises.length+'</span>'
-      : '<span style="color:var(--mu)">'+group.exercises.length+'</span>';
+      ? '<span class="pr-count-badge">'+groupPRCount+'/'+visibleGroupTotal+'</span>'
+      : '<span style="color:var(--mu)">'+visibleGroupTotal+'</span>';
 
     html += '<div class="pr-group-title '+tierCls+'" id="'+gid+'_hdr" onclick="togglePRGroup(\''+gid+'\')">'
       + '<span>'+group.label+'</span>'
@@ -5121,13 +5264,16 @@ function renderRecords() {
         const lv=getRelLevel(ratio);
         if(lv) relBadge=' <span class="rel-badge '+lv.cls+'">'+lv.label+'</span>';
       }
+      const setLine=(hasPR&&rec.weight&&rec.reps)
+        ? '<div class="pr-set-line">'+rec.weight+' kg × '+rec.reps+'</div>'
+        : '';
 
       const sparkId='spark_'+safeId;
       html += '<div class="pr-card '+tierCls+' '+(hasPR?'has-pr':'no-pr')+'" id="prc_'+safeId+'">';
       html += '<div class="pr-card-top">';
       html += '<div class="pr-ex-name">'+exName+'</div>';
       if (hasPR) {
-        html += '<div class="pr-value-wrap"><div class="pr-badge">'+rec.orm+'<span class="pr-badge-unit">kg</span></div><div class="pr-value-label">PR</div></div>';
+        html += '<div class="pr-value-wrap"><div class="pr-badge">'+rec.orm+'<span class="pr-badge-unit">kg</span></div><div class="pr-value-label">Bester 1RM</div>'+setLine+'</div>';
       } else {
         html += '<div class="pr-value-wrap"><div class="pr-badge no-pr">—</div><div class="pr-value-label">offen</div></div>';
       }
@@ -5142,6 +5288,7 @@ function renderRecords() {
         html += '<div class="pr-spark-wrap" id="'+sparkId+'">'+buildPRSparkline(hist)+'</div>';
       }
       html += '<div class="pr-edit-row">'
+        +'<span class="pr-override-label">Manuelle Korrektur</span>'
         +'<input class="pr-edit-inp" type="number" id="pr_inp_'+safeId+'" placeholder="kg" step="0.5" min="0" value="'+(hasPR?rec.orm:'')+'">'
         +'<button class="pr-edit-btn" onclick="savePRManual(\''+exName.replace(/'/g,"\\'")+'\')">Speichern</button>'
         +(hasPR?'<button class="pr-del-btn" onclick="deletePR(\''+exName.replace(/'/g,"\\'")+'\')">✕</button>':'')
@@ -5232,13 +5379,16 @@ async function syncFromSheet(){
   try{
     const sheetName='ZYKLUS '+(snapC+1);
     const day=PLAN[snapC].weeks[snapW].days[snapD];
-    const resp=await fetchSheetGetWithRetry(API_URL+'?action=getPlan&sheet='+encodeURIComponent(sheetName),{scope:'syncFromSheet',cycle:snapC+1,week:snapW+1,day:snapD+1,date:day.date});
+    const bestleistungenImported=await importBestleistungenFromSheet();
+    if(!isCurrentSync(sync,snapC,snapW,snapD))return;
+    const resp=await fetchSheetGetWithRetry(API_URL+'?action=getPlan&sheet='+encodeURIComponent(sheetName)+'&date='+encodeURIComponent(day.date),{scope:'syncFromSheet',cycle:snapC+1,week:snapW+1,day:snapD+1,date:day.date});
     if(!isCurrentSync(sync,snapC,snapW,snapD))return;
     if(!resp.ok)return;
     const text=await resp.text();
     if(!text||!text.trim()){showStatus('ok',shortSheetSyncStatus(sheetName,day,[],new Set(),false));return;}
     const data=JSON.parse(text);
     if(!Array.isArray(data)||data.length===0){showStatus('ok',shortSheetSyncStatus(sheetName,day,[],new Set(),false,data));return;}
+    if(!bestleistungenImported)importPRsFromSheetTrainingHistory(snapC,data);
     let changed=false,lastDate='';
     const matched=new Set();
     const dayRows=extractSheetRowsForDate(data,day.date);
