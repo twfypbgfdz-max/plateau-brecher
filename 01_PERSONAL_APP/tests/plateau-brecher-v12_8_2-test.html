@@ -1865,10 +1865,21 @@ function buildSetupDiagnostics(){
     storeSize=bytes>=1024*1024?(bytes/1024/1024).toFixed(2)+' MB':Math.max(1,Math.round(bytes/1024))+' KB';
   }catch(e){}
   const prNames=Array.isArray(store.prBestleistungenNames)?store.prBestleistungenNames:[];
+  let snapLabel='—',snapSize='';
+  try{
+    const raw=localStorage.getItem(SK+'_snapshot_before_import');
+    if(raw){
+      const snap=JSON.parse(raw);
+      snapLabel=formatDiagTime(snap.createdAt);
+      const bytes=new Blob([raw]).size;
+      snapSize=' · '+(bytes>=1024*1024?(bytes/1024/1024).toFixed(2)+' MB':Math.max(1,Math.round(bytes/1024))+' KB');
+    }
+  }catch(e){}
   return[
     {k:'API',v:API_URL?'verbunden':'nicht gesetzt',cls:API_URL?'good':'muted'},
     {k:'Letzter Sync',v:store._lastSync||'—',cls:store._lastSync?'good':'muted'},
     {k:'Bestleistungen',v:(prNames.length||0)+' importiert · '+formatDiagTime(store.prBestleistungenLastImport),cls:prNames.length?'good':'muted'},
+    {k:'Letzter Snapshot',v:snapLabel+snapSize,cls:snapLabel!=='—'?'good':'muted'},
     {k:'Offline-Buffer',v:String(offlineCount),cls:offlineCount?'':'muted'},
     {k:'Store-Größe',v:storeSize,cls:''},
     {k:'Letzter Log-Eintrag',v:appLog[0]||'—',cls:appLog[0]?'':'muted',wide:true}
@@ -1952,12 +1963,36 @@ function exportBackup(){
   a.download='pb_backup_'+new Date().toISOString().slice(0,10)+'.json';
   a.click();
 }
+
+function createLocalSnapshot(reason){
+  try{
+    const snapshot={
+      createdAt:new Date().toISOString(),
+      appVersion:APP_VERSION,
+      reason:reason||'manual',
+      store:JSON.parse(JSON.stringify(store||{}))
+    };
+    localStorage.setItem(SK+'_snapshot_before_import',JSON.stringify(snapshot));
+    return true;
+  }catch(e){
+    addToErrorLog('SNAPSHOT_WARN','Snapshot fehlgeschlagen: '+(e&&e.message?e.message:e));
+    return false;
+  }
+}
+
 function handleImport(input){
   const reader=new FileReader();
   reader.onload=(e)=>{
     try{
       const imported=JSON.parse(e.target.result);
       if(confirm('Backup importieren? Aktuelle Daten werden überschrieben.')){
+        const snapOk=createLocalSnapshot('before_import');
+        if(snapOk){
+          addToErrorLog('INFO','Snapshot vor Import erstellt');
+          showSetupStatus('ok','Snapshot vor Import erstellt');
+        }else{
+          showSetupStatus('err','Snapshot vor Import konnte nicht erstellt werden. Import läuft trotzdem.');
+        }
         Object.assign(store,imported);persist();location.reload();
       }
     }catch(err){alert('Fehler beim Lesen der Backup-Datei.');}
