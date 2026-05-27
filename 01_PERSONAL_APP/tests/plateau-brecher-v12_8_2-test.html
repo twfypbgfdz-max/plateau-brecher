@@ -132,8 +132,15 @@ main{padding:16px;max-width:860px;}
 .whead{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
 .wtitle{font-family:'Barlow Condensed',sans-serif;font-size:28px;letter-spacing:2px;}
 .mtag{background:var(--sur3);border:1px solid var(--bor);font-family:'DM Mono',monospace;font-size:8px;padding:3px 8px;color:var(--tx2);border-radius:var(--r);letter-spacing:1px;}
+.day-status-card{background:linear-gradient(180deg,rgba(255,255,255,.026),var(--sur));border:1px solid var(--bor);border-radius:var(--r);padding:10px 12px;margin:0 0 12px;}
+.day-status-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px;}
+.day-status-main{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;letter-spacing:1px;line-height:1;color:var(--tx);}
+.day-status-kv{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--mu);white-space:nowrap;padding-top:2px;}
+.next-ex-line{font-family:'DM Mono',monospace;font-size:9px;line-height:1.45;color:var(--tx2);overflow-wrap:anywhere;}
+.next-ex-line b{color:var(--acc);font-weight:600;}
 .prog-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--mu);margin-bottom:6px;letter-spacing:1px;}
 .prog-bar{height:3px;background:var(--bor);margin-bottom:16px;border-radius:2px;overflow:hidden;}
+.day-status-card .prog-bar{margin:8px 0 0;}
 .prog-fill{height:100%;background:var(--acc);transition:width .5s cubic-bezier(.4,0,.2,1);}
 [data-theme="light"] .prog-fill{background:#111;}
 
@@ -830,6 +837,11 @@ main{padding:16px;max-width:860px;}
   .whead{gap:7px;margin-bottom:8px;}
   .wtitle{font-size:24px;line-height:1.05;}
   .mtag{font-size:7.5px;padding:3px 7px;}
+  .day-status-card{padding:9px 10px;margin-bottom:11px;}
+  .day-status-top{gap:8px;margin-bottom:7px;}
+  .day-status-main{font-size:20px;}
+  .day-status-kv{font-size:7px;}
+  .next-ex-line{font-size:8px;}
   .prog-bar{margin-bottom:12px;}
   .excard{margin-bottom:9px;border-radius:8px;}
   .excard.done{opacity:.86;}
@@ -2858,8 +2870,13 @@ function getVisibleSetCountForExercise(i){
 function renderWorkout(){
   const week=PLAN[C].weeks[W],day=week.days[D];
   requestSheetHistoryForDeload();
+  const totalExercises=day.exercises.length;
   const doneCount=day.exercises.filter((_,i)=>getD(C,W,D,i).done).length;
-  const pct=Math.round(doneCount/day.exercises.length*100);
+  const openCount=Math.max(totalExercises-doneCount,0);
+  const pct=totalExercises?Math.round(doneCount/totalExercises*100):0;
+  const nextExerciseIndex=day.exercises.findIndex((_,i)=>!getD(C,W,D,i).done);
+  const nextExercise=nextExerciseIndex>=0?getExName(nextExerciseIndex):'Training abgeschlossen';
+  const nextExerciseLabel=nextExerciseIndex>=0?nextExercise:'Alle Übungen erledigt';
 
   // Deload: Plan-Kontext-Banner + optionaler Datenstatus
   let deloadHints=[];
@@ -2916,8 +2933,11 @@ function renderWorkout(){
     +fatigueChip+'</div>'
     +'<div class="mtag">'+day.muscle+'</div>'
     +'</div>'
-    +'<div class="prog-lbl">'+doneCount+' / '+day.exercises.length+' Übungen · '+pct+'%</div>'
+    +'<div class="day-status-card">'
+    +'<div class="day-status-top"><div class="day-status-main">'+doneCount+'/'+totalExercises+' &Uuml;bungen erledigt</div><div class="day-status-kv">'+openCount+' offen</div></div>'
+    +'<div class="next-ex-line">N&auml;chste: <b>'+nextExerciseLabel+'</b></div>'
     +'<div class="prog-bar"><div class="prog-fill" style="width:'+pct+'%"></div></div>'
+    +'</div>'
     +renderReadinessBlock();
 
   day.exercises.forEach((ex,i)=>{
@@ -2984,7 +3004,8 @@ function renderWorkout(){
     const setFilled=setPairs.map(([g,r])=>!!(d[g]&&d[r]));
     const filledSets=setFilled.filter(Boolean).length;
     const nextSetIndex=setFilled.findIndex(filled=>!filled);
-    const setProgressLine='<div class="set-progress-line"><span>SÃ¤tze</span><b>'+filledSets+'/'+visibleSetCount+' erledigt</b></div>';
+    const setNextText=nextSetIndex>=0?' &middot; N&auml;chster Satz: S'+(nextSetIndex+1):'';
+    const setProgressLine='<div class="set-progress-line"><span>S&auml;tze</span><b>'+filledSets+'/'+visibleSetCount+' erledigt'+setNextText+'</b></div>';
     const setCls=(idx)=>{
       if(setFilled[idx])return 'set-row-done';
       if(idx===nextSetIndex)return 'set-row-current';
