@@ -267,6 +267,17 @@ function doGet(e) {
   try {
     const ss = SpreadsheetApp.openById(SHEET_ID);
 
+    if (e.parameter.action === 'getBestleistungen') {
+      const sheet = ss.getSheetByName(PB_SHEET_NAME);
+      if (!sheet) return jsonOut([]);
+
+      const lastRow = sheet.getLastRow();
+      if (lastRow < PB_DATA_START_ROW) return jsonOut([]);
+
+      const data = sheet.getRange(PB_DATA_START_ROW, 1, lastRow - PB_DATA_START_ROW + 1, 10).getValues();
+      return jsonOut(data);
+    }
+
     if (e.parameter.action === 'getPlan') {
       const sheet = ss.getSheetByName(e.parameter.sheet);
 
