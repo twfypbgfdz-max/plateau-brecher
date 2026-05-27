@@ -706,6 +706,22 @@ main{padding:16px;max-width:860px;}
 .top-progress-meta{font-family:'DM Mono',monospace;font-size:8.5px;color:var(--mu);margin-top:3px;line-height:1.35;}
 .top-progress-delta{font-family:'Barlow Condensed',sans-serif;font-size:22px;letter-spacing:1px;color:var(--ok);white-space:nowrap;}
 .top-progress-empty{font-family:'DM Mono',monospace;font-size:9px;color:var(--mu);padding:14px 0 2px;text-align:center;}
+.coach-insight-card{
+  background:linear-gradient(180deg,rgba(200,255,0,.035),var(--sur));
+  border:1px solid var(--bor);border-radius:var(--r);padding:14px;margin-bottom:14px;
+}
+.coach-insight-list{display:flex;gap:8px;flex-wrap:wrap;}
+.coach-insight-chip{
+  display:flex;align-items:center;gap:7px;min-width:0;
+  background:var(--sur2);border:1px solid var(--bor);border-radius:999px;
+  padding:7px 10px;font-family:'DM Mono',monospace;font-size:9px;line-height:1.35;color:var(--tx2);
+}
+.coach-insight-chip.good{border-color:rgba(0,230,118,.22);}
+.coach-insight-chip.watch{border-color:rgba(255,214,0,.22);}
+.coach-insight-chip.load{border-color:rgba(200,255,0,.18);}
+.coach-insight-dot{width:6px;height:6px;border-radius:50%;background:var(--acc);flex:0 0 auto;}
+.coach-insight-chip.good .coach-insight-dot{background:var(--ok);}
+.coach-insight-chip.watch .coach-insight-dot{background:var(--warn);}
 .progress-timeline-card{
   background:var(--sur);border:1px solid var(--bor);border-radius:var(--r);
   padding:14px;margin-bottom:14px;
@@ -927,6 +943,9 @@ main{padding:16px;max-width:860px;}
   .top-progress-row{grid-template-columns:minmax(0,1fr) auto;padding:8px 0;}
   .top-progress-name{font-size:16px;}
   .top-progress-delta{font-size:21px;}
+  .coach-insight-card{padding:12px;margin-bottom:12px;}
+  .coach-insight-list{display:grid;gap:7px;}
+  .coach-insight-chip{border-radius:8px;padding:8px 9px;}
   .progress-timeline-card{padding:12px;margin-bottom:12px;}
   .progress-timeline-row{grid-template-columns:auto minmax(0,1fr) auto;gap:8px;padding:8px 0;}
   .progress-timeline-name{font-size:15px;}
@@ -1101,6 +1120,7 @@ main{padding:16px;max-width:860px;}
 
   <div id="weeklyOverviewWrap"></div>
 
+  <div id="coachInsightsWrap"></div>
   <div id="topProgressWrap"></div>
   <div id="progressTimelineWrap"></div>
   <div id="watchlistWrap"></div>
@@ -4406,6 +4426,7 @@ function initProgressTab(){
 
 function renderProgress(){
   renderWeeklyOverview();
+  renderCoachInsightsCard();
   renderTopProgressCard();
   renderProgressTimelineCard();
   renderWatchlistCard();
@@ -5182,6 +5203,67 @@ function buildTopProgressStats(){
     if(delta<=0)return null;
     return{name,delta,units:hist.length,from:first.orm,to:last.orm};
   }).filter(Boolean).sort((a,b)=>b.delta-a.delta).slice(0,5);
+}
+
+function buildRecentLoadInsight(){
+  const week=PLAN[C]?.weeks?.[W];
+  if(!week||!Array.isArray(week.days))return null;
+  const muscleVol={};
+  let total=0;
+  week.days.forEach((day,di)=>{
+    const muscle=(day.muscle||'Sonstige').split('/')[0].trim()||'Sonstige';
+    (day.exercises||[]).forEach((_,i)=>{
+      const data=getD(C,W,di,i);
+      const vol=calcTotal(data)||0;
+      if(vol<=0)return;
+      muscleVol[muscle]=(muscleVol[muscle]||0)+vol;
+      total+=vol;
+    });
+  });
+  const entries=Object.entries(muscleVol).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  if(!entries.length||total<2500)return null;
+  const [muscle,vol]=entries[0];
+  if(vol/total>=0.45)return{type:'load',text:muscle+' zuletzt hoch belastet'};
+  return{type:'load',text:muscle+' aktuell am präsentesten'};
+}
+
+function buildCoachInsights(){
+  const insights=[];
+  const top=buildTopProgressStats();
+  if(top.length){
+    const best=top[0];
+    const name=best.name.split('(')[0].trim();
+    insights.push({type:'good',text:name+' mit starkem Trainingstrend'});
+  }
+  const recent=buildProgressTimelineEntries();
+  if(recent.length>=3)insights.push({type:'good',text:'Mehrere positive Fortschritte zuletzt'});
+  const watch=buildWatchlistStats();
+  if(watch.length)insights.push({type:'watch',text:watch.length+' Übungen beobachten'});
+  const load=buildRecentLoadInsight();
+  if(load)insights.push(load);
+  const unique=[];
+  const seen=new Set();
+  insights.forEach(item=>{
+    if(seen.has(item.text)||unique.length>=3)return;
+    seen.add(item.text);
+    unique.push(item);
+  });
+  return unique;
+}
+
+function renderCoachInsightsCard(){
+  const wrap=document.getElementById('coachInsightsWrap');
+  if(!wrap)return;
+  const insights=buildCoachInsights();
+  const rows=insights.length
+    ? '<div class="coach-insight-list">'+insights.map(item=>
+        '<div class="coach-insight-chip '+item.type+'"><span class="coach-insight-dot"></span><span>'+item.text+'</span></div>'
+      ).join('')+'</div>'
+    : '<div class="top-progress-empty">Noch zu wenig Daten für Hinweise.</div>';
+  wrap.innerHTML='<div class="coach-insight-card">'
+    +'<div class="top-progress-hd"><div><div class="top-progress-title">Coach-Hinweise</div><div class="top-progress-sub">Lokale Trends, vorsichtig eingeordnet</div></div></div>'
+    +rows
+    +'</div>';
 }
 
 function renderTopProgressCard(){
