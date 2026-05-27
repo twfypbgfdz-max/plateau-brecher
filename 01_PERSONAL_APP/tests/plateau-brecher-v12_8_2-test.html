@@ -237,7 +237,7 @@ main{padding:16px;max-width:860px;}
 #histClose{float:right;background:none;border:none;color:var(--mu);font-size:16px;cursor:pointer;margin-top:-4px;}
 .hist-close-btn{float:right;background:none;border:none;color:var(--mu);font-size:16px;cursor:pointer;margin-top:-4px;}
 .excard.done::before{background:var(--ok);}
-.excard.open-ex{border-color:rgba(200,255,0,.48);background:linear-gradient(180deg,rgba(200,255,0,.055),var(--sur));box-shadow:0 0 0 1px rgba(200,255,0,.1);}
+.excard.open-ex{border-color:rgba(200,255,0,.55);background:linear-gradient(180deg,rgba(200,255,0,.072),var(--sur));box-shadow:0 0 0 1px rgba(200,255,0,.14),0 10px 28px rgba(0,0,0,.18);}
 .excard.open-ex::before{background:var(--acc);width:4px;}
 [data-theme="light"] .excard.open-ex::before{background:#111;}
 .excard.pr-card::after{
@@ -266,6 +266,12 @@ main{padding:16px;max-width:860px;}
 .ex-chevron{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .3s ease;flex-shrink:0;color:var(--mu);}
 .open-ex .ex-chevron{transform:rotate(180deg);color:var(--acc);}
 .excard.done .ex-chevron{color:var(--ok);}
+.exercise-focus-bar{display:flex;align-items:center;justify-content:space-between;gap:9px;background:rgba(255,255,255,.026);border:1px solid rgba(200,255,0,.12);border-radius:var(--r);padding:8px 9px;margin:0 0 9px;}
+.exercise-focus-main{min-width:0;font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:.8px;color:var(--tx);line-height:1.05;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.exercise-focus-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;flex-shrink:0;}
+.exercise-focus-chip{font-family:'DM Mono',monospace;font-size:8px;color:var(--tx2);background:var(--sur2);border:1px solid var(--bor);border-radius:999px;padding:4px 7px;white-space:nowrap;}
+.exercise-focus-chip.next{color:var(--acc);border-color:rgba(200,255,0,.18);}
+.exercise-focus-chip.action{cursor:pointer;color:var(--acc3);border-color:rgba(0,212,255,.18);}
 
 /* SETS GRID */
 .sets-grid{display:grid;grid-template-columns:44px 1fr 1fr auto;gap:5px 6px;align-items:center;margin:10px 0;}
@@ -300,6 +306,8 @@ main{padding:16px;max-width:860px;}
 [data-theme="light"] .orm-inline{color:#111;background:rgba(0,0,0,.06);}
 .prev-session-line{font-family:'DM Mono',monospace;font-size:9px;line-height:1.45;color:var(--mu);background:rgba(0,212,255,.045);border:1px solid rgba(0,212,255,.12);border-radius:var(--r);padding:6px 9px;margin:7px 0 9px;}
 .prev-session-line b{color:var(--acc3);font-weight:600;}
+.quick-apply-btn{background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.18);color:var(--acc3);font-family:'DM Mono',monospace;font-size:8px;padding:4px 7px;border-radius:999px;margin-left:7px;cursor:pointer;white-space:nowrap;}
+.quick-apply-btn:active{transform:scale(.98);}
 
 /* WARMUP BLOCK */
 .warmup-toggle{
@@ -907,13 +915,17 @@ main{padding:16px;max-width:860px;}
   .prog-bar{margin-bottom:12px;}
   .excard{margin-bottom:9px;border-radius:8px;}
   .excard.done{opacity:.86;}
-  .excard.open-ex{box-shadow:0 0 0 1px rgba(200,255,0,.14);}
+  .excard.open-ex{box-shadow:0 0 0 1px rgba(200,255,0,.16),0 8px 20px rgba(0,0,0,.16);}
   .exhead{padding:12px 11px 12px 15px;gap:8px;}
   .exname{font-size:13.5px;line-height:1.38;}
   .exmeta{gap:5px;max-width:42%;}
   .exstatus{font-size:8px;}
   .prev-badge,.prog-arrow{font-size:7.5px;padding:2px 5px;}
-  .exbody.open{padding:12px 10px 14px 15px;}
+  .exbody.open{padding:11px 10px 13px 15px;}
+  .exercise-focus-bar{padding:7px 8px;margin-bottom:8px;align-items:flex-start;}
+  .exercise-focus-main{font-size:15px;white-space:normal;line-height:1.15;}
+  .exercise-focus-meta{gap:5px;}
+  .exercise-focus-chip{font-size:7.5px;padding:3px 6px;}
   .sets-grid{grid-template-columns:32px minmax(0,1fr) minmax(0,1fr) 52px;gap:5px;margin:8px 0 10px;}
   .slbl{font-size:7px;letter-spacing:.5px;}
   .set-progress-line{font-size:7px;padding:5px 7px;margin:7px 0 6px;}
@@ -922,6 +934,7 @@ main{padding:16px;max-width:860px;}
   .sinput::placeholder{font-size:9px;}
   .orm-inline{font-size:7.5px;min-width:0;padding:2px 4px;color:var(--tx2);background:rgba(255,255,255,.035);}
   .prev-session-line{font-size:8px;padding:6px 8px;margin:6px 0 8px;}
+  .quick-apply-btn{display:inline-flex;margin-left:0;margin-top:5px;font-size:7.5px;padding:4px 6px;}
   .warmup-toggle{font-size:7.5px;padding:5px 0;}
   .coach-rec,.load-suggest{font-size:8px;padding:6px 8px;margin-bottom:7px;}
   .stats-row{gap:7px;margin-bottom:10px;}
@@ -1091,6 +1104,7 @@ main{padding:16px;max-width:860px;}
         <button class="test-btn" onclick="exportBackup()">💾 Backup exportieren (JSON)</button>
         <input type="file" id="importFile" class="import-file" onchange="handleImport(this)">
         <button class="test-btn" onclick="document.getElementById('importFile').click()">📥 Backup importieren</button>
+        <button class="test-btn" id="restoreSnapshotBtn" onclick="restoreImportSnapshot()" style="display:none;">↩ Snapshot wiederherstellen</button>
       </div>
     </div>
     <div class="setup-action-group">
@@ -1888,6 +1902,8 @@ function buildSetupDiagnostics(){
 
 function renderSetupDiagnostics(){
   const el=document.getElementById('setupDiagnostics');
+  const restoreBtn=document.getElementById('restoreSnapshotBtn');
+  if(restoreBtn)restoreBtn.style.display=localStorage.getItem(SK+'_snapshot_before_import')?'inline-flex':'none';
   if(!el)return;
   const items=buildSetupDiagnostics();
   el.innerHTML='<div class="setup-action-label">Lokale Diagnose</div>'
@@ -1964,7 +1980,7 @@ function exportBackup(){
   a.click();
 }
 
-function createLocalSnapshot(reason){
+function createLocalSnapshot(reason,key){
   try{
     const snapshot={
       createdAt:new Date().toISOString(),
@@ -1972,11 +1988,35 @@ function createLocalSnapshot(reason){
       reason:reason||'manual',
       store:JSON.parse(JSON.stringify(store||{}))
     };
-    localStorage.setItem(SK+'_snapshot_before_import',JSON.stringify(snapshot));
+    localStorage.setItem(key||SK+'_snapshot_before_import',JSON.stringify(snapshot));
     return true;
   }catch(e){
     addToErrorLog('SNAPSHOT_WARN','Snapshot fehlgeschlagen: '+(e&&e.message?e.message:e));
     return false;
+  }
+}
+
+function restoreImportSnapshot(){
+  if(!confirm('Lokale Daten durch Snapshot ersetzen?'))return;
+  if(!confirm('Wirklich wiederherstellen? Aktuelle lokale Daten werden überschrieben.'))return;
+  try{
+    const raw=localStorage.getItem(SK+'_snapshot_before_import');
+    if(!raw){showSetupStatus('err','Kein Snapshot vorhanden.');return;}
+    const snapshot=JSON.parse(raw);
+    if(!snapshot||typeof snapshot!=='object'||!snapshot.store||typeof snapshot.store!=='object'||Array.isArray(snapshot.store)){
+      showSetupStatus('err','Snapshot ungültig. Wiederherstellung abgebrochen.');
+      addToErrorLog('SNAPSHOT_WARN','Ungültiger Snapshot');
+      return;
+    }
+    const safetyOk=createLocalSnapshot('before_restore',SK+'_snapshot_before_restore');
+    if(!safetyOk)addToErrorLog('SNAPSHOT_WARN','Sicherung vor Restore fehlgeschlagen');
+    store=JSON.parse(JSON.stringify(snapshot.store));
+    localStorage.setItem(SK,JSON.stringify(store));
+    showSetupStatus('ok','Snapshot wiederhergestellt. App wird neu geladen.');
+    location.reload();
+  }catch(e){
+    showSetupStatus('err','Snapshot konnte nicht wiederhergestellt werden.');
+    addToErrorLog('SNAPSHOT_WARN','Restore fehlgeschlagen: '+(e&&e.message?e.message:e));
   }
 }
 
@@ -3163,7 +3203,7 @@ function renderWorkout(){
       if(prevEntry.g1)prevG=prevEntry.g1;
     }
     const prevSetLine=(prevData&&prevData.g1&&prevData.r1)
-      ? '<div class="prev-session-line">Letztes Mal: <b>'+prevData.g1+' kg × '+prevData.r1+'</b>'+(prevOrm?' · 1RM '+prevOrm+' kg':'')+'</div>'
+      ? '<div class="prev-session-line">Letztes Mal: <b>'+prevData.g1+' kg × '+prevData.r1+'</b>'+(prevOrm?' · 1RM '+prevOrm+' kg':'')+'<button class="quick-apply-btn" onclick="event.stopPropagation();applyPreviousSet('+i+')">Wie letztes Mal</button></div>'
       : '';
 
     // Progressionspfeil — nur wenn aktuelle Session Daten hat UND Vorwoche vorhanden
@@ -3210,6 +3250,20 @@ function renderWorkout(){
     const nextSetIndex=setFilled.findIndex(filled=>!filled);
     const setNextText=nextSetIndex>=0?' &middot; N&auml;chster Satz: S'+(nextSetIndex+1):'';
     const setProgressLine='<div class="set-progress-line"><span>S&auml;tze</span><b>'+filledSets+'/'+visibleSetCount+' erledigt'+setNextText+'</b></div>';
+    const focusNextText=nextSetIndex>=0?'S'+(nextSetIndex+1):'fertig';
+    const lastFilledIndex=setFilled.map((filled,idx)=>filled?idx:-1).filter(idx=>idx>=0).pop();
+    const nextEmptyAfterFilled=lastFilledIndex>=0?setFilled.findIndex((filled,idx)=>idx>lastFilledIndex&&!filled):-1;
+    const copySetButton=nextEmptyAfterFilled>=0
+      ? '<button class="exercise-focus-chip action" onclick="event.stopPropagation();copyPreviousSetToNext('+i+')" title="Letzten Satz in den nächsten leeren Satz kopieren">Satz kopieren</button>'
+      : '';
+    const focusBar='<div class="exercise-focus-bar">'
+      +'<div class="exercise-focus-main">'+exName+'</div>'
+      +'<div class="exercise-focus-meta">'
+      +'<span class="exercise-focus-chip">S&auml;tze '+filledSets+'/'+visibleSetCount+'</span>'
+      +'<span class="exercise-focus-chip next">N&auml;chster Satz: '+focusNextText+'</span>'
+      +copySetButton
+      +'<button class="hist-btn exercise-focus-chip" onclick="event.stopPropagation();showHistory('+i+')" title="Verlauf">Verlauf</button>'
+      +'</div></div>';
     const setCls=(idx)=>{
       if(setFilled[idx])return 'set-row-done';
       if(idx===nextSetIndex)return 'set-row-current';
@@ -3240,6 +3294,7 @@ function renderWorkout(){
       +loadSuggest
       +coachRecHtml
       +prevSetLine
+      +focusBar
       +setProgressLine
       +'<div class="sets-grid">'
       +'<div class="slbl set-cell set-label '+setCls(0)+'">S1</div>'
@@ -3291,6 +3346,46 @@ function toggleWarmup(i){
   body.classList.toggle('wu-open');
 }
 
+function applyPreviousSet(i){
+  const week=PLAN[C].weeks[W];
+  const exName=getExName(i);
+  const prevEntry=week.isDeload
+    ? (findPreviousExerciseEntry(exName,{sameCycleOnly:true})||findPreviousSheetExerciseEntry(exName))
+    : findPreviousExerciseEntry(exName);
+  const prevData=prevEntry?.data||null;
+  if(!prevData||!prevData.g1||!prevData.r1)return;
+  const d=getD(C,W,D,i);
+  if((d.g1||d.r1)&&!confirm('Aktuelle Werte überschreiben?'))return;
+  d.g1=prevData.g1;
+  d.r1=prevData.r1;
+  persist();
+  renderWorkout();
+  showStatus('ok','Vorherigen Satz übernommen');
+}
+
+function copyPreviousSetToNext(i){
+  const d=getD(C,W,D,i);
+  const visibleSetCount=getVisibleSetCountForExercise(i);
+  const pairs=[['g1','r1'],['g2','r2'],['g3','r3']].slice(0,visibleSetCount);
+  let source=-1,target=-1;
+  pairs.forEach(([g,r],idx)=>{if(d[g]&&d[r])source=idx;});
+  if(source<0)return;
+  for(let idx=source+1;idx<pairs.length;idx++){
+    const [g,r]=pairs[idx];
+    if(!d[g]&&!d[r]){target=idx;break;}
+    if(!d[g]||!d[r]){target=idx;break;}
+  }
+  if(target<0)return;
+  const [sg,sr]=pairs[source];
+  const [tg,tr]=pairs[target];
+  if((d[tg]||d[tr])&&!confirm('Zielsatz überschreiben?'))return;
+  d[tg]=d[sg];
+  d[tr]=d[sr];
+  persist();
+  renderWorkout();
+  showStatus('ok','Satz kopiert');
+}
+
 function toggleDone(idx){
   const d=getD(C,W,D,idx);d.done=!d.done;persist();
   haptic(d.done?20:10);
@@ -3302,7 +3397,12 @@ function toggleDone(idx){
   if(d.done){
     const next=idx+1;
     if(next<PLAN[C].weeks[W].days[D].exercises.length)
-      setTimeout(()=>{document.getElementById('eb'+next)?.classList.add('open');document.getElementById('ec'+next)?.classList.add('open-ex');},80);
+      setTimeout(()=>{
+        document.getElementById('eb'+next)?.classList.add('open');
+        const nextCard=document.getElementById('ec'+next);
+        nextCard?.classList.add('open-ex');
+        nextCard?.scrollIntoView({behavior:'smooth',block:'start'});
+      },80);
   }
 }
 
