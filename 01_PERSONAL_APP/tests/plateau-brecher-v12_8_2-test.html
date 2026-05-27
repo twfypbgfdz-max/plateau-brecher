@@ -692,6 +692,20 @@ main{padding:16px;max-width:860px;}
 .prog-stat-val{font-family:'Barlow Condensed',sans-serif;font-size:28px;color:var(--acc);letter-spacing:1px;line-height:1;}
 [data-theme="light"] .prog-stat-val{color:#111;}
 .prog-stat-diff{font-family:'DM Mono',monospace;font-size:9px;margin-top:4px;line-height:1.25;}
+.top-progress-card{
+  background:linear-gradient(180deg,rgba(255,255,255,.026),var(--sur));
+  border:1px solid var(--bor);border-radius:var(--r);padding:14px;margin-bottom:14px;
+}
+.top-progress-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px;}
+.top-progress-title{font-family:'Barlow Condensed',sans-serif;font-size:20px;letter-spacing:1px;color:var(--tx);line-height:1;}
+.top-progress-sub{font-family:'DM Mono',monospace;font-size:9px;color:var(--mu);line-height:1.35;margin-top:4px;}
+.top-progress-list{display:grid;gap:8px;}
+.top-progress-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--bor);}
+.top-progress-row:first-child{border-top:0;}
+.top-progress-name{font-family:'Barlow Condensed',sans-serif;font-size:17px;letter-spacing:.8px;color:var(--tx);line-height:1.05;overflow-wrap:anywhere;}
+.top-progress-meta{font-family:'DM Mono',monospace;font-size:8.5px;color:var(--mu);margin-top:3px;line-height:1.35;}
+.top-progress-delta{font-family:'Barlow Condensed',sans-serif;font-size:22px;letter-spacing:1px;color:var(--ok);white-space:nowrap;}
+.top-progress-empty{font-family:'DM Mono',monospace;font-size:9px;color:var(--mu);padding:14px 0 2px;text-align:center;}
 .prog-vol-bar-wrap{margin:8px 0;}
 .prog-vol-bar-hd{display:flex;justify-content:space-between;margin-bottom:5px;}
 .prog-vol-bar-lbl{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;}
@@ -894,6 +908,11 @@ main{padding:16px;max-width:860px;}
   .prog-stat-grid,.mheat-grid{grid-template-columns:1fr;gap:10px;}
   .prog-stat-card,.mheat-card{padding:14px;}
   .prog-stat-val{font-size:30px;}
+  .top-progress-card{padding:12px;margin-bottom:12px;}
+  .top-progress-title{font-size:19px;}
+  .top-progress-row{grid-template-columns:minmax(0,1fr) auto;padding:8px 0;}
+  .top-progress-name{font-size:16px;}
+  .top-progress-delta{font-size:21px;}
   .prog-chart-sub{font-size:9px;line-height:1.45;margin-bottom:12px;}
   .prog-vol-bar-hd{gap:8px;align-items:flex-start;}
   .prog-vol-bar-lbl{line-height:1.35;overflow-wrap:anywhere;}
@@ -1063,6 +1082,8 @@ main{padding:16px;max-width:860px;}
   </div>
 
   <div id="weeklyOverviewWrap"></div>
+
+  <div id="topProgressWrap"></div>
 
   <!-- 1RM VERLAUF -->
   <div class="prog-tab-section">
@@ -4365,6 +4386,7 @@ function initProgressTab(){
 
 function renderProgress(){
   renderWeeklyOverview();
+  renderTopProgressCard();
   renderProgressChart();
   renderVolChart();
   renderBwChart();
@@ -5113,6 +5135,45 @@ function getExerciseProgressSignal(exName){
     return{type:'volume',delta:pct,text:'Volumen +'+pct+'%'};
   }
   return null;
+}
+
+function buildTopProgressStats(){
+  const names=[];
+  const seen=new Set();
+  (PR_GROUPS||[]).forEach(group=>{
+    (group.exercises||[]).forEach(name=>{
+      if(!name||seen.has(name)||shouldHidePRDisplayName(name))return;
+      seen.add(name);
+      names.push(name);
+    });
+  });
+  return names.map(name=>{
+    const hist=getExerciseHistoryByName(name,8).filter(p=>p.orm>0);
+    if(hist.length<2)return null;
+    const first=hist[0];
+    const last=hist[hist.length-1];
+    const delta=Math.round((last.orm-first.orm)*10)/10;
+    if(delta<=0)return null;
+    return{name,delta,units:hist.length,from:first.orm,to:last.orm};
+  }).filter(Boolean).sort((a,b)=>b.delta-a.delta).slice(0,5);
+}
+
+function renderTopProgressCard(){
+  const wrap=document.getElementById('topProgressWrap');
+  if(!wrap)return;
+  const stats=buildTopProgressStats();
+  const rows=stats.length
+    ? '<div class="top-progress-list">'+stats.map(item=>
+        '<div class="top-progress-row">'
+        +'<div><div class="top-progress-name">'+item.name+'</div><div class="top-progress-meta">über '+item.units+' Einheiten · '+item.from+' → '+item.to+' kg 1RM</div></div>'
+        +'<div class="top-progress-delta">+'+item.delta+' kg</div>'
+        +'</div>'
+      ).join('')+'</div>'
+    : '<div class="top-progress-empty">Noch zu wenig Verlauf.</div>';
+  wrap.innerHTML='<div class="top-progress-card">'
+    +'<div class="top-progress-hd"><div><div class="top-progress-title">Top Fortschritt</div><div class="top-progress-sub">Trainingstrend aus den letzten Einheiten</div></div></div>'
+    +rows
+    +'</div>';
 }
 
 function formatPRDateForDisplay(rawDate){
