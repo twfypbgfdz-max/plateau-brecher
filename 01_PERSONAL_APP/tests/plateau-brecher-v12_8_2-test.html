@@ -714,10 +714,12 @@ main{padding:16px;max-width:860px;}
 .progress-timeline-row{display:grid;grid-template-columns:auto 1fr auto;gap:9px;align-items:center;padding:8px 0;border-top:1px solid var(--bor);}
 .progress-timeline-row:first-child{border-top:0;}
 .progress-timeline-dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px rgba(0,230,118,.08);}
+.progress-timeline-dot.watch{background:var(--warn);box-shadow:0 0 0 3px rgba(255,214,0,.08);}
 .progress-timeline-main{min-width:0;}
 .progress-timeline-date{font-family:'DM Mono',monospace;font-size:8px;color:var(--mu);letter-spacing:.6px;text-transform:uppercase;}
 .progress-timeline-name{font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:.7px;color:var(--tx);line-height:1.05;overflow-wrap:anywhere;}
 .progress-timeline-delta{font-family:'DM Mono',monospace;font-size:10px;color:var(--ok);font-weight:700;white-space:nowrap;}
+.progress-timeline-delta.watch{color:var(--warn);}
 .prog-vol-bar-wrap{margin:8px 0;}
 .prog-vol-bar-hd{display:flex;justify-content:space-between;margin-bottom:5px;}
 .prog-vol-bar-lbl{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;}
@@ -1101,6 +1103,7 @@ main{padding:16px;max-width:860px;}
 
   <div id="topProgressWrap"></div>
   <div id="progressTimelineWrap"></div>
+  <div id="watchlistWrap"></div>
 
   <!-- 1RM VERLAUF -->
   <div class="prog-tab-section">
@@ -4405,6 +4408,7 @@ function renderProgress(){
   renderWeeklyOverview();
   renderTopProgressCard();
   renderProgressTimelineCard();
+  renderWatchlistCard();
   renderProgressChart();
   renderVolChart();
   renderBwChart();
@@ -5234,6 +5238,42 @@ function renderProgressTimelineCard(){
     : '<div class="top-progress-empty">Noch keine Fortschritte erkannt.</div>';
   wrap.innerHTML='<div class="progress-timeline-card">'
     +'<div class="top-progress-hd"><div><div class="top-progress-title">Letzte Fortschritte</div><div class="top-progress-sub">Positive Trainingstrends aus der lokalen Historie</div></div></div>'
+    +rows
+    +'</div>';
+}
+
+function buildWatchlistStats(){
+  return getTrainingTrendExerciseNames().map(name=>{
+    const hist=getExerciseHistoryByName(name,6).filter(p=>p.orm>0);
+    if(hist.length<3)return null;
+    const last=hist[hist.length-1];
+    const previousBest=Math.max(...hist.slice(0,-1).map(p=>p.orm));
+    if(last.orm>previousBest)return null;
+    let units=1;
+    for(let i=hist.length-1;i>0;i--){
+      const prevBest=Math.max(...hist.slice(0,i).map(p=>p.orm));
+      if(hist[i].orm>prevBest)break;
+      units++;
+    }
+    return{name,units,lastOrm:last.orm,bestOrm:previousBest};
+  }).filter(Boolean).sort((a,b)=>b.units-a.units||b.bestOrm-a.bestOrm).slice(0,5);
+}
+
+function renderWatchlistCard(){
+  const wrap=document.getElementById('watchlistWrap');
+  if(!wrap)return;
+  const items=buildWatchlistStats();
+  const rows=items.length
+    ? '<div class="progress-timeline-list">'+items.map(item=>
+        '<div class="progress-timeline-row">'
+        +'<div class="progress-timeline-dot watch"></div>'
+        +'<div class="progress-timeline-main"><div class="progress-timeline-date">Beobachten</div><div class="progress-timeline-name">'+item.name+'</div><div class="top-progress-meta">'+item.units+' Einheiten ohne 1RM-Steigerung · zuletzt '+item.lastOrm+' kg</div></div>'
+        +'<div class="progress-timeline-delta watch">'+item.units+' Einheiten</div>'
+        +'</div>'
+      ).join('')+'</div>'
+    : '<div class="top-progress-empty">Keine auffälligen Stagnationen.</div>';
+  wrap.innerHTML='<div class="progress-timeline-card">'
+    +'<div class="top-progress-hd"><div><div class="top-progress-title">Beobachten</div><div class="top-progress-sub">Übungen ohne klare Steigerung</div></div></div>'
     +rows
     +'</div>';
 }
