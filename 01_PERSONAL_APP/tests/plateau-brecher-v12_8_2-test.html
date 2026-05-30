@@ -187,12 +187,21 @@ main{padding:14px;max-width:860px;}
 .pain-input{width:100%;background:var(--sur2);border:1px solid var(--bor);color:var(--tx);font-family:'DM Mono',monospace;font-size:12px;border-radius:var(--r);padding:7px;text-align:center;}
 .readiness-note{font-family:'DM Mono',monospace;font-size:9.5px;line-height:1.5;color:var(--mu);margin-top:10px;}
 .weekly-overview,.pr-insight{border:1px solid rgba(255,255,255,.075);background:linear-gradient(180deg,rgba(255,255,255,.018),var(--sur));border-radius:var(--r);padding:15px;margin-bottom:14px;}
+.weekly-overview{position:relative;overflow:hidden;}
+.weekly-overview:before{content:"";position:absolute;inset:0 0 auto;height:2px;background:rgba(255,255,255,.08);}
+.weekly-overview.good:before{background:rgba(0,230,118,.5);}
+.weekly-overview.watch{border-color:rgba(255,214,0,.18);background:linear-gradient(180deg,rgba(255,214,0,.035),var(--sur));}
+.weekly-overview.watch:before{background:rgba(255,214,0,.62);}
+.weekly-overview.warning{border-color:rgba(255,61,0,.28);background:linear-gradient(180deg,rgba(255,61,0,.055),var(--sur));}
+.weekly-overview.warning:before{background:rgba(255,61,0,.75);}
 .weekly-line,.pr-insight-line{font-family:'DM Mono',monospace;font-size:10px;line-height:1.6;color:var(--tx);margin-bottom:4px;}
 .weekly-grid,.pr-insight-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px;}
 .weekly-kv,.pr-insight-kv{background:rgba(255,255,255,.024);border:1px solid rgba(255,255,255,.07);border-radius:var(--r);padding:10px;}
 .weekly-k,.pr-insight-k{font-family:'DM Mono',monospace;font-size:8.5px;color:var(--mu);text-transform:uppercase;letter-spacing:1.1px;margin-bottom:4px;}
 .weekly-v,.pr-insight-v{font-family:'Barlow Condensed',sans-serif;font-size:22px;color:var(--acc);letter-spacing:1px;line-height:1.05;}
 .weekly-primary,.pr-primary{font-family:'Barlow Condensed',sans-serif;font-size:30px;line-height:1;color:var(--tx);letter-spacing:1px;margin-bottom:8px;}
+.weekly-overview.warning .weekly-primary{color:#ffb199;}
+.weekly-overview.watch .weekly-primary{color:#ffe36b;}
 .weekly-sub,.pr-sub{font-family:'DM Mono',monospace;font-size:9.5px;line-height:1.5;color:var(--mu);}
 .pr-insight{padding:12px 13px;margin-bottom:12px;background:linear-gradient(180deg,rgba(255,255,255,.025),var(--sur));}
 .pr-primary{font-size:21px;line-height:1.05;letter-spacing:.8px;margin-bottom:5px;color:var(--tx2);}
@@ -689,11 +698,11 @@ main{padding:14px;max-width:860px;}
 }
 .swap-confirm-btn:active{opacity:.8;}
 /* PROGRESS TAB */
-.prog-tab-section{margin-bottom:30px;}
+.prog-tab-section{margin-bottom:24px;}
 .prog-section-hd{
-  font-family:'DM Mono',monospace;font-size:9.5px;color:var(--mu);
-  text-transform:uppercase;letter-spacing:1.5px;
-  padding-bottom:10px;border-bottom:1px solid var(--bor);margin-bottom:14px;
+  font-family:'DM Mono',monospace;font-size:10px;color:var(--tx2);
+  text-transform:uppercase;letter-spacing:1.1px;
+  padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.07);margin-bottom:10px;
   display:flex;justify-content:space-between;align-items:center;gap:10px;
 }
 .prog-ex-select{
@@ -704,75 +713,80 @@ main{padding:14px;max-width:860px;}
 .prog-ex-select:focus{border-color:var(--acc);}
 .prog-chart-wrap{
   background:linear-gradient(180deg,rgba(255,255,255,.018),var(--sur));border:1px solid rgba(255,255,255,.075);
-  border-radius:var(--r);padding:15px;margin-bottom:12px;
+  border-radius:var(--r);padding:13px;margin-bottom:10px;
   position:relative;overflow:hidden;
 }
 .prog-chart-title{
   font-family:'Barlow Condensed',sans-serif;font-size:18px;letter-spacing:1px;
   color:var(--tx);margin-bottom:2px;
 }
-.prog-chart-sub{font-family:'DM Mono',monospace;font-size:9.5px;color:var(--mu);margin-bottom:14px;line-height:1.5;}
+.prog-chart-sub{font-family:'DM Mono',monospace;font-size:9.5px;color:var(--tx2);margin-bottom:12px;line-height:1.5;}
 .prog-svg{width:100%;display:block;overflow:visible;}
 .prog-svg text{font-size:8px;}
 .prog-no-data{
-  font-family:'DM Mono',monospace;font-size:9.5px;color:var(--mu);
-  text-align:center;padding:24px 0;
+  font-family:'DM Mono',monospace;font-size:10px;color:var(--tx2);
+  text-align:center;padding:18px 10px;border:1px dashed rgba(255,255,255,.09);
+  border-radius:var(--r);background:rgba(255,255,255,.016);line-height:1.45;
 }
-.prog-stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:14px;}
+.prog-stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;margin-top:11px;}
 .prog-stat-card{
   background:rgba(255,255,255,.022);border:1px solid rgba(255,255,255,.075);
-  padding:13px 11px;border-radius:var(--r);text-align:center;min-width:0;
+  padding:12px 11px;border-radius:var(--r);text-align:center;min-width:0;
 }
+.prog-stat-card.primary{border-color:rgba(200,255,0,.2);background:linear-gradient(180deg,rgba(200,255,0,.035),rgba(255,255,255,.018));}
+.prog-stat-card.trend-down{border-color:rgba(255,61,0,.26);background:linear-gradient(180deg,rgba(255,61,0,.055),rgba(255,255,255,.016));}
+.prog-stat-card.trend-up{border-color:rgba(0,230,118,.18);}
+.prog-stat-card.trend-flat{border-color:rgba(255,255,255,.08);}
 .prog-stat-key{font-family:'DM Mono',monospace;font-size:9.5px;color:var(--mu);text-transform:uppercase;letter-spacing:.9px;margin-bottom:6px;line-height:1.35;}
 .prog-stat-val{font-family:'Barlow Condensed',sans-serif;font-size:28px;color:var(--acc);letter-spacing:1px;line-height:1;}
 [data-theme="light"] .prog-stat-val{color:#111;}
 .prog-stat-diff{font-family:'DM Mono',monospace;font-size:9.5px;margin-top:4px;line-height:1.3;color:var(--mu);}
 .top-progress-card{
   background:linear-gradient(180deg,rgba(255,255,255,.02),var(--sur));
-  border:1px solid rgba(255,255,255,.075);border-radius:var(--r);padding:12px;margin-bottom:11px;
+  border:1px solid rgba(255,255,255,.075);border-radius:var(--r);padding:12px;margin-bottom:9px;
 }
-.top-progress-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:9px;}
+.top-progress-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px;}
 .top-progress-title{font-family:'Barlow Condensed',sans-serif;font-size:20px;letter-spacing:1px;color:var(--tx);line-height:1;}
-.top-progress-sub{font-family:'DM Mono',monospace;font-size:9.5px;color:var(--mu);line-height:1.4;margin-top:4px;}
+.top-progress-sub{font-family:'DM Mono',monospace;font-size:9.5px;color:var(--tx2);line-height:1.4;margin-top:4px;}
 .top-progress-list{display:grid;gap:6px;}
-.top-progress-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:9px;align-items:center;padding:7px 0;border-top:1px solid rgba(255,255,255,.065);}
+.top-progress-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:9px;align-items:center;padding:6px 0;border-top:1px solid rgba(255,255,255,.06);}
 .top-progress-row:first-child{border-top:0;}
 .top-progress-rank{font-family:'DM Mono',monospace;font-size:8.5px;color:var(--tx2);background:rgba(255,255,255,.026);border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:3px 6px;line-height:1;}
 .top-progress-name{font-family:'Barlow Condensed',sans-serif;font-size:17px;letter-spacing:.8px;color:var(--tx);line-height:1.05;overflow-wrap:anywhere;}
-.top-progress-meta{font-family:'DM Mono',monospace;font-size:9px;color:var(--mu);margin-top:3px;line-height:1.4;}
+.top-progress-meta{font-family:'DM Mono',monospace;font-size:9.5px;color:var(--tx2);margin-top:3px;line-height:1.4;}
 .top-progress-delta{font-family:'Barlow Condensed',sans-serif;font-size:24px;letter-spacing:1px;color:var(--ok);white-space:nowrap;}
-.top-progress-empty{font-family:'DM Mono',monospace;font-size:9.5px;color:var(--mu);padding:13px 0 2px;text-align:center;}
+.top-progress-empty{font-family:'DM Mono',monospace;font-size:10px;color:var(--tx2);padding:12px 8px 3px;text-align:center;line-height:1.45;}
 .coach-insight-card{
-  background:linear-gradient(180deg,rgba(200,255,0,.018),var(--sur));
-  border:1px solid rgba(255,255,255,.075);border-radius:var(--r);padding:11px;margin-bottom:11px;
+  background:linear-gradient(180deg,rgba(255,255,255,.018),var(--sur));
+  border:1px solid rgba(255,255,255,.07);border-radius:var(--r);padding:10px 11px;margin-bottom:9px;
 }
 .coach-insight-list{display:flex;gap:7px;flex-wrap:wrap;}
 .coach-insight-chip{
   display:flex;align-items:center;gap:6px;min-width:0;
   background:rgba(255,255,255,.022);border:1px solid rgba(255,255,255,.075);border-radius:999px;
-  padding:6px 9px;font-family:'DM Mono',monospace;font-size:9px;line-height:1.35;color:var(--tx2);
+  padding:6px 9px;font-family:'DM Mono',monospace;font-size:9.5px;line-height:1.35;color:var(--tx2);
 }
 .coach-insight-chip.good{border-color:rgba(0,230,118,.22);}
-.coach-insight-chip.watch{border-color:rgba(255,214,0,.14);}
+.coach-insight-chip.watch{border-color:rgba(255,214,0,.3);background:rgba(255,214,0,.04);color:var(--tx);}
 .coach-insight-chip.load{border-color:rgba(200,255,0,.18);}
 .coach-insight-dot{width:6px;height:6px;border-radius:50%;background:var(--acc);flex:0 0 auto;}
 .coach-insight-chip.good .coach-insight-dot{background:var(--ok);}
-.coach-insight-chip.watch .coach-insight-dot{background:var(--mu);}
+.coach-insight-chip.watch .coach-insight-dot{background:var(--warn);}
 .progress-timeline-card{
   background:linear-gradient(180deg,rgba(255,255,255,.018),var(--sur));
-  border:1px solid rgba(255,255,255,.075);border-radius:var(--r);padding:11px 12px;margin-bottom:11px;
+  border:1px solid rgba(255,255,255,.07);border-radius:var(--r);padding:10px 12px;margin-bottom:9px;
 }
 .progress-timeline-list{display:grid;gap:0;}
-.progress-timeline-row{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;padding:6px 0;border-top:1px solid rgba(255,255,255,.065);}
+.progress-timeline-row{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;padding:5px 0;border-top:1px solid rgba(255,255,255,.06);}
 .progress-timeline-row:first-child{border-top:0;}
 .progress-timeline-dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px rgba(0,230,118,.075);}
 .progress-timeline-dot.watch{background:var(--mu);box-shadow:0 0 0 3px rgba(255,255,255,.05);}
 .progress-timeline-dot.best{background:var(--acc);box-shadow:0 0 0 3px rgba(200,255,0,.065);}
 .progress-timeline-main{min-width:0;}
-.progress-timeline-date{font-family:'DM Mono',monospace;font-size:8px;color:var(--mu);letter-spacing:.6px;text-transform:uppercase;}
+.progress-timeline-date{font-family:'DM Mono',monospace;font-size:8.5px;color:var(--tx2);letter-spacing:.6px;text-transform:uppercase;}
 .progress-timeline-name{font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:.5px;color:var(--tx);line-height:1.05;overflow-wrap:anywhere;}
 .progress-timeline-delta{font-family:'DM Mono',monospace;font-size:10px;color:var(--ok);font-weight:700;white-space:nowrap;}
-.progress-timeline-delta.watch{color:var(--mu);}
+.progress-timeline-delta.watch{color:var(--warn);}
 .progress-timeline-delta.best{color:var(--acc);}
 .prog-vol-bar-wrap{margin:8px 0;}
 .prog-vol-bar-hd{display:flex;justify-content:space-between;margin-bottom:5px;}
@@ -897,10 +911,10 @@ main{padding:14px;max-width:860px;}
 .bw-wrap-hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
 .bw-wrap-val{font-family:'Barlow Condensed',sans-serif;font-size:22px;color:var(--acc3);}
 .bw-wrap-trend{font-family:'DM Mono',monospace;font-size:9px;}
-.vol-total-wrap{background:rgba(255,255,255,.024);border:1px solid rgba(255,255,255,.075);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;border-radius:var(--r);}
-.vol-total-lbl{font-family:'DM Mono',monospace;font-size:8.5px;color:var(--mu);text-transform:uppercase;letter-spacing:1.4px;}
-.vol-total-val{font-family:'Barlow Condensed',sans-serif;font-size:26px;color:var(--acc);}
-.vol-total-unit{font-size:14px;color:var(--mu);}
+.vol-total-wrap{background:rgba(255,255,255,.022);border:1px solid rgba(255,255,255,.075);padding:10px 12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;border-radius:var(--r);}
+.vol-total-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--tx2);text-transform:uppercase;letter-spacing:1.1px;}
+.vol-total-val{font-family:'Barlow Condensed',sans-serif;font-size:24px;color:var(--acc);}
+.vol-total-unit{font-size:13px;color:var(--tx2);}
 .hist-no-data{color:var(--mu);padding:12px 0;font-size:11px;}
 .ki-empty{font-family:'DM Mono',monospace;font-size:9.5px;color:var(--mu);text-align:center;padding:20px 0;}
 .pr-count-badge{color:var(--acc);font-weight:700;}
@@ -911,8 +925,8 @@ main{padding:14px;max-width:860px;}
 .muscle-bars-hd{margin-bottom:8px;}
 .pr-list-wrap{margin-bottom:10px;}
 /* MUSCLE HEATMAP */
-.mheat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:8px;}
-.mheat-card{background:linear-gradient(180deg,rgba(255,255,255,.018),var(--sur));border:1px solid rgba(255,255,255,.075);border-radius:var(--r);padding:13px 14px;position:relative;overflow:hidden;transition:border-color .2s,background .2s;min-width:0;}
+.mheat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:9px;margin-top:8px;}
+.mheat-card{background:linear-gradient(180deg,rgba(255,255,255,.016),var(--sur));border:1px solid rgba(255,255,255,.07);border-radius:var(--r);padding:11px 12px;position:relative;overflow:hidden;transition:border-color .2s,background .2s;min-width:0;}
 .mheat-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--tx2);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;line-height:1.35;overflow-wrap:anywhere;}
 .mheat-bar{height:4px;background:var(--bor);border-radius:2px;margin-bottom:5px;overflow:hidden;}
 .mheat-fill{height:100%;border-radius:2px;transition:width .6s cubic-bezier(.4,0,.2,1);}
@@ -970,7 +984,7 @@ main{padding:14px;max-width:860px;}
   .sbox{padding:7px 8px;min-width:72px;}
   .notes{height:40px;font-size:11px;}
   .done-btn{padding:10px 12px;margin-top:6px;}
-  .weekly-overview{padding:15px;margin-bottom:15px;}
+  .weekly-overview{padding:14px;margin-bottom:12px;}
   .pr-insight{padding:11px 12px;margin-bottom:12px;}
   .weekly-grid,.pr-insight-grid{grid-template-columns:1fr;gap:9px;}
   .weekly-primary,.pr-primary{font-size:28px;}
@@ -993,25 +1007,25 @@ main{padding:14px;max-width:860px;}
   .pr-edit-row{flex-wrap:wrap;gap:6px;opacity:.62;}
   .pr-override-label{width:100%;margin-right:0;}
   .pr-edit-inp{width:68px;}
-  .prog-tab-section{margin-bottom:26px;}
-  .prog-section-hd{flex-wrap:wrap;align-items:flex-start;line-height:1.35;font-size:9.5px;}
+  .prog-tab-section{margin-bottom:22px;}
+  .prog-section-hd{flex-wrap:wrap;align-items:flex-start;line-height:1.35;font-size:9.5px;margin-bottom:9px;}
   .prog-ex-select{width:100%;max-width:none;}
-  .prog-chart-wrap{padding:14px;margin-bottom:12px;}
-  .prog-stat-grid,.mheat-grid{grid-template-columns:1fr;gap:10px;}
-  .prog-stat-card,.mheat-card{padding:14px;}
-  .prog-stat-val{font-size:30px;}
-  .top-progress-card{padding:11px;margin-bottom:11px;}
+  .prog-chart-wrap{padding:12px;margin-bottom:10px;}
+  .prog-stat-grid,.mheat-grid{grid-template-columns:1fr;gap:8px;}
+  .prog-stat-card,.mheat-card{padding:12px;}
+  .prog-stat-val{font-size:28px;}
+  .top-progress-card{padding:11px;margin-bottom:9px;}
   .top-progress-title{font-size:19px;}
   .top-progress-row{grid-template-columns:auto minmax(0,1fr) auto;padding:7px 0;}
   .top-progress-name{font-size:16px;}
   .top-progress-delta{font-size:22px;}
-  .coach-insight-card{padding:11px;margin-bottom:11px;}
+  .coach-insight-card{padding:10px;margin-bottom:9px;}
   .coach-insight-list{display:grid;gap:7px;}
   .coach-insight-chip{border-radius:8px;padding:7px 8px;}
   .setup-diag-grid{grid-template-columns:1fr;gap:7px;}
   .data-quality-head{align-items:flex-start;}
-  .progress-timeline-card{padding:11px;margin-bottom:11px;}
-  .progress-timeline-row{grid-template-columns:auto minmax(0,1fr) auto;gap:7px;padding:7px 0;}
+  .progress-timeline-card{padding:10px 11px;margin-bottom:9px;}
+  .progress-timeline-row{grid-template-columns:auto minmax(0,1fr) auto;gap:7px;padding:6px 0;}
   .progress-timeline-name{font-size:15px;}
   .progress-timeline-delta{font-size:9.5px;}
   .prog-chart-sub{font-size:9.5px;line-height:1.45;margin-bottom:12px;}
@@ -1020,8 +1034,8 @@ main{padding:14px;max-width:860px;}
   .mheat-disbalance{font-size:10px;line-height:1.45;}
 }
 .mheat-val{font-family:'Barlow Condensed',sans-serif;font-size:24px;letter-spacing:1px;line-height:1;}
-.mheat-sub{font-family:'DM Mono',monospace;font-size:9.5px;color:var(--mu);margin-top:5px;line-height:1.35;}
-.mheat-disbalance{background:rgba(255,61,0,.07);border:1px solid rgba(255,61,0,.2);border-radius:var(--r);padding:8px 12px;margin-top:8px;font-family:'DM Mono',monospace;font-size:9.5px;color:#ff8f70;display:none;}
+.mheat-sub{font-family:'DM Mono',monospace;font-size:9.5px;color:var(--tx2);margin-top:5px;line-height:1.35;}
+.mheat-disbalance{background:rgba(255,61,0,.09);border:1px solid rgba(255,61,0,.32);border-radius:var(--r);padding:9px 12px;margin-top:8px;font-family:'DM Mono',monospace;font-size:10px;color:#ffb199;display:none;line-height:1.45;}
 .mheat-disbalance.show{display:block;}
 </style>
 </head>
@@ -1209,7 +1223,7 @@ main{padding:14px;max-width:860px;}
   <div class="prog-tab-section">
     <div class="prog-section-hd"><span>Volumen / Muskelgruppe</span><span id="progVolLabel" class="vol-label-sm"></span></div>
     <div class="prog-chart-wrap" id="progVolWrap">
-      <div class="prog-no-data">Noch keine Trainingsdaten</div>
+      <div class="prog-no-data">Noch keine Volumendaten für diesen Zyklus</div>
     </div>
   </div>
 
@@ -1225,7 +1239,7 @@ main{padding:14px;max-width:860px;}
   <div class="prog-tab-section">
     <div class="prog-section-hd"><span>Muskelgruppen-Balance</span><span class="prog-section-meta">Letzte 7 Tage</span></div>
     <div id="muscleHeatWrap">
-      <div class="prog-no-data">Noch keine Daten der letzten 7 Tage</div>
+      <div class="prog-no-data">Noch keine Muskelgruppen-Daten der letzten 7 Tage</div>
     </div>
     <div class="mheat-disbalance" id="mheatDisbalance"></div>
   </div>
@@ -4639,7 +4653,8 @@ function buildWeeklyOverviewHtml(){
     if(!v)return'';
     return '<div class="balance-row"><span>'+mName+' · '+rateMuscleVolume(v,s.total,maxVolV127)+'</span><span>'+Math.round(v).toLocaleString('de-DE')+' kg</span></div>';
   }).join('');
-  return '<div class="weekly-overview">'
+  const weeklyToneV127=(performanceClsV127==='warning'||deloadClsV127==='warning')?'warning':((performanceClsV127==='watch'||recoveryClsV127==='watch'||volClsV127==='watch'||deloadClsV127==='watch')?'watch':'good');
+  return '<div class="weekly-overview '+weeklyToneV127+'">'
     +'<div class="weekly-primary">'+performanceV127+'</div>'
     +'<div class="weekly-sub">'+lineV127+'</div>'
     +'<div class="weekly-grid">'
@@ -4769,7 +4784,7 @@ function renderMuscleHeatmap(){
 
   const entries=Object.entries(muscleVol).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
   if(!entries.length){
-    wrap.innerHTML='<div class="prog-no-data">Noch keine Daten der letzten 7 Tage</div>';
+    wrap.innerHTML='<div class="prog-no-data">Noch keine Muskelgruppen-Daten der letzten 7 Tage</div>';
     if(disEl)disEl.classList.remove('show');
     return;
   }
@@ -4851,7 +4866,7 @@ function renderProgressChart(){
   const statGrid=document.getElementById('progStatGrid');
 
   if(pts.length===0){
-    wrap.innerHTML='<div class="prog-chart-title">'+exName+'</div><div class="prog-no-data">Noch keine Daten für diese Übung</div>';
+    wrap.innerHTML='<div class="prog-chart-title">'+exName+'</div><div class="prog-no-data">Noch keine verwertbaren 1RM-Daten für diese Übung</div>';
     statGrid.innerHTML='';
     return;
   }
@@ -4918,9 +4933,9 @@ function renderProgressChart(){
   // Stats
   const rec=getRecord(exName);
   statGrid.innerHTML=
-    '<div class="prog-stat-card"><div class="prog-stat-key">Aktuell</div><div class="prog-stat-val">'+latest+'</div><div class="prog-stat-diff prog-stat-diff-mu">kg 1RM</div></div>'
-    +'<div class="prog-stat-card"><div class="prog-stat-key">Bestleistung</div><div class="prog-stat-val prog-stat-val-warn">'+(rec?rec.orm:'—')+'</div><div class="prog-stat-diff prog-stat-diff-mu">kg 1RM</div></div>'
-    +'<div class="prog-stat-card"><div class="prog-stat-key">Gesamt</div><div class="prog-stat-val" style="color:'+diffColor+'">'+(totalDiff>0?'+':'')+totalDiff+'</div><div class="prog-stat-diff" style="color:'+diffColor+'">'+(diffClass==='up'?'↑ Aufwärtstrend':diffClass==='down'?'↓ Abwärtstrend':'► Stagnation')+'</div></div>';
+    '<div class="prog-stat-card primary"><div class="prog-stat-key">Aktuell</div><div class="prog-stat-val">'+latest+'</div><div class="prog-stat-diff prog-stat-diff-mu">kg 1RM</div></div>'
+    +'<div class="prog-stat-card"><div class="prog-stat-key">Bestleistung</div><div class="prog-stat-val prog-stat-val-warn">'+(rec?rec.orm:'Noch keine Daten')+'</div><div class="prog-stat-diff prog-stat-diff-mu">'+(rec?'kg 1RM':'manueller PR fehlt')+'</div></div>'
+    +'<div class="prog-stat-card trend-'+diffClass+'"><div class="prog-stat-key">Trend</div><div class="prog-stat-val" style="color:'+diffColor+'">'+(totalDiff>0?'+':'')+totalDiff+'</div><div class="prog-stat-diff" style="color:'+diffColor+'">'+(diffClass==='up'?'↑ Aufwärtstrend':diffClass==='down'?'↓ Abwärtstrend':'► Stabil')+'</div></div>';
 }
 
 function renderVolChart(){
@@ -4930,7 +4945,7 @@ function renderVolChart(){
 
   // Nicht-Deload-Wochen sammeln
   const workWeeks=PLAN[C].weeks.map((week,w)=>({week,w})).filter(({week})=>!week.isDeload);
-  if(!workWeeks.length){wrap.innerHTML='<div class="prog-no-data">Keine Trainingsdaten</div>';return;}
+  if(!workWeeks.length){wrap.innerHTML='<div class="prog-no-data">Noch keine Volumendaten für diesen Zyklus</div>';return;}
 
   // Pro Woche: Gesamt-Volumen + Volumen pro Muskelgruppe
   const weekData=workWeeks.map(({week,w})=>{
@@ -4952,7 +4967,7 @@ function renderVolChart(){
   });
 
   const hasData=weekData.some(d=>d.total>0);
-  if(!hasData){wrap.innerHTML='<div class="prog-no-data">Noch keine Trainingsdaten in Z'+(C+1)+'</div>';return;}
+  if(!hasData){wrap.innerHTML='<div class="prog-no-data">Noch keine Volumendaten in Z'+(C+1)+'</div>';return;}
 
   const maxTotal=Math.max(...weekData.map(d=>d.total))||1;
   const colors=['var(--acc)','var(--acc3)','var(--ok)','var(--warn)'];
@@ -5554,7 +5569,7 @@ function renderCoachInsightsCard(){
     ? '<div class="coach-insight-list">'+insights.map(item=>
         '<div class="coach-insight-chip '+item.type+'"><span class="coach-insight-dot"></span><span>'+item.text+'</span></div>'
       ).join('')+'</div>'
-    : '<div class="top-progress-empty">Noch zu wenig Daten für Hinweise.</div>';
+    : '<div class="top-progress-empty">Noch zu wenig Verlauf für belastbare Hinweise.</div>';
   wrap.innerHTML='<div class="coach-insight-card">'
     +'<div class="top-progress-hd"><div><div class="top-progress-title">Coach-Hinweise</div><div class="top-progress-sub">Lokale Trends, vorsichtig eingeordnet</div></div></div>'
     +rows
@@ -5573,7 +5588,7 @@ function renderTopProgressCard(){
         +'<div class="top-progress-delta">+'+item.delta+' kg</div>'
         +'</div>'
       ).join('')+'</div>'
-    : '<div class="top-progress-empty">Noch zu wenig Verlauf.</div>';
+    : '<div class="top-progress-empty">Noch zu wenig Verlauf für Top-Fortschritte.</div>';
   wrap.innerHTML='<div class="top-progress-card">'
     +'<div class="top-progress-hd"><div><div class="top-progress-title">Top Fortschritt</div><div class="top-progress-sub">Trainingstrend aus den letzten Einheiten</div></div></div>'
     +rows
@@ -5613,7 +5628,7 @@ function renderProgressTimelineCard(){
         +'<div class="progress-timeline-delta">+'+item.delta+' kg</div>'
         +'</div>'
       ).join('')+'</div>'
-    : '<div class="top-progress-empty">Noch keine Fortschritte erkannt.</div>';
+    : '<div class="top-progress-empty">Noch keine klaren Fortschritte in der lokalen Historie.</div>';
   wrap.innerHTML='<div class="progress-timeline-card">'
     +'<div class="top-progress-hd"><div><div class="top-progress-title">Letzte Fortschritte</div><div class="top-progress-sub">Positive Trainingstrends aus der lokalen Historie</div></div></div>'
     +rows
