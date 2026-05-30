@@ -2,6 +2,13 @@
 
 Status: Testversion, nicht Stable, nicht deployt.
 
+## V12.8.7-test
+
+- Optionales Geraete-/Maschinenprofil pro Uebung lokal ergaenzt.
+- Kompaktes Auswahlfeld im Training-Reiter mit Standardwert `Standard`.
+- Dezenter Hinweis bei anderem Geraet als im letzten lokalen Training.
+- Keine Sheet-, Sync-, PR-, Stats-, Bestleistungen- oder Apps-Script-Logik geaendert.
+
 ## Geaendert
 
 - Neue Testdatei auf Basis von V12.7 erstellt: `plateau-brecher-v12_8-test.html`.

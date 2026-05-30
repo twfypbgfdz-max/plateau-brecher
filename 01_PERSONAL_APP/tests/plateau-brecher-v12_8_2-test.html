@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#080808">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PB V12.8.6-test">
-<title>Plateau-Brecher V12.8.6-test</title>
+<meta name="apple-mobile-web-app-title" content="PB V12.8.7-test">
+<title>Plateau-Brecher V12.8.7-test</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -356,6 +356,11 @@ main{padding:14px;max-width:860px;}
 .notes{width:100%;background:rgba(255,255,255,.024);border:1px solid rgba(255,255,255,.075);color:var(--tx);font-family:'DM Mono',monospace;font-size:12px;padding:9px 10px;resize:none;height:42px;outline:none;border-radius:var(--r);transition:border-color .15s,background .15s;}
 .notes:focus{border-color:var(--bor2);background:var(--sur2);}
 .notes::placeholder{color:var(--mu);}
+.machine-row{display:flex;align-items:center;gap:8px;margin:7px 0 6px;flex-wrap:wrap;}
+.machine-lbl{font-family:'DM Mono',monospace;font-size:8.5px;color:var(--mu);letter-spacing:.8px;text-transform:uppercase;white-space:nowrap;}
+.machine-select{background:rgba(255,255,255,.024);border:1px solid rgba(255,255,255,.08);color:var(--tx2);font-family:'DM Mono',monospace;font-size:10px;padding:8px 10px;min-height:36px;flex:1;min-width:150px;outline:none;border-radius:var(--r);transition:border-color .15s,background .15s,color .15s;}
+.machine-select:focus{border-color:var(--bor2);background:var(--sur2);color:var(--tx);}
+.machine-warning{font-family:'DM Mono',monospace;font-size:8.5px;line-height:1.45;color:var(--warn);background:rgba(255,171,0,.045);border:1px solid rgba(255,171,0,.13);border-radius:var(--r);padding:7px 9px;margin:-1px 0 7px;}
 
 .done-btn{
   background:rgba(255,255,255,.018);border:1px solid rgba(255,255,255,.08);color:var(--tx2);
@@ -1036,6 +1041,8 @@ main{padding:14px;max-width:860px;}
   .coach-insight-card{padding:10px;margin-bottom:9px;}
   .coach-insight-list{display:grid;gap:7px;}
   .coach-insight-chip{border-radius:8px;padding:7px 8px;}
+  .machine-row{gap:6px;}
+  .machine-select{width:100%;min-width:0;flex-basis:100%;}
   .setup-details-summary{align-items:flex-start;padding:10px 11px;}
   .setup-details-body{padding:0 9px 9px;}
   .setup-details .setup-action-row{display:grid;grid-template-columns:1fr;gap:6px;}
@@ -1069,14 +1076,14 @@ main{padding:14px;max-width:860px;}
 <body>
 <div class="consent-overlay" id="consentOverlay">
   <div class="consent-box">
-    <h2 class="splash-h2">SYSTEM-START V12.8.6-test</h2>
+    <h2 class="splash-h2">SYSTEM-START V12.8.7-test</h2>
     <p class="splash-p">Daten werden lokal gespeichert und via API synchronisiert. Fehler-Logging ist aktiv.</p>
     <button class="save-btn" onclick="acceptConsent()">Akzeptieren &amp; Starten</button>
   </div>
 </div>
 <header>
   <div>
-    <div class="logo">PB<span class="splash-logo-ver"> V12.8.6-test</span></div>
+    <div class="logo">PB<span class="splash-logo-ver"> V12.8.7-test</span></div>
     <span class="hbadge" id="todayBadge">Lädt…</span>
     <div class="splash-build">Build: <span id="buildDateTxt"></span></div>
   </div>
@@ -1139,7 +1146,7 @@ main{padding:14px;max-width:860px;}
     <div class="step-desc">Nur ändern, wenn <b>SCRIPT_CODE</b> aktualisiert wurde. App-Testversionen brauchen nicht automatisch ein neues Apps-Script-Deployment.</div>
     <div class="setup-mini-grid">
       <div class="setup-mini-card"><b>Aktuelle Script-Basis:</b><br>V11.9.1</div>
-      <div class="setup-mini-card"><b>App-Version:</b><br>V12.8.6-test</div>
+      <div class="setup-mini-card"><b>App-Version:</b><br>V12.8.7-test</div>
     </div>
     <div class="setup-note"><strong>Hinweis:</strong> Wenn die Sheet-Verbindung bereits funktioniert, muss dieser Code für diese Testversion normalerweise nicht neu deployed werden.</div>
     <div class="code-box" id="scriptCodeBox">Lädt…</div>
@@ -1607,9 +1614,14 @@ const PLAN = [
 // STORAGE
 // ============================================================
 const SK='pb_v12_0_test';
-const APP_VERSION='V12.8.6-test';
-const BUILD_DATE='28.05.2026';
+const APP_VERSION='V12.8.7-test';
+const BUILD_DATE='30.05.2026';
 /*
+CHANGELOG V12.8.7-test
+- Lokales optionales Geraete-/Maschinenprofil pro Uebung ergaenzt.
+- Kompakte Auswahl im Training-Reiter mit dezentem Hinweis bei anderem Vorgeraet.
+- Keine Sheet-, Sync-, PR-, Stats-, Bestleistungen- oder Apps-Script-Logik geaendert.
+
 CHANGELOG V12.8.6-test
 - Weitere Lesbarkeitsrunde für Meta-Texte, Chips, Timeline-Daten und mobile Kleinschrift.
 - Ruhigere Card-/Border-Sprache in Training, Stats, Setup, Verlauf und Heatmap.
@@ -1701,7 +1713,20 @@ if(Object.keys(store).length===0){try{const old=JSON.parse(localStorage.getItem(
 
 function persist(){try{localStorage.setItem(SK,JSON.stringify(store));}catch(e){}}
 function saveStore(){persist();}
-function getD(c,w,d,e){const k=c+'_'+w+'_'+d+'_'+e;if(!store[k])store[k]={g1:'',r1:'',g2:'',r2:'',g3:'',r3:'',notes:'',done:false};return store[k];}
+const MACHINE_OPTIONS=['Standard','Life Fitness','Cybex','Technogym','Hammer Strength','Gym80','Nautilus','Matrix','Sonstige'];
+function getMachineValue(data){return String(data?.machine||'Standard').trim()||'Standard';}
+function renderMachineOptions(current){
+  const selected=getMachineValue({machine:current});
+  return MACHINE_OPTIONS.map(opt=>'<option value="'+sanitize(opt)+'"'+(opt===selected?' selected':'')+'>'+sanitize(opt)+'</option>').join('');
+}
+function buildMachineWarning(current,prevData){
+  if(!prevData)return '';
+  const curr=getMachineValue({machine:current});
+  const prev=getMachineValue(prevData);
+  if(curr===prev)return '';
+  return '<div class="machine-warning">Anderes Ger&auml;t als beim letzten Training &ndash; Vergleich eingeschr&auml;nkt.</div>';
+}
+function getD(c,w,d,e){const k=c+'_'+w+'_'+d+'_'+e;if(!store[k])store[k]={g1:'',r1:'',g2:'',r2:'',g3:'',r3:'',notes:'',done:false,machine:'Standard'};return store[k];}
 function getRecord(n){return store['rec_'+n]||null;}
 function getBestSetFromTrainingData(d){
   let best=null;
@@ -3313,6 +3338,10 @@ function renderWorkout(){
       ? '<div class="prev-session-line">Letztes Mal: <b>'+prevData.g1+' kg × '+prevData.r1+'</b>'+(prevOrm?' · 1RM '+prevOrm+' kg':'')+'<button class="quick-apply-btn" onclick="event.stopPropagation();applyPreviousSet('+i+')">Wie letztes Mal</button></div>'
       : '';
 
+    const machineValue=getMachineValue(d);
+    const machineRow='<div class="machine-row"><span class="machine-lbl">Ger&auml;t</span><select class="machine-select" onchange="upd('+i+',\'machine\',this.value)">'+renderMachineOptions(machineValue)+'</select></div>';
+    const machineWarning=buildMachineWarning(machineValue,prevData);
+
     // Progressionspfeil — nur wenn aktuelle Session Daten hat UND Vorwoche vorhanden
     let progArrow='',progClass='flat',progDiff='';
     if(orm&&prevOrm&&d.g1){
@@ -3401,6 +3430,8 @@ function renderWorkout(){
       +loadSuggest
       +coachRecHtml
       +prevSetLine
+      +machineRow
+      +machineWarning
       +focusBar
       +setProgressLine
       +'<div class="sets-grid">'
