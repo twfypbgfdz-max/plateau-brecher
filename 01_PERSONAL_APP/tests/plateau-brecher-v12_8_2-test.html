@@ -555,6 +555,15 @@ main{padding:14px;max-width:860px;}
 .setup-action-label{font-family:'DM Mono',monospace;font-size:8.5px;color:var(--mu);letter-spacing:.9px;margin-bottom:7px;text-transform:uppercase;}
 .setup-action-row{display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
 .setup-inline-note{font-family:'DM Mono',monospace;font-size:8.5px;color:var(--mu);line-height:1.5;margin-top:7px;}
+.setup-details{border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.014);border-radius:var(--r);margin-top:10px;overflow:hidden;}
+.setup-details[open]{background:rgba(255,255,255,.02);}
+.setup-details-summary{list-style:none;cursor:pointer;padding:11px 12px;font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:.9px;color:var(--tx);display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.setup-details-summary::-webkit-details-marker{display:none;}
+.setup-details-summary::after{content:'+';font-family:'DM Mono',monospace;font-size:13px;color:var(--mu);line-height:1;}
+.setup-details[open]>.setup-details-summary::after{content:'-';}
+.setup-details-sub{font-family:'DM Mono',monospace;font-size:8.5px;color:var(--mu);letter-spacing:.5px;text-transform:uppercase;}
+.setup-details-body{border-top:1px solid rgba(255,255,255,.06);padding:0 10px 10px;}
+.setup-details-body .setup-action-group:first-child{border-top:0;margin-top:0;}
 .update-status{display:none;margin-top:7px;background:rgba(255,255,255,.018);border:1px solid rgba(255,255,255,.075);border-radius:var(--r);padding:8px 10px;font-family:'DM Mono',monospace;font-size:9px;line-height:1.5;color:var(--tx2);}
 .update-status.vis{display:block;}
 .update-status.loading{border-color:rgba(255,214,0,.18);color:var(--tx2);}
@@ -1027,6 +1036,10 @@ main{padding:14px;max-width:860px;}
   .coach-insight-card{padding:10px;margin-bottom:9px;}
   .coach-insight-list{display:grid;gap:7px;}
   .coach-insight-chip{border-radius:8px;padding:7px 8px;}
+  .setup-details-summary{align-items:flex-start;padding:10px 11px;}
+  .setup-details-body{padding:0 9px 9px;}
+  .setup-details .setup-action-row{display:grid;grid-template-columns:1fr;gap:6px;}
+  .setup-details .test-btn{width:100%;margin-top:0;}
   .setup-diag-grid{grid-template-columns:1fr;gap:7px;}
   .data-quality-head{align-items:flex-start;}
   .progress-timeline-card{padding:10px 11px;margin-bottom:9px;}
@@ -1157,35 +1170,51 @@ main{padding:14px;max-width:860px;}
   <!-- Daten & Log -->
   <div class="setup-step">
     <div class="step-num">6</div><div class="step-title">Daten & Log</div>
-    <div class="setup-action-group">
-      <div class="setup-action-label">Backup</div>
-      <div class="setup-action-row">
-        <button class="test-btn" onclick="exportBackup()">💾 Backup exportieren (JSON)</button>
-        <input type="file" id="importFile" class="import-file" onchange="handleImport(this)">
-        <button class="test-btn" onclick="document.getElementById('importFile').click()">📥 Backup importieren</button>
-        <button class="test-btn" id="restoreSnapshotBtn" onclick="restoreImportSnapshot()" style="display:none;">↩ Snapshot wiederherstellen</button>
+    <details class="setup-details">
+      <summary class="setup-details-summary">
+        <span>Backup / Restore / Wartung</span>
+        <span class="setup-details-sub">lokale Daten</span>
+      </summary>
+      <div class="setup-details-body">
+        <div class="setup-action-group">
+          <div class="setup-action-label">Backup</div>
+          <div class="setup-action-row">
+            <button class="test-btn" onclick="exportBackup()">💾 Backup exportieren (JSON)</button>
+            <input type="file" id="importFile" class="import-file" onchange="handleImport(this)">
+            <button class="test-btn" onclick="document.getElementById('importFile').click()">📥 Backup importieren</button>
+            <button class="test-btn" id="restoreSnapshotBtn" onclick="restoreImportSnapshot()" style="display:none;">↩ Snapshot wiederherstellen</button>
+          </div>
+        </div>
+        <div class="danger-zone">
+          <div class="setup-action-label">Gefahrenzone</div>
+          <div class="step-desc step-desc-mb">Löscht lokale Trainingsdaten auf diesem Gerät. Vorher Backup exportieren.</div>
+          <button class="test-btn btn-danger" onclick="if(this.dataset.confirm){wipeAllData();}else{this.textContent='⚠ Nochmal tippen zum Bestätigen';this.dataset.confirm='1';}">⚠ Alle Daten löschen</button>
+        </div>
       </div>
-    </div>
-    <div class="setup-action-group">
-      <div class="setup-action-label">Status & Update</div>
-      <div class="setup-action-row">
-        <button class="test-btn" onclick="document.getElementById('appLogBox').style.display=document.getElementById('appLogBox').style.display==='none'?'block':'none'">🔍 Live-Log anzeigen/ausblenden</button>
-        <button class="test-btn" onclick="checkForUpdate(this)">🔄 Auf Update prüfen</button>
+    </details>
+    <details class="setup-details">
+      <summary class="setup-details-summary">
+        <span>Debug / Logs</span>
+        <span class="setup-details-sub">Status & Diagnose</span>
+      </summary>
+      <div class="setup-details-body">
+        <div class="setup-action-group">
+          <div class="setup-action-label">Status & Update</div>
+          <div class="setup-action-row">
+            <button class="test-btn" onclick="document.getElementById('appLogBox').style.display=document.getElementById('appLogBox').style.display==='none'?'block':'none'">🔍 Live-Log anzeigen/ausblenden</button>
+            <button class="test-btn" onclick="checkForUpdate(this)">🔄 Auf Update prüfen</button>
+          </div>
+          <div id="updateStatus" class="update-status"></div>
+          <div class="setup-inline-note">Der Versionsstatus erscheint nach dem Check direkt hier.</div>
+        </div>
+        <div id="setupDiagnostics" class="setup-diag-card"></div>
+        <div id="dataQualityCard" class="data-quality-card"></div>
+        <div id="appLogBox" class="log-box-wrap">
+          <div class="log-box-lbl">Live-Log</div>
+          <div id="appLogContent" class="log-box-content"></div>
+        </div>
       </div>
-      <div id="updateStatus" class="update-status"></div>
-      <div class="setup-inline-note">Der Versionsstatus erscheint nach dem Check direkt hier.</div>
-    </div>
-    <div id="setupDiagnostics" class="setup-diag-card"></div>
-    <div id="dataQualityCard" class="data-quality-card"></div>
-    <div id="appLogBox" class="log-box-wrap">
-      <div class="log-box-lbl">Live-Log</div>
-      <div id="appLogContent" class="log-box-content"></div>
-    </div>
-    <div class="danger-zone">
-      <div class="setup-action-label">Gefahrenzone</div>
-      <div class="step-desc step-desc-mb">Löscht lokale Trainingsdaten auf diesem Gerät. Vorher Backup exportieren.</div>
-      <button class="test-btn btn-danger" onclick="if(this.dataset.confirm){wipeAllData();}else{this.textContent='⚠ Nochmal tippen zum Bestätigen';this.dataset.confirm='1';}">⚠ Alle Daten löschen</button>
-    </div>
+    </details>
   </div>
 </div>
 
