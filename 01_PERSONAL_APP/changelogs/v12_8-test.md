@@ -2,6 +2,22 @@
 
 Status: Testversion, nicht Stable, nicht deployt.
 
+## V12.8.9-test / v12_8_4
+
+- Neue Testdatei: `plateau-brecher-v12_8_4-test.html`.
+- Zyklus 2 / Woche 3 auf `08.06`, `09.06`, `10.06`, `12.06`, `13.06` korrigiert.
+- Zyklus 2 / Woche 4 auf `15.06`, `16.06`, `17.06`, `19.06`, `20.06` korrigiert.
+- `PlanMaintenance.js` um Full-PLAN-Dry-Run und Blank-only-Anwendung erweitert.
+- Keine Stable-, `Code.js`-, `format.js`-, Sync-, PR- oder Bestleistungen-Logik geaendert.
+
+## V12.8.8-test / v12_8_3
+
+- Neue Testdatei: `plateau-brecher-v12_8_3-test.html`.
+- Startlogik findet bei fehlendem exaktem Tagesdatum defensiv die aktuelle Planwoche.
+- `01.06.2026` ist als Zyklus 2 / Woche 2 / TAG 1: PULL im PLAN pruefbar.
+- Separater Apps-Script-Dry-Run-Helfer `PlanMaintenance.js` fuer `ZYKLUS 2` / `Woche 2` ergaenzt.
+- Keine Stable-, `Code.js`-, Sync-, PR- oder Bestleistungen-Logik geaendert.
+
 ## V12.8.7-test
 
 - Optionales Geraete-/Maschinenprofil pro Uebung lokal ergaenzt.
