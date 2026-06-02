@@ -10,10 +10,16 @@ BUILD_DATE:
 `02.06.2026`
 
 Commit:
-Rename-Commit siehe Git-Log
+`99b2582`
 
 Status:
 Aktive Entwicklungsbasis
+
+Vorbereitete Stable:
+`00_AKTUELL/personal_latest/plateau-brecher-v12_8_11.html`
+
+Stable-Status:
+Stable vorbereitet - nicht deployt
 
 Wichtige Regel:
 Nur diese Datei weiterentwickeln.
