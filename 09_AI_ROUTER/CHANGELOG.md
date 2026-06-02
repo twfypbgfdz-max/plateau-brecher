@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.5.1-test
+
+- Neue Design-Testversion `ai-router-v0_5_1-test.html` angelegt.
+- Dunkles Dashboard-Interface mit Schwarz/Grau-Farbpalette umgesetzt.
+- Karten, Buttons, Formulare und Ergebnisbereiche visuell ueberarbeitet.
+- Vertrauen, Risiko und Lernbonus als CSS-Chips dargestellt.
+- Routing-, Lern- und Speicherlogik unveraendert gelassen.
+
 ## v0.5-test
 
 - Neue Testversion `ai-router-v0_5-test.html` angelegt.

@@ -4,12 +4,12 @@ Lokale HTML-Test-App zur einfachen Empfehlung eines passenden KI-Tools fuer eine
 
 ## Version
 
-Aktuelle Testversion: `v0.5-test`
+Aktuelle Testversion: `v0.5.1-test`
 
 ## Start lokal
 
 1. In VS Code den Ordner `09_AI_ROUTER/01_APP/tests` oeffnen oder die Datei direkt im Explorer auswaehlen.
-2. Rechtsklick auf `ai-router-v0_5-test.html`.
+2. Rechtsklick auf `ai-router-v0_5_1-test.html`.
 3. `Open with Live Server` auswaehlen.
 
 Die App benoetigt kein Backend, kein npm, keine APIs und keine externen Libraries.
@@ -54,3 +54,11 @@ Die App benoetigt kein Backend, kein npm, keine APIs und keine externen Librarie
 - Kein Lernbonus bei weniger als 3 Bewertungen
 - Transparente Lernbonus-Karte mit Bewertungen, Durchschnitt und aktivem Bonus
 - Erweiterte KI-Auswertung mit bestem Durchschnitt und meisten positiven Bewertungen
+
+## UI v0.5.1
+
+- Dunkles Dashboard-Design
+- Schwarz/Grau-Farbpalette
+- Groessere Kartenrundungen und klarere Abstaende
+- Chip-Darstellung fuer Vertrauen, Risiko und Lernbonus
+- Mobile-freundliche Controls und Buttons
