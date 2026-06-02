@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.2-test
+
+- Neue Testversion `ai-router-v0_2-test.html` angelegt.
+- Einzelempfehlung durch Top-3-KI-Ranking mit Prozentwerten ersetzt.
+- Vertrauenswert auf Basis erkannter Schluesselwoerter eingebaut.
+- Projektmodus-Dropdown fuer Allgemein, Plateau-Brecher, Kalorien-App und Social-Media-App ergaenzt.
+- Detaillierte Begruendung mit erkannten Kriterien und Workflow-Vorschlag umgesetzt.
+
 ## v0.1-test
 
 - Neues Mini-Projekt `09_AI_ROUTER` angelegt.
