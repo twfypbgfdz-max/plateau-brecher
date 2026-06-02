@@ -18,7 +18,7 @@ Fuer jede Version dokumentieren:
 
 | Version | Dateiname | Pfad | Commit | Status | Kurzbeschreibung |
 | --- | --- | --- | --- | --- | --- |
-| V12.8.11-test | plateau-brecher-v12_8_6-test.html | 01_PERSONAL_APP/tests/plateau-brecher-v12_8_6-test.html | 2399c75 | AKTIVE BASIS | Aktuelle Entwicklungsbasis aus V12.8.10-Basis; Versionsfluss bereinigt und UX-Text fuer Tageszusammenfassung uebernommen. |
+| V12.8.11-test | plateau-brecher-v12_8_11-test.html | 01_PERSONAL_APP/tests/plateau-brecher-v12_8_11-test.html | Rename-Commit siehe Git-Log | AKTIVE BASIS | Aktuelle Entwicklungsbasis aus V12.8.10-Basis; Dateiname an APP_VERSION angeglichen und UX-Text fuer Tageszusammenfassung uebernommen. |
 | V12.8.10-test | plateau-brecher-v12_8_5-test.html | 01_PERSONAL_APP/tests/plateau-brecher-v12_8_5-test.html | 4f2db32 | TESTVERSION | Fruehere echte Basis vor V12.8.11-test. |
 | V12.8.10-test | plateau-brecher-v12_8_10-test.html | 01_PERSONAL_APP/backups/plateau-brecher-v12_8_10-test.html | Unbekannt / pruefen | BACKUP | Backup-Kopie der V12.8.10-test-Basis; nicht als Arbeitsdatei verwenden. |
 | V12.8.9-test | plateau-brecher-v12_8_4-test.html | 01_PERSONAL_APP/tests/plateau-brecher-v12_8_4-test.html | ff5b25b | TESTVERSION | Aeltere Testversion; heute versehentlich mit UX-Patch geaendert, nicht weiter als aktuelle Basis verwenden. |

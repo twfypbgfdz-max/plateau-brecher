@@ -51,7 +51,7 @@ Bei jeder neuen Testversion muessen immer zusammenpassen:
 \- Changelog-Eintrag
 
 Beispiel:
-\- Datei: `01_PERSONAL_APP/tests/plateau-brecher-v12_8_6-test.html`
+\- Datei: `01_PERSONAL_APP/tests/plateau-brecher-v12_8_11-test.html`
 \- `APP_VERSION`: `V12.8.11-test`
 \- `BUILD_DATE`: aktuelles Datum
 \- Changelog: `V12.8.11-test`
