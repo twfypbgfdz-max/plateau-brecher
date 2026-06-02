@@ -42,6 +42,27 @@ Vor Änderungen immer nennen:
 
 \- Immer neue Version + Changelog erstellen.
 
+\## Versionsregeln
+
+Bei jeder neuen Testversion muessen immer zusammenpassen:
+\- Dateiname
+\- `APP_VERSION`
+\- `BUILD_DATE`
+\- Changelog-Eintrag
+
+Beispiel:
+\- Datei: `01_PERSONAL_APP/tests/plateau-brecher-v12_8_6-test.html`
+\- `APP_VERSION`: `V12.8.11-test`
+\- `BUILD_DATE`: aktuelles Datum
+\- Changelog: `V12.8.11-test`
+
+Vor jedem Commit pruefen:
+Dateiname, `APP_VERSION` und Changelog-Version muessen denselben Versionsstand haben.
+Wenn sie nicht uebereinstimmen: STOP, zuerst Versionen synchronisieren.
+
+Aktive Entwicklung findet nur unter `01_PERSONAL_APP/tests/` statt.
+Dateien in `01_PERSONAL_APP/backups/` sind nur Sicherungen und duerfen nicht als Arbeitsdatei weiterentwickelt werden.
+
 
 
 \## Nach jedem Patch berichten
