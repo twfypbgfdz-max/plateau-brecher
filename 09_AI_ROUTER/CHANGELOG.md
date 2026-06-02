@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.3-test
+
+- Neue Testversion `ai-router-v0_3-test.html` angelegt.
+- Prompt Engine fuer automatisch erzeugte, kopierbare Prompts zur Top-Empfehlung ergaenzt.
+- Arbeitsmodus-Dropdown fuer Analyse, Bugfix, Feature, Refactor, Deployment und Research eingebaut.
+- Projektregeln fuer Allgemein, Plateau-Brecher, Kalorien-App und Social-Media-App in Ergebnis und Prompt integriert.
+- Workflow-Vorschlaege nach Arbeitsmodus ergaenzt, z. B. Feature: Claude -> Codex -> ChatGPT.
+
 ## v0.2-test
 
 - Neue Testversion `ai-router-v0_2-test.html` angelegt.
