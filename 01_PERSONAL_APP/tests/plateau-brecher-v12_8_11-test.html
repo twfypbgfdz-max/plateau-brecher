@@ -2803,7 +2803,7 @@ function renderDayRow(){
   html+='</div>';
   document.getElementById('daySelRow').innerHTML=html;
 }
-function setD(i,btn){D=i;invalidateActiveSync();btn.closest('.sec').querySelectorAll('.dbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderWorkout();loadBW();if(API_URL)syncAllFromSheet();}
+function setD(i,btn){D=i;invalidateActiveSync();document.querySelectorAll('#daySelRow .dbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderWorkout();loadBW();if(API_URL)syncAllFromSheet();}
 function prevDay(){
   if(D>0){D--;}
   else if(W>0){W--;D=PLAN[C].weeks[W].days.length-1;}
