@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.5-test
+
+- Neue Testversion `ai-router-v0_5-test.html` angelegt.
+- Lernmodus-Schalter fuer optionale lokale Lernboni ergaenzt.
+- Lernbonus je KI aus gespeicherten Bewertungen berechnet und vor finaler Sortierung angewendet.
+- Bonuswirkung begrenzt auf maximal +15 Punkte und maximal 25 Prozent des bisherigen KI-Scores.
+- Lernbonus-Karte mit Bewertungen, Durchschnitt und aktivem Bonus ergaenzt.
+- KI-Auswertung um besten Durchschnitt und meiste positive Bewertungen erweitert.
+- Bestehende v0.4-`localStorage`-Daten werden weiterverwendet.
+
 ## v0.4-test
 
 - Neue Testversion `ai-router-v0_4-test.html` angelegt.
