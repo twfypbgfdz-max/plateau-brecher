@@ -380,6 +380,8 @@ main{padding:14px;max-width:860px;}
 .machine-select{background:rgba(255,255,255,.024);border:1px solid rgba(255,255,255,.08);color:var(--tx2);font-family:'DM Mono',monospace;font-size:10px;padding:8px 10px;min-height:36px;flex:1;min-width:150px;outline:none;border-radius:var(--r);transition:border-color .15s,background .15s,color .15s;}
 .machine-select:focus{border-color:var(--bor2);background:var(--sur2);color:var(--tx);}
 .machine-warning{font-family:'DM Mono',monospace;font-size:8.5px;line-height:1.45;color:var(--warn);background:rgba(255,171,0,.045);border:1px solid rgba(255,171,0,.13);border-radius:var(--r);padding:7px 9px;margin:-1px 0 7px;}
+.machine-pr-line{font-family:'DM Mono',monospace;font-size:8.5px;line-height:1.45;color:var(--tx2);background:rgba(200,255,0,.018);border:1px solid rgba(200,255,0,.09);border-radius:var(--r);padding:6px 8px;margin-bottom:6px;}
+.machine-pr-line b{color:var(--acc);font-weight:700;}
 
 .done-btn{
   background:rgba(255,255,255,.018);border:1px solid rgba(255,255,255,.08);color:var(--tx2);
@@ -1752,7 +1754,9 @@ if(Object.keys(store).length===0){try{const old=JSON.parse(localStorage.getItem(
 function persist(){try{localStorage.setItem(SK,JSON.stringify(store));}catch(e){}}
 function saveStore(){persist();}
 const MACHINE_OPTIONS=['Standard','Life Fitness','Cybex','Technogym','Hammer Strength','Gym80','Nautilus','Matrix','Sonstige'];
+function normalizeMachineValue(value){return String(value||'Standard').trim().toLowerCase()||'standard';}
 function getMachineValue(data){return String(data?.machine||'Standard').trim()||'Standard';}
+function machineMatchesEntry(data,currentMachine){return normalizeMachineValue(getMachineValue(data))===normalizeMachineValue(currentMachine);}
 function renderMachineOptions(current){
   const selected=getMachineValue({machine:current});
   return MACHINE_OPTIONS.map(opt=>'<option value="'+sanitize(opt)+'"'+(opt===selected?' selected':'')+'>'+sanitize(opt)+'</option>').join('');
@@ -1775,6 +1779,35 @@ function getBestSetFromTrainingData(d){
     const orm=g*(1+r/30);
     if(!best||orm>best.orm)best={orm:Math.round(orm),weight:g,reps:r};
   });
+  return best;
+}
+function getMachinePRFromLocalHistory(exName,machine){
+  const wanted=normExLookupName(exName);
+  if(!wanted)return null;
+  let best=null;
+  for(let c=0;c<PLAN.length;c++){
+    const weeks=PLAN[c]?.weeks||[];
+    for(let w=0;w<weeks.length;w++){
+      const week=weeks[w];
+      if(!week||week.isDeload)continue;
+      const days=week.days||[];
+      for(let d=0;d<days.length;d++){
+        const day=days[d];
+        for(let i=0;i<(day?.exercises||[]).length;i++){
+          const histName=getHistoricalExName(c,w,d,i);
+          if(normExLookupName(histName)!==wanted)continue;
+          const data=getD(c,w,d,i);
+          if(!machineMatchesEntry(data,machine))continue;
+          const set=getBestSetFromTrainingData(data);
+          const orm=calc1RM(data);
+          if(!set||!orm)continue;
+          if(!best||orm>best.orm||(orm===best.orm&&set.weight>best.weight)){
+            best={weight:set.weight,reps:set.reps,orm,date:day?.date||'',machine:getMachineValue(data)};
+          }
+        }
+      }
+    }
+  }
   return best;
 }
 function setRecord(n,o,d,w,reps,source){
@@ -2993,7 +3026,49 @@ function countFilledWorkSets(d){
   return count;
 }
 
-function getRecommendationDataBasis(exName){
+function setProgressNum(v){
+  const n=parseFloat(String(v??'').replace(',','.'));
+  return Number.isFinite(n)?n:0;
+}
+function isSetProgressFilled(d,g,r){
+  return setProgressNum(d?.[g])>0&&setProgressNum(d?.[r])>0;
+}
+function getSetProgressState(d,visibleSetCount){
+  const setPairs=[['g1','r1'],['g2','r2'],['g3','r3']].slice(0,visibleSetCount);
+  const setFilled=setPairs.map(([g,r])=>isSetProgressFilled(d,g,r));
+  const filledSets=setFilled.filter(Boolean).length;
+  const nextSetIndex=setFilled.findIndex(filled=>!filled);
+  return{setFilled,filledSets,nextSetIndex,visibleSetCount};
+}
+function updateSetProgressUI(idx){
+  const d=getD(C,W,D,idx);
+  const state=getSetProgressState(d,getVisibleSetCountForExercise(idx));
+  const nextText=state.nextSetIndex>=0?'S'+(state.nextSetIndex+1):'fertig';
+  const progress=document.getElementById('setProgressText_'+idx);
+  if(progress)progress.innerHTML=state.filledSets+'/'+state.visibleSetCount+' erledigt'+(state.nextSetIndex>=0?' &middot; N&auml;chster Satz: '+nextText:'');
+  const count=document.getElementById('setFocusCount_'+idx);
+  if(count)count.innerHTML='S&auml;tze '+state.filledSets+'/'+state.visibleSetCount;
+  const next=document.getElementById('setFocusNext_'+idx);
+  if(next)next.innerHTML='N&auml;chster Satz: '+nextText;
+  const card=document.getElementById('ec'+idx);
+  if(card){
+    card.querySelectorAll('.sets-grid .set-cell').forEach((cell,cellIdx)=>{
+      const setIdx=Math.floor(cellIdx/3);
+      cell.classList.remove('set-row-done','set-row-current','set-row-empty');
+      cell.classList.add(state.setFilled[setIdx]?'set-row-done':(setIdx===state.nextSetIndex?'set-row-current':'set-row-empty'));
+    });
+  }
+}
+function updateMachinePRUI(idx){
+  const el=document.getElementById('machinePr_'+idx);
+  if(!el)return;
+  const d=getD(C,W,D,idx);
+  const machineValue=getMachineValue(d);
+  const machinePr=getMachinePRFromLocalHistory(getExName(idx),machineValue);
+  el.outerHTML=renderMachinePRLine(machinePr,machineValue,idx);
+}
+
+function getRecommendationDataBasis(exName,machine){
   const wanted=normExLookupName(exName);
   const currentPos=getPlanDayPosition(C,W,D);
   const entries=[];
@@ -3013,6 +3088,7 @@ function getRecommendationDataBasis(exName){
         const histName=getHistoricalExName(C,w,d,i);
         if(normExLookupName(histName)!==wanted)continue;
         const data=getD(C,w,d,i);
+        if(machine!==undefined&&!machineMatchesEntry(data,machine))continue;
         const orm=calc1RM(data);
         const volume=calcTotal(data);
         if(!orm&&!volume)continue;
@@ -3028,18 +3104,19 @@ function getRecommendationDataBasis(exName){
   return{level,count:entries.length,latest};
 }
 
-function buildExerciseRecommendation(i){
+function buildExerciseRecommendation(i,machine){
   const week=PLAN[C].weeks[W],day=week.days[D];
   const exName=getExName(i);
   const d=getD(C,W,D,i);
   const orm=calc1RM(d);
   const rpe=coachNum(d.rpe);
   const reps1=coachNum(d.r1);
-  const basis=getRecommendationDataBasis(exName);
+  const currentMachine=machine!==undefined?machine:getMachineValue(d);
+  const basis=getRecommendationDataBasis(exName,currentMachine);
   const caution=getReadinessTrainingCaution(exName);
   const prevEntry=week.isDeload
-    ? (findPreviousExerciseEntry(exName,{sameCycleOnly:true})||findPreviousSheetExerciseEntry(exName))
-    : findPreviousExerciseEntry(exName,{sameCycleOnly:true});
+    ? findPreviousExerciseEntry(exName,{sameCycleOnly:true,machine:currentMachine})
+    : findPreviousExerciseEntry(exName,{sameCycleOnly:true,machine:currentMachine});
   const prevOrm=prevEntry?.orm||0;
   const prevG=prevEntry?.g1||0;
   const prevRpe=coachNum(prevEntry?.data?.rpe);
@@ -3067,7 +3144,7 @@ function buildExerciseRecommendation(i){
   }
 
   if(!d.g1&&!d.r1){
-    if(!prevEntry)return{level:'muted',text:'Wenige Vergleichsdaten vorhanden'};
+    if(!prevEntry)return{level:'muted',text:'Wenige Vergleichsdaten f&uuml;r dieses Ger&auml;t vorhanden'};
     if((caution.level==='light'||qualityDefensive)&&basis.level==='good')return{level:'muted',text:'Steigerung nur sauber bewerten'};
     if(basis.level==='good'&&prevRpe>0&&prevRpe<7)return{level:'ok',text:'+2,5 kg versuchen'};
     if(basis.level==='good')return{level:'muted',text:'gleiches Gewicht wiederholen'};
@@ -3108,7 +3185,7 @@ function buildTrainingSummary(toSend){
   let improved=0, declines=0, prs=0;
   exercises.forEach((x)=>{
     const orm=calc1RM(x.data);
-    const prev=findPreviousExerciseEntry(x.name,{sameCycleOnly:true});
+    const prev=findPreviousExerciseEntry(x.name,{sameCycleOnly:true,machine:getMachineValue(x.data)});
     const quality=prev?mergeQualityContexts(getEntryQualityContext(C,W,D,x.idx),getEntryQualityContext(prev.c,prev.w,prev.d,prev.i)):getEntryQualityContext(C,W,D,x.idx);
     if(prev?.orm&&orm){
       if(orm>prev.orm+0.5)improved++;
@@ -3313,9 +3390,20 @@ function hasExerciseSetData(d){
 function escHtml(v){
   return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 }
-function renderLastTrainingBox(prevEntry){
+function renderMachinePRLine(machinePr,machine,idx){
+  const label=escHtml(getMachineValue({machine}));
+  const id='machinePr_'+idx;
+  if(!machinePr)return '<div class="machine-pr-line" id="'+id+'">Noch kein Ger&auml;te-PR f&uuml;r '+label+'</div>';
+  return '<div class="machine-pr-line" id="'+id+'">Ger&auml;te-PR '+label+': <b>'+escHtml(machinePr.weight)+' kg &times; '+escHtml(machinePr.reps)+'</b></div>';
+}
+function renderLastTrainingBox(prevEntry,machine){
   const data=prevEntry?.data;
-  if(!data)return '';
+  if(!data){
+    return '<div class="last-training-box">'
+      +'<div class="last-training-head"><span>Letztes Mal</span><span class="last-training-date">'+escHtml(getMachineValue({machine}))+'</span></div>'
+      +'<div class="last-training-note">Keine Historie f&uuml;r dieses Ger&auml;t</div>'
+      +'</div>';
+  }
   const sets=[['g1','r1'],['g2','r2'],['g3','r3']]
     .map(([g,r],idx)=>({idx:idx+1,g:String(data[g]||'').trim(),r:String(data[r]||'').trim()}))
     .filter(s=>s.g||s.r);
@@ -3330,7 +3418,7 @@ function renderLastTrainingBox(prevEntry){
     +(note?'<div class="last-training-note"><b>Notiz:</b> '+escHtml(note)+'</div>':'')
     +'</div>';
 }
-function collectExerciseSetHistory(exName,limit=4){
+function collectExerciseSetHistory(exName,limit=4,machine){
   const wanted=normExLookupName(exName);
   const rows=[];
   if(!wanted)return rows;
@@ -3350,6 +3438,7 @@ function collectExerciseSetHistory(exName,limit=4){
           const histName=getHistoricalExName(c,w,d,i);
           if(normExLookupName(histName)!==wanted)continue;
           const data=getD(c,w,d,i);
+          if(machine!==undefined&&!machineMatchesEntry(data,machine))continue;
           if(!data||(!data.g1&&!data.r1))continue;
           rows.push({date:day.date||'?',data});
           break;
@@ -3359,9 +3448,14 @@ function collectExerciseSetHistory(exName,limit=4){
   }
   return rows;
 }
-function renderSetHistoryBox(exName){
-  const rows=collectExerciseSetHistory(exName,4);
-  if(!rows.length)return '';
+function renderSetHistoryBox(exName,machine){
+  const rows=collectExerciseSetHistory(exName,4,machine);
+  if(!rows.length){
+    return '<div class="set-history-box">'
+      +'<div class="set-history-title">Verlauf</div>'
+      +'<div class="set-history-list"><div class="set-history-main">Keine Verlaufseintr&auml;ge f&uuml;r dieses Ger&auml;t</div></div>'
+      +'</div>';
+  }
   return '<div class="set-history-box">'
     +'<div class="set-history-title">Verlauf</div>'
     +'<div class="set-history-list">'
@@ -3394,7 +3488,7 @@ function renderWorkout(){
   if(week.isDeload){
     day.exercises.forEach((ex,i)=>{
       const exName=getExName(i);
-      const prevEntry=findPreviousExerciseEntry(exName,{sameCycleOnly:true})||findPreviousSheetExerciseEntry(exName);
+      const prevEntry=findPreviousExerciseEntry(exName,{sameCycleOnly:true,machine:getMachineValue(getD(C,W,D,i))});
       const prevG=prevEntry?.g1||null;
       if(prevG){const kg=Math.round(prevG*0.6*2)/2;deloadHints.push(exName.split('(')[0].trim()+': '+kg+'kg');}
     });
@@ -3460,23 +3554,24 @@ function renderWorkout(){
     const exName=getExName(i);
     const rec=getRecord(exName);
     const isPR=orm&&rec&&orm>rec.orm;
+    const machineValue=getMachineValue(d);
 
     // Previous matching exercise data
     let prevOrm=null,prevG=null;
     const prevEntry=week.isDeload
-      ? (findPreviousExerciseEntry(exName,{sameCycleOnly:true})||findPreviousSheetExerciseEntry(exName))
-      : findPreviousExerciseEntry(exName);
+      ? findPreviousExerciseEntry(exName,{sameCycleOnly:true,machine:machineValue})
+      : findPreviousExerciseEntry(exName,{machine:machineValue});
     const prevData=prevEntry?.data||null;
     if(prevEntry){
       if(prevEntry.orm>0)prevOrm=prevEntry.orm;
       if(prevEntry.g1)prevG=prevEntry.g1;
     }
-    const lastTrainingBox=renderLastTrainingBox(prevEntry);
-    const setHistoryBox=renderSetHistoryBox(exName);
+    const lastTrainingBox=renderLastTrainingBox(prevEntry,machineValue);
+    const setHistoryBox=renderSetHistoryBox(exName,machineValue);
 
-    const machineValue=getMachineValue(d);
     const machineRow='<div class="machine-row"><span class="machine-lbl">Ger&auml;t</span><select class="machine-select" onchange="upd('+i+',\'machine\',this.value)">'+renderMachineOptions(machineValue)+'</select></div>';
     const machineWarning=buildMachineWarning(machineValue,prevData);
+    const machinePrLine=renderMachinePRLine(getMachinePRFromLocalHistory(exName,machineValue),machineValue,i);
 
     // Progressionspfeil — nur wenn aktuelle Session Daten hat UND Vorwoche vorhanden
     let progArrow='',progClass='flat',progDiff='';
@@ -3507,8 +3602,10 @@ function renderWorkout(){
       if(suggestG>0&&suggestG<500){
         loadSuggest='<div class="load-suggest">💡 Vorschlag: <b>'+suggestG+' kg</b>'+(hint?' <span class="load-hint">'+hint+'</span>':'')+'</div>';
       }
+    }else if(!week.isDeload&&!prevEntry&&!d.g1){
+      loadSuggest='<div class="load-suggest">Keine Ger&auml;tehistorie &ndash; Gewicht bewusst w&auml;hlen</div>';
     }
-    const coachRec=buildExerciseRecommendation(i);
+    const coachRec=buildExerciseRecommendation(i,machineValue);
     const coachRecHtml=coachRec&&coachRec.text
       ? '<div class="coach-rec '+(coachRec.level||'muted')+'"><b>Nächste Empfehlung:</b> '+coachRec.text+'</div>'
       : '';
@@ -3516,12 +3613,12 @@ function renderWorkout(){
     const wu=d.g1?parseFloat(d.g1):null;
     const isStag=checkStagnation(i);
     const visibleSetCount=getVisibleSetCountForExercise(i);
-    const setPairs=[['g1','r1'],['g2','r2'],['g3','r3']].slice(0,visibleSetCount);
-    const setFilled=setPairs.map(([g,r])=>!!(d[g]&&d[r]));
-    const filledSets=setFilled.filter(Boolean).length;
-    const nextSetIndex=setFilled.findIndex(filled=>!filled);
+    const setProgress=getSetProgressState(d,visibleSetCount);
+    const setFilled=setProgress.setFilled;
+    const filledSets=setProgress.filledSets;
+    const nextSetIndex=setProgress.nextSetIndex;
     const setNextText=nextSetIndex>=0?' &middot; N&auml;chster Satz: S'+(nextSetIndex+1):'';
-    const setProgressLine='<div class="set-progress-line"><span>S&auml;tze</span><b>'+filledSets+'/'+visibleSetCount+' erledigt'+setNextText+'</b></div>';
+    const setProgressLine='<div class="set-progress-line"><span>S&auml;tze</span><b id="setProgressText_'+i+'">'+filledSets+'/'+visibleSetCount+' erledigt'+setNextText+'</b></div>';
     const focusNextText=nextSetIndex>=0?'S'+(nextSetIndex+1):'fertig';
     const lastFilledIndex=setFilled.map((filled,idx)=>filled?idx:-1).filter(idx=>idx>=0).pop();
     const nextEmptyAfterFilled=lastFilledIndex>=0?setFilled.findIndex((filled,idx)=>idx>lastFilledIndex&&!filled):-1;
@@ -3531,8 +3628,8 @@ function renderWorkout(){
     const focusBar='<div class="exercise-focus-bar">'
       +'<div class="exercise-focus-main">'+exName+'</div>'
       +'<div class="exercise-focus-meta">'
-      +'<span class="exercise-focus-chip">S&auml;tze '+filledSets+'/'+visibleSetCount+'</span>'
-      +'<span class="exercise-focus-chip next">N&auml;chster Satz: '+focusNextText+'</span>'
+      +'<span class="exercise-focus-chip" id="setFocusCount_'+i+'">S&auml;tze '+filledSets+'/'+visibleSetCount+'</span>'
+      +'<span class="exercise-focus-chip next" id="setFocusNext_'+i+'">N&auml;chster Satz: '+focusNextText+'</span>'
       +copySetButton
       +'<button class="hist-btn exercise-focus-chip" onclick="event.stopPropagation();showHistory('+i+')" title="Verlauf">Verlauf</button>'
       +'</div></div>';
@@ -3566,6 +3663,7 @@ function renderWorkout(){
       +'</div></div>'
       +loadSuggest
       +coachRecHtml
+      +machinePrLine
       +lastTrainingBox
       +setHistoryBox
       +machineRow
@@ -3625,9 +3723,10 @@ function toggleWarmup(i){
 function applyPreviousSet(i){
   const week=PLAN[C].weeks[W];
   const exName=getExName(i);
+  const machineValue=getMachineValue(getD(C,W,D,i));
   const prevEntry=week.isDeload
-    ? (findPreviousExerciseEntry(exName,{sameCycleOnly:true})||findPreviousSheetExerciseEntry(exName))
-    : findPreviousExerciseEntry(exName);
+    ? findPreviousExerciseEntry(exName,{sameCycleOnly:true,machine:machineValue})
+    : findPreviousExerciseEntry(exName,{machine:machineValue});
   const prevData=prevEntry?.data||null;
   if(!prevData||!prevData.g1||!prevData.r1)return;
   const d=getD(C,W,D,i);
@@ -3813,6 +3912,7 @@ function getHistoricalExName(c,w,d,idx){
 function findPreviousExerciseEntry(exName,opts={}){
   const wanted=normExLookupName(exName);
   const sameCycleOnly=!!opts.sameCycleOnly;
+  const machine=opts.machine;
   if(!wanted)return null;
   for(let c=C;c>=0;c--){
     if(sameCycleOnly&&c!==C)continue;
@@ -3831,6 +3931,7 @@ function findPreviousExerciseEntry(exName,opts={}){
           const histName=getHistoricalExName(c,w,d,i);
           if(normExLookupName(histName)!==wanted)continue;
           const data=getD(c,w,d,i);
+          if(machine!==undefined&&!machineMatchesEntry(data,machine))continue;
           if(!data||(!data.g1&&!data.r1))continue;
           const orm=calc1RM(data);
           const g1=parseFloat(String(data.g1||'').replace(',','.'))||null;
@@ -4015,6 +4116,7 @@ async function preflightSheetNamesForSave(sheetName,day,c=C,w=W,d=D){
 
 function upd(idx,field,val){
   const d=getD(C,W,D,idx);d[field]=val;persist();
+  if(field==='machine'){renderWorkout();return;}
   const orm=calc1RM(d);
   const oe=document.getElementById('orm'+idx);
   if(oe)oe.textContent=orm?orm+' kg':'—';
@@ -4024,6 +4126,8 @@ function upd(idx,field,val){
     const e=document.getElementById(id+idx);
     if(e)e.textContent=d[g]&&d[r]?Math.round(parseFloat(d[g])*(1+parseFloat(d[r])/30))+' kg':'—';
   });
+
+  if(['g1','r1','g2','r2','g3','r3'].includes(field)){updateSetProgressUI(idx);updateMachinePRUI(idx);}
 
   // Update warmup toggle when S1 weight changes
   if(field==='g1'){
@@ -6237,6 +6341,8 @@ function deletePR(exName) {
 function showHistory(exIdx){
   const day=PLAN[C].weeks[W].days[D];
   const name=getExName(exIdx);
+  const wanted=normExLookupName(name);
+  const machineValue=getMachineValue(getD(C,W,D,exIdx));
   const rows=[];
   for(let ci=C;ci>=0&&rows.length<6;ci--){
     const cyc=PLAN[ci];
@@ -6246,16 +6352,23 @@ function showHistory(exIdx){
       if(week.isDeload)continue;
       for(let di=0;di<week.days.length&&rows.length<6;di++){
         if(ci===C&&wi===W&&di===D)continue;
-        const d2=getD(ci,wi,di,exIdx);
-        if(!d2.g1&&!d2.r1)continue;
-        rows.push({date:week.days[di]?week.days[di].date:'?',g1:d2.g1,r1:d2.r1,g2:d2.g2,r2:d2.r2,g3:d2.g3,r3:d2.r3,pos:calcPOS(d2),orm:calc1RM(d2)});
+        const histDay=week.days[di];
+        for(let hi=0;hi<(histDay?.exercises||[]).length&&rows.length<6;hi++){
+          const histName=getHistoricalExName(ci,wi,di,hi);
+          if(normExLookupName(histName)!==wanted)continue;
+          const d2=getD(ci,wi,di,hi);
+          if(!machineMatchesEntry(d2,machineValue))continue;
+          if(!d2.g1&&!d2.r1)continue;
+          rows.push({date:histDay?.date||'?',g1:d2.g1,r1:d2.r1,g2:d2.g2,r2:d2.r2,g3:d2.g3,r3:d2.r3,pos:calcPOS(d2),orm:calc1RM(d2)});
+          break;
+        }
       }
     }
   }
   const el=document.getElementById('histContent');
   const title=document.getElementById('histTitle');
   title.innerHTML=name+'<button class="hist-close-btn" onclick="closeHistory()">✕</button>';
-  if(!rows.length){el.innerHTML='<div class="hist-no-data">Keine Verlaufsdaten vorhanden</div>';
+  if(!rows.length){el.innerHTML='<div class="hist-no-data">Keine Verlaufseintr&auml;ge f&uuml;r dieses Ger&auml;t</div>';
   }else{
     el.innerHTML='<div class="hist-row"><span class="hd">DATUM</span><span class="hd">S1 kg×Wdh</span><span class="hd">POS</span><span class="hd">1RM</span></div>'
       +rows.map(r=>'<div class="hist-row"><span>'+r.date+'</span><span>'+r.g1+'×'+r.r1+'</span><span>'+(r.pos||'—')+'</span><span>'+(r.orm?r.orm+' kg':'—')+'</span></div>').join('');
