@@ -3476,6 +3476,14 @@ function toggleExercisePanel(panel,idx){
   const key=getExercisePanelOpenKey(panel,idx);
   store[key]=!store[key];
   persist();
+  if(panel==='set_history'){
+    const box=document.getElementById('setHistoryBox_'+idx);
+    const arrow=document.getElementById('setHistoryArrow_'+idx);
+    if(!box||!arrow){renderWorkout();return;}
+    box.classList.toggle('open',!!store[key]);
+    arrow.innerHTML=store[key]?'▾':'▸';
+    return;
+  }
   renderWorkout();
 }
 
@@ -3486,13 +3494,13 @@ function renderSetHistoryBox(exName,machine,idx){
   const arrow=isOpen?'▾':'▸';
   const label='Verlauf'+(rows.length?' ('+rows.length+' Eintr&auml;ge)':'');
   if(!rows.length){
-    return '<div class="set-history-box'+openClass+'">'
-      +'<button class="set-history-title" type="button" onclick="toggleExercisePanel(\'set_history\','+idx+')"><span>'+label+'</span><span>'+arrow+'</span></button>'
+    return '<div class="set-history-box'+openClass+'" id="setHistoryBox_'+idx+'">'
+      +'<button class="set-history-title" type="button" onclick="toggleExercisePanel(\'set_history\','+idx+')"><span>'+label+'</span><span id="setHistoryArrow_'+idx+'">'+arrow+'</span></button>'
       +'<div class="set-history-list"><div class="set-history-main">Keine Verlaufseintr&auml;ge f&uuml;r dieses Ger&auml;t</div></div>'
       +'</div>';
   }
-  return '<div class="set-history-box'+openClass+'">'
-    +'<button class="set-history-title" type="button" onclick="toggleExercisePanel(\'set_history\','+idx+')"><span>'+label+'</span><span>'+arrow+'</span></button>'
+  return '<div class="set-history-box'+openClass+'" id="setHistoryBox_'+idx+'">'
+    +'<button class="set-history-title" type="button" onclick="toggleExercisePanel(\'set_history\','+idx+')"><span>'+label+'</span><span id="setHistoryArrow_'+idx+'">'+arrow+'</span></button>'
     +'<div class="set-history-list">'
     +rows.map(r=>{
       const d=r.data||{};
@@ -3635,7 +3643,7 @@ function renderWorkout(){
       if(suggestG>prevG*1.2) suggestG=prevG;
       // Nur anzeigen wenn Wert plausibel (> 0, < 500 kg)
       if(suggestG>0&&suggestG<500){
-        loadSuggest='<div class="load-suggest">💡 Vorschlag: <b>'+suggestG+' kg</b>'+(hint?' <span class="load-hint">'+hint+'</span>':'')+'</div>';
+        loadSuggest='<div class="load-suggest">💡 Vorschlag Geräte-Training: <b>'+suggestG+' kg</b>'+(hint?' <span class="load-hint">'+hint+'</span>':'')+'</div>';
       }
     }else if(!week.isDeload&&!prevEntry&&!d.g1){
       loadSuggest='<div class="load-suggest">Keine Ger&auml;tehistorie &ndash; Gewicht bewusst w&auml;hlen</div>';
@@ -3734,7 +3742,7 @@ function renderWorkout(){
       +'</div>'
       +'<div class="stats-row">'
       +'<div class="sbox"><div class="skey">1RM Est.</div><div class="sval" id="orm'+i+'">'+(orm?orm+' kg':'—')+'</div></div>'
-      +'<div class="sbox"><div class="skey">Bestleistung</div><div class="sval pr-warn-val">'+(rec?rec.orm+' kg':'—')+'</div></div>'
+      +'<div class="sbox"><div class="skey">Globale Bestleistung</div><div class="sval pr-warn-val">'+(rec?rec.orm+' kg':'—')+'</div></div>'
       +'</div>'
       +buildSparkline(i, orm)
       +'<textarea class="notes" placeholder="Notizen…" onchange="upd('+i+',\'notes\',this.value)">'+d.notes+'</textarea>'
