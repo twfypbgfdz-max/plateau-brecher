@@ -1770,10 +1770,17 @@ function persist(){try{localStorage.setItem(SK,JSON.stringify(store));}catch(e){
 function saveStore(){persist();}
 const MACHINE_OPTIONS=[
   'Standard',
+  'Life Fitness',
+  'Cybex',
+  'Hammer Strength',
+  'Gym80',
+  'Nautilus',
+  'Matrix',
   'Prime',
   'Schnell',
   'Precor',
-  'Fortis Forged'
+  'Fortis Forged',
+  'Sonstige'
 ];
 function normalizeMachineValue(value){return String(value||'Standard').trim().toLowerCase()||'standard';}
 function getMachineValue(data){return String(data?.machine||'Standard').trim()||'Standard';}
