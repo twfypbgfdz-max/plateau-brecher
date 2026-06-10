@@ -1768,7 +1768,13 @@ if(Object.keys(store).length===0){try{const old=JSON.parse(localStorage.getItem(
 
 function persist(){try{localStorage.setItem(SK,JSON.stringify(store));}catch(e){}}
 function saveStore(){persist();}
-const MACHINE_OPTIONS=['Standard','Life Fitness','Cybex','Technogym','Hammer Strength','Gym80','Nautilus','Matrix','Sonstige'];
+const MACHINE_OPTIONS=[
+  'Standard',
+  'Prime',
+  'Schnell',
+  'Precor',
+  'Fortis Forged'
+];
 function normalizeMachineValue(value){return String(value||'Standard').trim().toLowerCase()||'standard';}
 function getMachineValue(data){return String(data?.machine||'Standard').trim()||'Standard';}
 function machineMatchesEntry(data,currentMachine){return normalizeMachineValue(getMachineValue(data))===normalizeMachineValue(currentMachine);}
