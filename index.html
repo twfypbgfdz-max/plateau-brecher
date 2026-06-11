@@ -114,6 +114,8 @@ main{padding:14px;max-width:860px;}
 }
 .ctitle{font-family:'Barlow Condensed',sans-serif;font-size:18px;letter-spacing:1.4px;color:var(--tx);}
 .cdate{font-family:'DM Mono',monospace;font-size:9.5px;color:var(--mu);letter-spacing:.8px;}
+.template-save-btn{background:rgba(255,255,255,.024);border:1px solid rgba(255,255,255,.08);color:var(--tx2);font-family:'DM Mono',monospace;font-size:8.5px;padding:6px 9px;min-height:32px;border-radius:var(--r);cursor:pointer;letter-spacing:.5px;}
+.template-save-btn:hover{border-color:rgba(200,255,0,.28);color:var(--acc);background:rgba(200,255,0,.035);}
 .deload-tag{background:rgba(255,61,0,.16);border:1px solid rgba(255,111,64,.25);color:#ffb199;font-family:'DM Mono',monospace;font-size:8.5px;padding:4px 8px;letter-spacing:.8px;border-radius:999px;font-weight:700;}
 
 /* INFO ROW */
@@ -792,6 +794,46 @@ main{padding:14px;max-width:860px;}
 .prog-stat-val{font-family:'Barlow Condensed',sans-serif;font-size:28px;color:var(--acc);letter-spacing:1px;line-height:1;}
 [data-theme="light"] .prog-stat-val{color:#111;}
 .prog-stat-diff{font-family:'DM Mono',monospace;font-size:9.5px;margin-top:4px;line-height:1.3;color:var(--mu);}
+.tfreq-card{
+  background:linear-gradient(180deg,rgba(255,255,255,.018),var(--sur));
+  border:1px solid rgba(255,255,255,.07);border-radius:var(--r);padding:10px 12px;margin-bottom:9px;
+}
+.tfreq-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-bottom:10px;}
+.tfreq-stat{
+  background:rgba(255,255,255,.022);border:1px solid rgba(255,255,255,.075);
+  border-radius:var(--r);padding:8px 7px;text-align:center;min-width:0;
+}
+.tfreq-stat-val{font-family:'Barlow Condensed',sans-serif;font-size:24px;letter-spacing:1px;color:var(--acc);line-height:1;}
+.tfreq-stat-key{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.6px;text-transform:uppercase;color:var(--mu);line-height:1.25;margin-top:4px;}
+.tfreq-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;}
+.tfreq-cell{
+  aspect-ratio:1/1;border-radius:4px;border:1px solid rgba(255,255,255,.06);
+  background:rgba(255,255,255,.025);min-width:0;
+}
+.tfreq-cell.trained{background:var(--acc);border-color:rgba(200,255,0,.45);box-shadow:0 0 0 1px rgba(200,255,0,.08);}
+.tfreq-cell.future{opacity:.35;}
+.tfreq-cell.empty{background:transparent;border-color:transparent;}
+.pwindow-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-bottom:9px;}
+.pwindow-card{
+  background:linear-gradient(180deg,rgba(255,255,255,.018),var(--sur));
+  border:1px solid rgba(255,255,255,.07);border-radius:var(--r);padding:10px 12px;min-width:0;
+}
+.pwindow-card.full{grid-column:1/-1;}
+.pwindow-title{font-family:'Barlow Condensed',sans-serif;font-size:19px;letter-spacing:1px;color:var(--tx);line-height:1;margin-bottom:4px;}
+.pwindow-sub{font-family:'DM Mono',monospace;font-size:9px;line-height:1.45;color:var(--tx2);margin-bottom:9px;}
+.pwindow-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;}
+.pwindow-stat{background:rgba(255,255,255,.022);border:1px solid rgba(255,255,255,.075);border-radius:var(--r);padding:8px 7px;min-width:0;}
+.pwindow-key{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.6px;text-transform:uppercase;color:var(--mu);line-height:1.25;margin-bottom:4px;}
+.pwindow-val{font-family:'Barlow Condensed',sans-serif;font-size:23px;letter-spacing:.8px;color:var(--acc);line-height:1;overflow-wrap:anywhere;}
+.pwindow-list{display:grid;gap:6px;}
+.pwindow-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:6px 0;border-top:1px solid rgba(255,255,255,.06);}
+.pwindow-row:first-child{border-top:0;}
+.pwindow-name{font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:.5px;color:var(--tx);line-height:1.08;overflow-wrap:anywhere;}
+.pwindow-meta{font-family:'DM Mono',monospace;font-size:8.5px;line-height:1.35;color:var(--tx2);margin-top:3px;}
+.pwindow-delta{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;color:var(--ok);white-space:nowrap;}
+.pwindow-delta.watch{color:var(--warn);}
+.pwindow-bar{height:5px;background:var(--bor);border-radius:3px;overflow:hidden;margin-top:5px;}
+.pwindow-fill{height:100%;background:var(--acc3);border-radius:3px;}
 .top-progress-card{
   background:linear-gradient(180deg,rgba(255,255,255,.02),var(--sur));
   border:1px solid rgba(255,255,255,.075);border-radius:var(--r);padding:12px;margin-bottom:9px;
@@ -1077,6 +1119,9 @@ main{padding:14px;max-width:860px;}
   .prog-stat-grid,.mheat-grid{grid-template-columns:1fr;gap:8px;}
   .prog-stat-card,.mheat-card{padding:12px;}
   .prog-stat-val{font-size:28px;}
+  .tfreq-stats{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .pwindow-grid,.pwindow-stats{grid-template-columns:1fr;}
+  .pwindow-card.full{grid-column:auto;}
   .top-progress-card{padding:11px;margin-bottom:9px;}
   .top-progress-title{font-size:19px;}
   .top-progress-row{grid-template-columns:auto minmax(0,1fr) auto;padding:7px 0;}
@@ -1326,6 +1371,22 @@ main{padding:14px;max-width:860px;}
     <div class="prog-section-hd"><span>Körpergewicht</span></div>
     <div class="prog-chart-wrap" id="progBwWrap">
       <div class="prog-no-data">Noch keine KG-Daten</div>
+    </div>
+  </div>
+
+  <!-- TRAININGSFREQUENZ -->
+  <div class="prog-tab-section">
+    <div class="prog-section-hd"><span>Trainingsfrequenz</span><span class="prog-section-meta">Lokale Daten</span></div>
+    <div id="trainingFrequencyWrap">
+      <div class="prog-no-data">Noch keine Trainingstage erfasst</div>
+    </div>
+  </div>
+
+  <!-- 30/90-TAGE ANALYSE -->
+  <div class="prog-tab-section">
+    <div class="prog-section-hd"><span>30/90-Tage Analyse</span><span class="prog-section-meta">Lokale Daten</span></div>
+    <div id="progressWindowWrap">
+      <div class="prog-no-data">Noch zu wenig Daten</div>
     </div>
   </div>
 
@@ -1768,6 +1829,34 @@ if(Object.keys(store).length===0){try{const old=JSON.parse(localStorage.getItem(
 
 function persist(){try{localStorage.setItem(SK,JSON.stringify(store));}catch(e){}}
 function saveStore(){persist();}
+function getPlanTemplates(){
+  return Array.isArray(store._planTemplates)?store._planTemplates:[];
+}
+function savePlanTemplates(list){
+  store._planTemplates=Array.isArray(list)?list:[];
+  persist();
+}
+function createTemplateFromCurrentDay(){
+  const day=PLAN?.[C]?.weeks?.[W]?.days?.[D];
+  if(!day||!Array.isArray(day.exercises)){alert('Keine gueltige Trainingstag-Vorlage gefunden.');return;}
+  const ok=confirm('Es werden nur Übungen gespeichert. Trainingsdaten, Notizen, Geräte und PRs werden nicht übernommen.');
+  if(!ok)return;
+  const createdAt=new Date().toISOString();
+  const template={
+    id:'tpl_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
+    name:String((day.tag||'Trainingstag')+' '+(day.date||'')).trim(),
+    createdAt,
+    source:{c:C,w:W,d:D,date:day.date||'',tag:day.tag||''},
+    tag:day.tag||'',
+    muscle:day.muscle||'',
+    exercises:day.exercises.map(ex=>String(ex||''))
+  };
+  const list=getPlanTemplates().slice();
+  list.push(template);
+  savePlanTemplates(list);
+  if(typeof showStatus==='function')showStatus('ok','Vorlage gespeichert: '+template.name);
+  else alert('Vorlage gespeichert: '+template.name);
+}
 const MACHINE_OPTIONS=[
   'Standard',
   'Life Fitness',
@@ -3580,6 +3669,7 @@ function renderWorkout(){
   document.getElementById('cinfo').innerHTML=
     '<div class="ctitle">ZYKLUS '+(C+1)+' — '+week.weekLabel+'</div>'+
     '<div class="cdate">'+week.days.map(d=>d.date).join(' · ')+'</div>'+
+    '<button class="template-save-btn" type="button" onclick="createTemplateFromCurrentDay()">Als Vorlage speichern</button>'+
     (week.isDeload?'<span class="deload-tag">'+deloadBannerText+'</span>':'')+
     (week.isSchool?'<span class="deload-tag deload-tag-school">⛔ SCHULWOCHE — 3 Tage</span>':'');
 
@@ -5186,7 +5276,328 @@ function renderProgress(){
   renderProgressChart();
   renderVolChart();
   renderBwChart();
+  renderTrainingFrequencyHeatmap();
+  renderProgressWindowAnalysis();
   renderMuscleHeatmap();
+}
+
+function getStoredExerciseData(c,w,d,e){
+  return store[c+'_'+w+'_'+d+'_'+e]||null;
+}
+
+function getTrainingFrequencyDateKey(date){
+  return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');
+}
+
+function getTrainingFrequencyEntries(){
+  const now=new Date();
+  const year=now.getFullYear();
+  const entries=[];
+  for(let c=0;c<PLAN.length;c++){
+    for(let w=0;w<PLAN[c].weeks.length;w++){
+      const week=PLAN[c].weeks[w];
+      for(let d=0;d<week.days.length;d++){
+        const day=week.days[d];
+        const date=getPlanDateForYear(day?.date,year);
+        if(!date||isNaN(date))continue;
+        let trained=false,volume=0,doneCount=0,setDataCount=0;
+        (day.exercises||[]).forEach((_,i)=>{
+          const data=getStoredExerciseData(c,w,d,i);
+          if(!data)return;
+          const hasSets=hasExerciseSetData(data);
+          const vol=calcTotal(data)||0;
+          if(data.done===true)doneCount++;
+          if(hasSets)setDataCount++;
+          if(data.done===true||hasSets||vol>0)trained=true;
+          volume+=vol;
+        });
+        entries.push({
+          c,w,d,
+          date,
+          dateKey:getTrainingFrequencyDateKey(date),
+          label:String(day.date||''),
+          tag:String(day.tag||''),
+          trained,
+          volume,
+          doneCount,
+          setDataCount
+        });
+      }
+    }
+  }
+  return entries.sort((a,b)=>a.date-b.date||a.c-b.c||a.w-b.w||a.d-b.d);
+}
+
+function buildTrainingFrequencyStats(entries){
+  const today=new Date();
+  const todayStart=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+  const last30Start=new Date(todayStart);
+  last30Start.setDate(last30Start.getDate()-29);
+  const currentMonth=todayStart.getMonth();
+  const currentYear=todayStart.getFullYear();
+  const pastEntries=entries.filter(e=>e.date<=todayStart);
+  let currentStreak=0;
+  for(let i=pastEntries.length-1;i>=0;i--){
+    if(!pastEntries[i].trained)break;
+    currentStreak++;
+  }
+  let longestStreak=0,run=0;
+  pastEntries.forEach(e=>{
+    if(e.trained){
+      run++;
+      if(run>longestStreak)longestStreak=run;
+    }else{
+      run=0;
+    }
+  });
+  return {
+    currentStreak,
+    longestStreak,
+    monthDays:pastEntries.filter(e=>e.trained&&e.date.getFullYear()===currentYear&&e.date.getMonth()===currentMonth).length,
+    last30Days:pastEntries.filter(e=>e.trained&&e.date>=last30Start).length,
+    today:todayStart,
+    last30Start
+  };
+}
+
+function renderTrainingFrequencyHeatmap(){
+  const wrap=document.getElementById('trainingFrequencyWrap');
+  if(!wrap)return;
+  const entries=getTrainingFrequencyEntries();
+  if(!entries.length){
+    wrap.innerHTML='<div class="prog-no-data">Noch keine g&uuml;ltigen Trainingstage im Plan</div>';
+    return;
+  }
+  const stats=buildTrainingFrequencyStats(entries);
+  const byDate={};
+  entries.forEach(e=>{byDate[e.dateKey]=e;});
+  const gridStart=new Date(stats.today);
+  gridStart.setDate(gridStart.getDate()-41);
+  const cells=[];
+  for(let i=0;i<42;i++){
+    const cellDate=new Date(gridStart);
+    cellDate.setDate(gridStart.getDate()+i);
+    const key=getTrainingFrequencyDateKey(cellDate);
+    const entry=byDate[key];
+    const isFuture=cellDate>stats.today;
+    const cls=entry?(entry.trained?' trained':''):(isFuture?' future':'');
+    const title=entry
+      ? escHtml(entry.label+' · '+entry.tag+(entry.trained?' · trainiert':' · offen'))
+      : escHtml(String(cellDate.getDate()).padStart(2,'0')+'.'+String(cellDate.getMonth()+1).padStart(2,'0'));
+    cells.push('<div class="tfreq-cell'+cls+'" title="'+title+'"></div>');
+  }
+  wrap.innerHTML='<div class="tfreq-card">'
+    +'<div class="tfreq-stats">'
+      +'<div class="tfreq-stat"><div class="tfreq-stat-val">'+stats.currentStreak+'</div><div class="tfreq-stat-key">Aktuelle Serie</div></div>'
+      +'<div class="tfreq-stat"><div class="tfreq-stat-val">'+stats.longestStreak+'</div><div class="tfreq-stat-key">L&auml;ngste Serie</div></div>'
+      +'<div class="tfreq-stat"><div class="tfreq-stat-val">'+stats.monthDays+'</div><div class="tfreq-stat-key">Dieser Monat</div></div>'
+      +'<div class="tfreq-stat"><div class="tfreq-stat-val">'+stats.last30Days+'</div><div class="tfreq-stat-key">Letzte 30 Tage</div></div>'
+    +'</div>'
+    +'<div class="tfreq-grid">'+cells.join('')+'</div>'
+  +'</div>';
+}
+
+function formatProgressVolume(v){
+  const n=Math.round(Number(v)||0);
+  if(!n)return '0 kg';
+  return n>=1000?(Math.round(n/100)/10).toLocaleString('de-DE')+'k kg':n.toLocaleString('de-DE')+' kg';
+}
+
+function getProgressAnalysisEntries(){
+  const now=new Date();
+  const year=now.getFullYear();
+  const entries=[];
+  for(let c=0;c<PLAN.length;c++){
+    for(let w=0;w<PLAN[c].weeks.length;w++){
+      const week=PLAN[c].weeks[w];
+      for(let d=0;d<week.days.length;d++){
+        const day=week.days[d];
+        const date=getPlanDateForYear(day?.date,year);
+        if(!date||isNaN(date))continue;
+        (day.exercises||[]).forEach((ex,i)=>{
+          const data=getStoredExerciseData(c,w,d,i);
+          if(!data)return;
+          const hasSets=hasExerciseSetData(data);
+          const volume=calcTotal(data)||0;
+          const orm=calc1RM(data)||0;
+          if(data.done!==true&&!hasSets&&volume<=0)return;
+          const name=getHistoricalExName(c,w,d,i)||ex;
+          const muscle=getMuscleBucketForExercise(name,day);
+          entries.push({
+            c,w,d,i,
+            date,
+            dateKey:getTrainingFrequencyDateKey(date),
+            order:(c*100000)+(w*1000)+(d*20)+i,
+            name,
+            norm:normExLookupName(name),
+            muscle,
+            volume,
+            orm,
+            done:data.done===true,
+            hasSets
+          });
+        });
+      }
+    }
+  }
+  return entries.sort((a,b)=>a.date-b.date||a.order-b.order);
+}
+
+function getProgressWindowEntries(days){
+  const today=new Date();
+  const todayStart=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+  const start=new Date(todayStart);
+  start.setDate(start.getDate()-(days-1));
+  return getProgressAnalysisEntries().filter(e=>e.date>=start&&e.date<=todayStart);
+}
+
+function buildProgressWindowStats(entries,days){
+  const trainingDays=new Set(entries.map(e=>e.dateKey));
+  const exerciseNames=new Set(entries.map(e=>e.norm).filter(Boolean));
+  const muscle=buildMuscleProgressSummary(entries);
+  const volume=entries.reduce((sum,e)=>sum+(e.volume||0),0);
+  const strongest=muscle.strongest?.name||'—';
+  const summary=entries.length
+    ? trainingDays.size+' Trainingstage, '+formatProgressVolume(volume)+' Volumen, Schwerpunkt '+strongest+'.'
+    : 'Noch zu wenig Daten im '+days+'-Tage-Fenster.';
+  return {
+    days,
+    trainingDays:trainingDays.size,
+    totalVolume:Math.round(volume),
+    exerciseCount:exerciseNames.size,
+    strongestMuscle:strongest,
+    summary
+  };
+}
+
+function buildExerciseProgressRankings(entries){
+  const groups={};
+  entries.forEach(e=>{
+    if(!e.norm)return;
+    if(!groups[e.norm])groups[e.norm]={name:e.name,points:[]};
+    groups[e.norm].points.push(e);
+  });
+  const improvements=[];
+  const stagnations=[];
+  let volumeWinner=null;
+  Object.values(groups).forEach(group=>{
+    const pts=group.points.sort((a,b)=>a.date-b.date||a.order-b.order);
+    const ormPts=pts.filter(p=>p.orm>0);
+    if(ormPts.length>=2){
+      const first=ormPts[0],last=ormPts[ormPts.length-1];
+      const delta=Math.round((last.orm-first.orm)*10)/10;
+      if(delta>0)improvements.push({name:group.name,delta,from:first.orm,to:last.orm,count:ormPts.length});
+      if(ormPts.length>=3){
+        const previousBest=Math.max(...ormPts.slice(0,-1).map(p=>p.orm));
+        if(last.orm<=previousBest){
+          stagnations.push({name:group.name,units:ormPts.length,last:last.orm,best:previousBest});
+        }
+      }
+    }
+    const volPts=pts.filter(p=>p.volume>0);
+    if(volPts.length>=2){
+      const first=volPts[0],last=volPts[volPts.length-1];
+      const delta=Math.round(last.volume-first.volume);
+      if(delta>0&&(!volumeWinner||delta>volumeWinner.delta)){
+        volumeWinner={name:group.name,delta,from:first.volume,to:last.volume,count:volPts.length};
+      }
+    }
+  });
+  improvements.sort((a,b)=>b.delta-a.delta||b.to-a.to);
+  stagnations.sort((a,b)=>b.units-a.units||b.best-a.best);
+  return {
+    improvements:improvements.slice(0,5),
+    stagnations:stagnations.slice(0,5),
+    volumeWinner
+  };
+}
+
+function buildMuscleProgressSummary(entries){
+  const buckets={};
+  entries.forEach(e=>{
+    if(!e.muscle)return;
+    buckets[e.muscle]=(buckets[e.muscle]||0)+(e.volume||0);
+  });
+  const list=Object.entries(buckets)
+    .filter(([,v])=>v>0)
+    .map(([name,volume])=>({name,volume:Math.round(volume)}))
+    .sort((a,b)=>b.volume-a.volume);
+  return {
+    entries:list,
+    strongest:list[0]||null,
+    weakest:list.length?list[list.length-1]:null
+  };
+}
+
+function renderProgressWindowSummaryCard(stats,title,withSummary){
+  return '<div class="pwindow-card">'
+    +'<div class="pwindow-title">'+title+'</div>'
+    +(withSummary?'<div class="pwindow-sub">'+escHtml(stats.summary)+'</div>':'<div class="pwindow-sub">Rollierendes lokales Fenster</div>')
+    +'<div class="pwindow-stats">'
+      +'<div class="pwindow-stat"><div class="pwindow-key">Trainingstage</div><div class="pwindow-val">'+stats.trainingDays+'</div></div>'
+      +'<div class="pwindow-stat"><div class="pwindow-key">Gesamtvolumen</div><div class="pwindow-val">'+formatProgressVolume(stats.totalVolume)+'</div></div>'
+      +'<div class="pwindow-stat"><div class="pwindow-key">&Uuml;bungen</div><div class="pwindow-val">'+stats.exerciseCount+'</div></div>'
+      +'<div class="pwindow-stat"><div class="pwindow-key">St&auml;rkste Gruppe</div><div class="pwindow-val">'+escHtml(stats.strongestMuscle)+'</div></div>'
+    +'</div>'
+  +'</div>';
+}
+
+function renderProgressWindowListCard(title,subtitle,items,mode){
+  const rows=items.length?items.map(item=>{
+    let delta='',meta='';
+    if(mode==='up'){
+      delta='+'+item.delta+' kg';
+      meta=item.from+' &rarr; '+item.to+' kg 1RM · '+item.count+' Datenpunkte';
+    }else if(mode==='watch'){
+      delta=item.units+'x';
+      meta='zuletzt '+item.last+' kg · Bestwert '+item.best+' kg';
+    }
+    return '<div class="pwindow-row">'
+      +'<div><div class="pwindow-name">'+escHtml(item.name)+'</div><div class="pwindow-meta">'+meta+'</div></div>'
+      +'<div class="pwindow-delta '+(mode==='watch'?'watch':'')+'">'+delta+'</div>'
+      +'</div>';
+  }).join(''):'<div class="top-progress-empty">Noch zu wenig Daten</div>';
+  return '<div class="pwindow-card"><div class="pwindow-title">'+title+'</div><div class="pwindow-sub">'+subtitle+'</div><div class="pwindow-list">'+rows+'</div></div>';
+}
+
+function renderMuscleProgressCard(summary){
+  const max=summary.entries[0]?.volume||1;
+  const rows=summary.entries.length?summary.entries.map(item=>{
+    const pct=Math.max(3,Math.round(item.volume/max*100));
+    return '<div class="pwindow-row">'
+      +'<div><div class="pwindow-name">'+escHtml(item.name)+'</div><div class="pwindow-bar"><div class="pwindow-fill" style="width:'+pct+'%"></div></div></div>'
+      +'<div class="pwindow-delta">'+formatProgressVolume(item.volume)+'</div>'
+      +'</div>';
+  }).join(''):'<div class="top-progress-empty">Noch zu wenig Daten</div>';
+  const sub=summary.strongest
+    ? 'St&auml;rkste: '+escHtml(summary.strongest.name)+' · Schw&auml;chste: '+escHtml(summary.weakest.name)
+    : 'Letzte 30 Tage';
+  return '<div class="pwindow-card full"><div class="pwindow-title">Muskelgruppen</div><div class="pwindow-sub">'+sub+'</div><div class="pwindow-list">'+rows+'</div></div>';
+}
+
+function renderProgressWindowAnalysis(){
+  const wrap=document.getElementById('progressWindowWrap');
+  if(!wrap)return;
+  const entries30=getProgressWindowEntries(30);
+  const entries90=getProgressWindowEntries(90);
+  const stats30=buildProgressWindowStats(entries30,30);
+  const stats90=buildProgressWindowStats(entries90,90);
+  const rankings=buildExerciseProgressRankings(entries90);
+  const muscle30=buildMuscleProgressSummary(entries30);
+  const volume=rankings.volumeWinner
+    ? [{name:rankings.volumeWinner.name,delta:formatProgressVolume(rankings.volumeWinner.delta),meta:formatProgressVolume(rankings.volumeWinner.from)+' &rarr; '+formatProgressVolume(rankings.volumeWinner.to)}]
+    : [];
+  const volumeRows=volume.length
+    ? '<div class="pwindow-row"><div><div class="pwindow-name">'+escHtml(volume[0].name)+'</div><div class="pwindow-meta">'+volume[0].meta+'</div></div><div class="pwindow-delta">+'+volume[0].delta+'</div></div>'
+    : '<div class="top-progress-empty">Noch zu wenig Daten</div>';
+  wrap.innerHTML='<div class="pwindow-grid">'
+    +renderProgressWindowSummaryCard(stats30,'30 Tage',true)
+    +renderProgressWindowSummaryCard(stats90,'90 Tage',false)
+    +renderProgressWindowListCard('Top Verbesserungen','1RM-Differenz im 90-Tage-Fenster',rankings.improvements,'up')
+    +renderProgressWindowListCard('Beobachten','Mindestens 3 Datenpunkte ohne neuen 1RM-Bestwert',rankings.stagnations,'watch')
+    +renderMuscleProgressCard(muscle30)
+    +'<div class="pwindow-card full"><div class="pwindow-title">Gr&ouml;&szlig;te Volumensteigerung</div><div class="pwindow-sub">Session-Volumen im 90-Tage-Fenster</div><div class="pwindow-list">'+volumeRows+'</div></div>'
+  +'</div>';
 }
 
 function renderMuscleHeatmap(){
