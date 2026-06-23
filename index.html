@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#080808">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PB V12.8.12-test">
-<title>Plateau-Brecher V12.8.12-test</title>
+<meta name="apple-mobile-web-app-title" content="PB V12.8.13-test">
+<title>Plateau-Brecher V12.8.13-test</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -1165,14 +1165,14 @@ main{padding:14px;max-width:860px;}
 <body>
 <div class="consent-overlay" id="consentOverlay">
   <div class="consent-box">
-    <h2 class="splash-h2">SYSTEM-START V12.8.12-test</h2>
+    <h2 class="splash-h2">SYSTEM-START V12.8.13-test</h2>
     <p class="splash-p">Daten werden lokal gespeichert und via API synchronisiert. Fehler-Logging ist aktiv.</p>
     <button class="save-btn" onclick="acceptConsent()">Akzeptieren &amp; Starten</button>
   </div>
 </div>
 <header>
   <div>
-    <div class="logo">PB<span class="splash-logo-ver"> V12.8.12-test</span></div>
+    <div class="logo">PB<span class="splash-logo-ver"> V12.8.13-test</span></div>
     <span class="hbadge" id="todayBadge">Lädt…</span>
     <div class="splash-build">Build: <span id="buildDateTxt"></span></div>
   </div>
@@ -1235,7 +1235,7 @@ main{padding:14px;max-width:860px;}
     <div class="step-desc">Nur ändern, wenn <b>SCRIPT_CODE</b> aktualisiert wurde. App-Testversionen brauchen nicht automatisch ein neues Apps-Script-Deployment.</div>
     <div class="setup-mini-grid">
       <div class="setup-mini-card"><b>Aktuelle Script-Basis:</b><br>V11.9.1</div>
-      <div class="setup-mini-card"><b>App-Version:</b><br>V12.8.12-test</div>
+      <div class="setup-mini-card"><b>App-Version:</b><br>V12.8.13-test</div>
     </div>
     <div class="setup-note"><strong>Hinweis:</strong> Wenn die Sheet-Verbindung bereits funktioniert, muss dieser Code für diese Testversion normalerweise nicht neu deployed werden.</div>
     <div class="code-box" id="scriptCodeBox">Lädt…</div>
@@ -1712,9 +1712,14 @@ const PLAN = [{"weeks":[{"weekLabel":"Woche 1","isDeload":false,"isSchool":false
 // STORAGE
 // ============================================================
 const SK='pb_v12_0_test';
-const APP_VERSION='V12.8.12-test';
-const BUILD_DATE='23.06.2026';
+const APP_VERSION='V12.8.13-test';
+const BUILD_DATE='24.06.2026';
 /*
+CHANGELOG V12.8.13-test
+- Save-Preflight meldet fehlende Sheet-Planzeilen fuer das aktuelle Datum klarer.
+- Anzahlabweichungen zwischen App-PLAN und Sheet-PLAN nennen erwartete und gefundene Uebungszeilen.
+- Keine Schreiblogik, kein Sync-Bypass und keine PR-/Stats-/Bestleistungen-Logik geaendert.
+
 CHANGELOG V12.8.12-test
 - Versionsfuehrung bereinigt: neue aktive Testdatei aus V12.8.10-Basis erstellt.
 - Tageszusammenfassung klarer benannt.
@@ -4320,11 +4325,19 @@ async function fetchSheetRowsForDay(sheetName,date,c=C,w=W,d=D){
   return extractSheetRowsForDate(data,date);
 }
 
+function sheetPlanRowCountMessage(expected,found){
+  return 'Sheet-Zeilen passen nicht zur App-Übungsanzahl. Erwartet: '+expected+', gefunden: '+found+'.';
+}
+
+function missingSheetPlanRowsMessage(date,expected){
+  return 'Sheet-Planzeilen für '+(date||'?')+' fehlen oder Sheet wurde noch nicht neu geladen. Erwartet: '+expected+' Übungen aus App-PLAN. Gefunden: 0 Sheet-Zeilen. Bitte Sheet neu laden. Wenn der Fehler bleibt: PLAN/Sheet prüfen.';
+}
+
 function applySheetNamesToDay(c,w,d,rows){
   const day=PLAN[c]?.weeks?.[w]?.days?.[d];
   if(!day)return{ok:false,changed:false,message:'Training nicht gefunden'};
   const names=(rows||[]).map(r=>String(r.name||'').trim()).filter(Boolean);
-  if(names.length<day.exercises.length)return{ok:false,changed:false,message:'Sheet-Zeilen passen nicht zur Uebungsanzahl'};
+  if(names.length<day.exercises.length)return{ok:false,changed:false,message:sheetPlanRowCountMessage(day.exercises.length,names.length)};
   if(names.length>day.exercises.length){
     const normalizedExtra=names.map(canonicalSheetName);
     if(normalizedExtra.some(n=>!n))return{ok:false,changed:false,message:'Leere Uebungsnamen im Sheet'};
@@ -4332,10 +4345,10 @@ function applySheetNamesToDay(c,w,d,rows){
     const appNames=day.exercises.map((_,i)=>getHistoricalExName(c,w,d,i)).map(canonicalSheetName);
     if(new Set(appNames).size!==appNames.length)return{ok:false,changed:false,message:'Doppelte Uebungsnamen in der App'};
     const missing=appNames.filter(appName=>normalizedExtra.filter(sheetName=>sheetName===appName).length!==1);
-    if(missing.length)return{ok:false,changed:false,message:'Sheet-Zeilen passen nicht zur Uebungsanzahl'};
+    if(missing.length)return{ok:false,changed:false,message:sheetPlanRowCountMessage(day.exercises.length,names.length)};
     return{ok:true,changed:false,message:''};
   }
-  if(names.length!==day.exercises.length)return{ok:false,changed:false,message:'Sheet-Zeilen passen nicht zur Übungsanzahl'};
+  if(names.length!==day.exercises.length)return{ok:false,changed:false,message:sheetPlanRowCountMessage(day.exercises.length,names.length)};
   const normalized=names.map(canonicalSheetName);
   if(normalized.some(n=>!n))return{ok:false,changed:false,message:'Leere Übungsnamen im Sheet'};
   if(new Set(normalized).size!==normalized.length)return{ok:false,changed:false,message:'Doppelte Übungsnamen im Sheet'};
@@ -4350,6 +4363,10 @@ function applySheetNamesToDay(c,w,d,rows){
 
 async function preflightSheetNamesForSave(sheetName,day,c=C,w=W,d=D){
   const rows=await fetchSheetRowsForDay(sheetName,day.date,c,w,d);
+  if(rows.length===0){
+    const expected=day?.exercises?.length||0;
+    return{ok:false,message:missingSheetPlanRowsMessage(day?.date,expected)};
+  }
   const applied=applySheetNamesToDay(c,w,d,rows);
   if(!applied.ok)return{ok:false,message:applied.message};
   const missing=day.exercises
