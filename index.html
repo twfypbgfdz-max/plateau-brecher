@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#080808">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PB V12.8.14-test">
-<title>Plateau-Brecher V12.8.14-test</title>
+<meta name="apple-mobile-web-app-title" content="PB V12.8.15-test">
+<title>Plateau-Brecher V12.8.15-test</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -1165,14 +1165,14 @@ main{padding:14px;max-width:860px;}
 <body>
 <div class="consent-overlay" id="consentOverlay">
   <div class="consent-box">
-    <h2 class="splash-h2">SYSTEM-START V12.8.14-test</h2>
+    <h2 class="splash-h2">SYSTEM-START V12.8.15-test</h2>
     <p class="splash-p">Daten werden lokal gespeichert und via API synchronisiert. Fehler-Logging ist aktiv.</p>
     <button class="save-btn" onclick="acceptConsent()">Akzeptieren &amp; Starten</button>
   </div>
 </div>
 <header>
   <div>
-    <div class="logo">PB<span class="splash-logo-ver"> V12.8.14-test</span></div>
+    <div class="logo">PB<span class="splash-logo-ver"> V12.8.15-test</span></div>
     <span class="hbadge" id="todayBadge">Lädt…</span>
     <div class="splash-build">Build: <span id="buildDateTxt"></span></div>
   </div>
@@ -1235,7 +1235,7 @@ main{padding:14px;max-width:860px;}
     <div class="step-desc">Nur ändern, wenn <b>SCRIPT_CODE</b> aktualisiert wurde. App-Testversionen brauchen nicht automatisch ein neues Apps-Script-Deployment.</div>
     <div class="setup-mini-grid">
       <div class="setup-mini-card"><b>Aktuelle Script-Basis:</b><br>V11.9.1</div>
-      <div class="setup-mini-card"><b>App-Version:</b><br>V12.8.14-test</div>
+      <div class="setup-mini-card"><b>App-Version:</b><br>V12.8.15-test</div>
     </div>
     <div class="setup-note"><strong>Hinweis:</strong> Wenn die Sheet-Verbindung bereits funktioniert, muss dieser Code für diese Testversion normalerweise nicht neu deployed werden.</div>
     <div class="code-box" id="scriptCodeBox">Lädt…</div>
@@ -1712,9 +1712,15 @@ const PLAN = [{"weeks":[{"weekLabel":"Woche 1","isDeload":false,"isSchool":false
 // STORAGE
 // ============================================================
 const SK='pb_v12_0_test';
-const APP_VERSION='V12.8.14-test';
+const APP_VERSION='V12.8.15-test';
 const BUILD_DATE='24.06.2026';
 /*
+CHANGELOG V12.8.15-test
+- PLAN-Diagnose zeigt bei fehlender aktueller Kalenderwoche einen Vorschlag fuer die naechste Planwoche.
+- Der Vorschlag wird aus der letzten vollstaendigen PLAN-Woche abgeleitet und nur angezeigt.
+- Keine PLAN-Mutation, keine automatische Reparatur, keine Sheet-Aktion.
+- Keine Save-/Sync-, PR-, Stats- oder Bestleistungen-Logik geaendert.
+
 CHANGELOG V12.8.14-test
 - App-PLAN-Gap-Diagnose erweitert: PLAN-Daten werden nach Kalenderwochen ausgewertet.
 - Fehlende Kalenderwochen zwischen erstem und letztem PLAN-Datum werden diagnostisch erkannt.
@@ -2448,12 +2454,74 @@ function detectPlanWeekGaps(coverage){
   }
   return gaps;
 }
+function findLastCompletePlanWeek(entriesOrCoverage){
+  const entries=Array.isArray(entriesOrCoverage)?entriesOrCoverage:(entriesOrCoverage?.entries||[]);
+  const coverage=buildPlanWeekCoverage(entries);
+  const required=['TAG 1','TAG 2','TAG 3','TAG 5','TAG 6'];
+  let lastComplete=null;
+  coverage.weekKeys.forEach(key=>{
+    const week=coverage.weeksByKey[key];
+    const byTag={};
+    week.entries.forEach(entry=>{
+      const tag=(String(entry.day?.tag||'').match(/TAG\s+\d/)||[])[0];
+      if(tag&&!byTag[tag])byTag[tag]=entry;
+    });
+    if(required.every(tag=>!!byTag[tag])){
+      lastComplete={
+        key,
+        monday:week.monday,
+        range:week.range,
+        entries:required.map(tag=>byTag[tag]),
+        isDeload:week.entries.some(entry=>!!PLAN[entry.c]?.weeks?.[entry.w]?.isDeload),
+        sourceLabel:week.entries[0]?('Z'+(week.entries[0].c+1)+' / W'+(week.entries[0].w+1)+' / '+(week.entries[0].weekLabel||'')):''
+      };
+    }
+  });
+  return lastComplete;
+}
+function buildSuggestedNextPlanWeek(missingMonday,templateWeek){
+  if(!missingMonday||!templateWeek||!Array.isArray(templateWeek.entries)||templateWeek.entries.length<5)return null;
+  const offsets=[0,1,2,4,5];
+  const labels=['Montag','Dienstag','Mittwoch','Freitag','Samstag'];
+  const days=templateWeek.entries.map((entry,index)=>{
+    const dt=new Date(missingMonday);
+    dt.setDate(missingMonday.getDate()+offsets[index]);
+    return {
+      weekday:labels[index],
+      date:formatPlanDiagDate(dt),
+      tag:String(entry.day?.tag||'').replace(/\s*\(60% Gew\.\)/,''),
+      exerciseCount:Array.isArray(entry.day?.exercises)?entry.day.exercises.length:0,
+      exercises:Array.isArray(entry.day?.exercises)?entry.day.exercises.slice():[],
+      muscle:entry.day?.muscle||''
+    };
+  });
+  return {
+    weekRange:formatPlanWeekRange(missingMonday),
+    templateRange:templateWeek.range,
+    templateLabel:templateWeek.sourceLabel,
+    templateIsDeload:!!templateWeek.isDeload,
+    days,
+    note:'Nur Vorschlag, wurde nicht gespeichert.'
+  };
+}
+function formatSuggestedPlanWeek(suggestion){
+  if(!suggestion)return '<div class="weekly-sub" style="margin-top:10px">Kein sicherer Planvorschlag möglich.</div>';
+  const rows=suggestion.days.map(day=>{
+    const tag=String(day.tag||'').split(':')[0]||String(day.tag||'Training');
+    return '<div class="weekly-kv"><div class="weekly-k">'+day.weekday+' '+day.date+'</div><div class="weekly-v">'+tag+' · '+day.exerciseCount+' Übungen</div></div>';
+  }).join('');
+  const template='Vorlage: '+(suggestion.templateLabel||'letzte vollständige Woche')+' · '+suggestion.templateRange+(suggestion.templateIsDeload?' · Deload-Muster':'');
+  return '<div class="weekly-grid" style="margin-top:10px">'+rows+'</div><div class="weekly-sub" style="margin-top:10px">'+template+'<br>'+suggestion.note+'</div>';
+}
 function buildMissingPlanWeekDiagnosis(now,coverage,weekStart,weekEnd,gaps){
   const entries=coverage?.entries||[];
   const sorted=entries.slice().sort((a,b)=>a.dt-b.dt);
   const prev=sorted.filter(e=>e.dt<weekStart).slice(-1)[0]||null;
   const next=sorted.find(e=>e.dt>weekEnd)||null;
-  return {missing:true,weekStart,weekEnd,range:formatPlanDiagRange(weekStart,weekEnd),currentWeekRange:formatPlanWeekRange(weekStart),prev,next,coverage,gaps:gaps||[]};
+  const templateWeek=findLastCompletePlanWeek(sorted.filter(e=>e.dt<weekStart));
+  const suggestion=buildSuggestedNextPlanWeek(weekStart,templateWeek);
+  if(typeof console!=='undefined'&&console.debug&&suggestion)console.debug('PLAN-Fortschreibung Vorschlag',suggestion);
+  return {missing:true,weekStart,weekEnd,range:formatPlanDiagRange(weekStart,weekEnd),currentWeekRange:formatPlanWeekRange(weekStart),prev,next,coverage,gaps:gaps||[],suggestion};
 }
 function renderMissingPlanWeekDiagnosis(diag){
   const prev=diag.prev?('Letzter Planpunkt: Z'+(diag.prev.c+1)+' / W'+(diag.prev.w+1)+' / '+(diag.prev.day?.date||'?')+' · '+(diag.prev.day?.tag||'')):'Letzter Planpunkt: keiner gefunden';
@@ -2461,7 +2529,8 @@ function renderMissingPlanWeekDiagnosis(diag){
   const gaps=(diag.gaps||[]).slice(0,4).map(g=>g.range).join(', ');
   const moreGaps=(diag.gaps&&diag.gaps.length>4)?' +' +(diag.gaps.length-4)+' weitere':'';
   const gapLine=gaps?'<br>Erkannte PLAN-Gaps: '+gaps+moreGaps:'';
-  return '<div class="weekly-overview warning"><div class="weekly-primary">Planwoche fehlt</div><div class="weekly-sub">Für die aktuelle Kalenderwoche '+(diag.currentWeekRange||diag.range)+' ist kein Trainingstag im eingebetteten PLAN vorhanden. Es wird kein alter Standardtag geladen.</div><div class="weekly-grid"><div class="weekly-kv"><div class="weekly-k">Diagnose</div><div class="weekly-v warning">PLAN-Lücke</div></div><div class="weekly-kv"><div class="weekly-k">Aktuelle Woche</div><div class="weekly-v">'+(diag.currentWeekRange||diag.range)+'</div></div></div><div class="weekly-sub" style="margin-top:10px">'+prev+'<br>'+next+gapLine+'</div></div>';
+  const suggestionHtml='<div class="weekly-primary" style="margin-top:12px">Vorschlag für nächste Woche</div><div class="weekly-sub">Fehlende Woche: '+(diag.currentWeekRange||diag.range)+'</div>'+formatSuggestedPlanWeek(diag.suggestion);
+  return '<div class="weekly-overview warning"><div class="weekly-primary">Planwoche fehlt</div><div class="weekly-sub">Für die aktuelle Kalenderwoche '+(diag.currentWeekRange||diag.range)+' ist kein Trainingstag im eingebetteten PLAN vorhanden. Es wird kein alter Standardtag geladen.</div><div class="weekly-grid"><div class="weekly-kv"><div class="weekly-k">Diagnose</div><div class="weekly-v warning">PLAN-Lücke</div></div><div class="weekly-kv"><div class="weekly-k">Aktuelle Woche</div><div class="weekly-v">'+(diag.currentWeekRange||diag.range)+'</div></div></div><div class="weekly-sub" style="margin-top:10px">'+prev+'<br>'+next+gapLine+'</div>'+suggestionHtml+'</div>';
 }
 function clearPlanDiagnosis(){ACTIVE_PLAN_DIAG=null;}
 function findPlanPositionForCurrentWeek(now){
