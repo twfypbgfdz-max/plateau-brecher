@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#080808">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PB V12.8.13-test">
-<title>Plateau-Brecher V12.8.13-test</title>
+<meta name="apple-mobile-web-app-title" content="PB V12.8.14-test">
+<title>Plateau-Brecher V12.8.14-test</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -1165,14 +1165,14 @@ main{padding:14px;max-width:860px;}
 <body>
 <div class="consent-overlay" id="consentOverlay">
   <div class="consent-box">
-    <h2 class="splash-h2">SYSTEM-START V12.8.13-test</h2>
+    <h2 class="splash-h2">SYSTEM-START V12.8.14-test</h2>
     <p class="splash-p">Daten werden lokal gespeichert und via API synchronisiert. Fehler-Logging ist aktiv.</p>
     <button class="save-btn" onclick="acceptConsent()">Akzeptieren &amp; Starten</button>
   </div>
 </div>
 <header>
   <div>
-    <div class="logo">PB<span class="splash-logo-ver"> V12.8.13-test</span></div>
+    <div class="logo">PB<span class="splash-logo-ver"> V12.8.14-test</span></div>
     <span class="hbadge" id="todayBadge">Lädt…</span>
     <div class="splash-build">Build: <span id="buildDateTxt"></span></div>
   </div>
@@ -1235,7 +1235,7 @@ main{padding:14px;max-width:860px;}
     <div class="step-desc">Nur ändern, wenn <b>SCRIPT_CODE</b> aktualisiert wurde. App-Testversionen brauchen nicht automatisch ein neues Apps-Script-Deployment.</div>
     <div class="setup-mini-grid">
       <div class="setup-mini-card"><b>Aktuelle Script-Basis:</b><br>V11.9.1</div>
-      <div class="setup-mini-card"><b>App-Version:</b><br>V12.8.13-test</div>
+      <div class="setup-mini-card"><b>App-Version:</b><br>V12.8.14-test</div>
     </div>
     <div class="setup-note"><strong>Hinweis:</strong> Wenn die Sheet-Verbindung bereits funktioniert, muss dieser Code für diese Testversion normalerweise nicht neu deployed werden.</div>
     <div class="code-box" id="scriptCodeBox">Lädt…</div>
@@ -1712,9 +1712,15 @@ const PLAN = [{"weeks":[{"weekLabel":"Woche 1","isDeload":false,"isSchool":false
 // STORAGE
 // ============================================================
 const SK='pb_v12_0_test';
-const APP_VERSION='V12.8.13-test';
+const APP_VERSION='V12.8.14-test';
 const BUILD_DATE='24.06.2026';
 /*
+CHANGELOG V12.8.14-test
+- App-PLAN-Gap-Diagnose erweitert: PLAN-Daten werden nach Kalenderwochen ausgewertet.
+- Fehlende Kalenderwochen zwischen erstem und letztem PLAN-Datum werden diagnostisch erkannt.
+- Fehlende aktuelle PLAN-Woche zeigt weiterhin keinen Default-Trainingstag, sondern eine Diagnose mit letztem/naechstem Planpunkt.
+- Keine PLAN-Daten, keine Sheet-/Sync-Logik und keine PR-/Stats-/Bestleistungen-Logik geaendert.
+
 CHANGELOG V12.8.13-test
 - Save-Preflight meldet fehlende Sheet-Planzeilen fuer das aktuelle Datum klarer.
 - Anzahlabweichungen zwischen App-PLAN und Sheet-PLAN nennen erwartete und gefundene Uebungszeilen.
@@ -2374,41 +2380,113 @@ function getPlanDateForYear(planDate,year){
   return new Date(year,month-1,day);
 }
 let ACTIVE_PLAN_DIAG=null;
+function parsePlanDateToDateObject(dateStr,year){
+  const parts=String(dateStr||'').trim().match(/^(\d{1,2})\.(\d{1,2})$/);
+  if(!parts)return null;
+  const day=parseInt(parts[1],10);
+  const month=parseInt(parts[2],10);
+  if(!day||!month)return null;
+  const dt=new Date(year,month-1,day);
+  return isNaN(dt)?null:dt;
+}
+function getMondayOfDate(date){
+  const base=new Date(date.getFullYear(),date.getMonth(),date.getDate());
+  base.setDate(base.getDate()-((base.getDay()+6)%7));
+  base.setHours(0,0,0,0);
+  return base;
+}
 function formatPlanDiagDate(date){return String(date.getDate()).padStart(2,'0')+'.'+String(date.getMonth()+1).padStart(2,'0');}
 function formatPlanDiagRange(start,end){return formatPlanDiagDate(start)+'-'+formatPlanDiagDate(end);}
-function buildMissingPlanWeekDiagnosis(now,entries,weekStart,weekEnd){
+function formatPlanWeekRange(monday){
+  const end=new Date(monday);
+  end.setDate(monday.getDate()+6);
+  return formatPlanDiagRange(monday,end);
+}
+function planWeekKey(date){
+  return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');
+}
+function collectPlanDateEntries(year){
+  const entries=[];
+  for(let c=0;c<PLAN.length;c++){
+    for(let w=0;w<PLAN[c].weeks.length;w++){
+      const week=PLAN[c].weeks[w];
+      for(let d=0;d<week.days.length;d++){
+        const day=week.days[d];
+        const dt=parsePlanDateToDateObject(day.date,year);
+        if(dt)entries.push({c,w,d,dt,day,weekLabel:week.weekLabel||('Woche '+(w+1))});
+      }
+    }
+  }
+  return entries.sort((a,b)=>a.dt-b.dt);
+}
+function buildPlanWeekCoverage(entries){
+  const weeksByKey={};
+  const sorted=(entries||[]).slice().sort((a,b)=>a.dt-b.dt);
+  sorted.forEach(entry=>{
+    const monday=getMondayOfDate(entry.dt);
+    const key=planWeekKey(monday);
+    if(!weeksByKey[key])weeksByKey[key]={key,monday,range:formatPlanWeekRange(monday),entries:[]};
+    weeksByKey[key].entries.push(entry);
+  });
+  return {
+    entries:sorted,
+    weeksByKey,
+    weekKeys:Object.keys(weeksByKey).sort(),
+    first:sorted[0]||null,
+    last:sorted[sorted.length-1]||null
+  };
+}
+function detectPlanWeekGaps(coverage){
+  if(!coverage||!coverage.first||!coverage.last)return[];
+  const gaps=[];
+  const cursor=getMondayOfDate(coverage.first.dt);
+  const end=getMondayOfDate(coverage.last.dt);
+  while(cursor<=end){
+    const key=planWeekKey(cursor);
+    if(!coverage.weeksByKey[key])gaps.push({key,weekStart:new Date(cursor),range:formatPlanWeekRange(cursor)});
+    cursor.setDate(cursor.getDate()+7);
+  }
+  return gaps;
+}
+function buildMissingPlanWeekDiagnosis(now,coverage,weekStart,weekEnd,gaps){
+  const entries=coverage?.entries||[];
   const sorted=entries.slice().sort((a,b)=>a.dt-b.dt);
   const prev=sorted.filter(e=>e.dt<weekStart).slice(-1)[0]||null;
   const next=sorted.find(e=>e.dt>weekEnd)||null;
-  return {missing:true,weekStart,weekEnd,range:formatPlanDiagRange(weekStart,weekEnd),prev,next};
+  return {missing:true,weekStart,weekEnd,range:formatPlanDiagRange(weekStart,weekEnd),currentWeekRange:formatPlanWeekRange(weekStart),prev,next,coverage,gaps:gaps||[]};
 }
 function renderMissingPlanWeekDiagnosis(diag){
   const prev=diag.prev?('Letzter Planpunkt: Z'+(diag.prev.c+1)+' / W'+(diag.prev.w+1)+' / '+(diag.prev.day?.date||'?')+' · '+(diag.prev.day?.tag||'')):'Letzter Planpunkt: keiner gefunden';
   const next=diag.next?('Nächster Planpunkt: Z'+(diag.next.c+1)+' / W'+(diag.next.w+1)+' / '+(diag.next.day?.date||'?')+' · '+(diag.next.day?.tag||'')):'Nächster Planpunkt: keiner gefunden';
-  return '<div class="weekly-overview warning"><div class="weekly-primary">Planwoche fehlt</div><div class="weekly-sub">Für die aktuelle Kalenderwoche '+diag.range+' ist kein Trainingstag im eingebetteten PLAN vorhanden. Es wird kein alter Standardtag geladen.</div><div class="weekly-grid"><div class="weekly-kv"><div class="weekly-k">Diagnose</div><div class="weekly-v warning">PLAN-Lücke</div></div><div class="weekly-kv"><div class="weekly-k">Zeitraum</div><div class="weekly-v">'+diag.range+'</div></div></div><div class="weekly-sub" style="margin-top:10px">'+prev+'<br>'+next+'</div></div>';
+  const gaps=(diag.gaps||[]).slice(0,4).map(g=>g.range).join(', ');
+  const moreGaps=(diag.gaps&&diag.gaps.length>4)?' +' +(diag.gaps.length-4)+' weitere':'';
+  const gapLine=gaps?'<br>Erkannte PLAN-Gaps: '+gaps+moreGaps:'';
+  return '<div class="weekly-overview warning"><div class="weekly-primary">Planwoche fehlt</div><div class="weekly-sub">Für die aktuelle Kalenderwoche '+(diag.currentWeekRange||diag.range)+' ist kein Trainingstag im eingebetteten PLAN vorhanden. Es wird kein alter Standardtag geladen.</div><div class="weekly-grid"><div class="weekly-kv"><div class="weekly-k">Diagnose</div><div class="weekly-v warning">PLAN-Lücke</div></div><div class="weekly-kv"><div class="weekly-k">Aktuelle Woche</div><div class="weekly-v">'+(diag.currentWeekRange||diag.range)+'</div></div></div><div class="weekly-sub" style="margin-top:10px">'+prev+'<br>'+next+gapLine+'</div></div>';
 }
 function clearPlanDiagnosis(){ACTIVE_PLAN_DIAG=null;}
 function findPlanPositionForCurrentWeek(now){
   const ts=String(now.getDate()).padStart(2,'0')+'.'+String(now.getMonth()+1).padStart(2,'0');
-  const entries=[];
-  for(let c=0;c<PLAN.length;c++){
-    for(let w=0;w<PLAN[c].weeks.length;w++){
-      for(let d=0;d<PLAN[c].weeks[w].days.length;d++){
-        const day=PLAN[c].weeks[w].days[d];
-        if(day.date===ts)return {c,w,d,mode:'exact'};
-        const dt=getPlanDateForYear(day.date,now.getFullYear());
-        if(dt)entries.push({c,w,d,dt,day});
-      }
-    }
-  }
+  const entries=collectPlanDateEntries(now.getFullYear());
+  const coverage=buildPlanWeekCoverage(entries);
+  const gaps=detectPlanWeekGaps(coverage);
+  const exact=entries.find(e=>e.day?.date===ts);
+  if(exact)return {c:exact.c,w:exact.w,d:exact.d,mode:'exact'};
   const todayStart=new Date(now.getFullYear(),now.getMonth(),now.getDate());
-  const weekStart=new Date(todayStart);
-  weekStart.setDate(todayStart.getDate()-((todayStart.getDay()+6)%7));
+  const weekStart=getMondayOfDate(todayStart);
   const weekEnd=new Date(weekStart);
   weekEnd.setDate(weekStart.getDate()+6);
   weekEnd.setHours(23,59,59,999);
   const currentWeek=entries.filter(e=>e.dt>=weekStart&&e.dt<=weekEnd).sort((a,b)=>a.dt-b.dt);
-  if(currentWeek.length===0)return buildMissingPlanWeekDiagnosis(now,entries,weekStart,weekEnd);
+  if(currentWeek.length===0){
+    const diag=buildMissingPlanWeekDiagnosis(now,coverage,weekStart,weekEnd,gaps);
+    if(typeof console!=='undefined'&&console.warn)console.warn('PLAN-Gap-Diagnose',{
+      currentWeek:diag.currentWeekRange,
+      prev:diag.prev?.day?.date||null,
+      next:diag.next?.day?.date||null,
+      gaps:(diag.gaps||[]).map(g=>g.range)
+    });
+    return diag;
+  }
   const upcoming=currentWeek.find(e=>e.dt>=todayStart);
   const chosen=upcoming||currentWeek[currentWeek.length-1];
   return {c:chosen.c,w:chosen.w,d:chosen.d,mode:upcoming?'week-next':'week-last'};
