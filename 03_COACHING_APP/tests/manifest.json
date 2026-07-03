@@ -1,0 +1,19 @@
+{
+  "name": "Felix Coaching Hub",
+  "short_name": "Coaching Hub",
+  "description": "Fitness- und Ernährungs-Coaching App von Felix",
+  "start_url": "./coaching-hub-v0_2-test.html",
+  "display": "standalone",
+  "background_color": "#0f0f0f",
+  "theme_color": "#00c896",
+  "orientation": "portrait-primary",
+  "lang": "de",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Felix Coaching Hub</title>
+
+  <!-- PWA / iOS Home Screen -->
+  <meta name="theme-color" content="#00c896">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Coaching Hub">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon.svg">
+
+  <!--
+    Felix Coaching Hub – v0.2
+    Datei: 03_COACHING_APP/tests/coaching-hub-v0_2-test.html
+    Stand: 2026-07-03
+
+    NEU in v0.2:
+    - Mehrere Kundenprofile (Max / Sarah / Tom) mit eigenem Datenspeicher
+    - PIN-Schutz für Coach-Ansicht (localStorage, 4-stellig)
+    - Wochenbericht-Export (kopierbarer formatierter Text)
+    - CSV-Export der Check-in-Daten (Excel-kompatibel)
+    - PWA-Unterstützung (manifest.json + sw.js + iOS Meta-Tags)
+
+    v0.1 bleibt unverändert als Referenz.
+  -->
+
+  <style>
+    /* ========== RESET & BASE ========== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: #0f0f0f;
+      color: #f0f0f0;
+      min-height: 100vh;
+      padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* ========== VARIABLES ========== */
+    :root {
+      --bg:         #0f0f0f;
+      --bg-card:    #1a1a1a;
+      --bg-card2:   #222222;
+      --accent:     #00c896;
+      --accent-dim: rgba(0,200,150,.15);
+      --danger:     #e74c3c;
+      --warning:    #f39c12;
+      --text:       #f0f0f0;
+      --text-muted: #888888;
+      --border:     #2a2a2a;
+    }
+
+    /* ========== SECTIONS ========== */
+    .section { display: none; padding: 16px; max-width: 480px; margin: 0 auto; }
+    .section.active { display: block; }
+
+    /* ========== HEADER ========== */
+    .app-header {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .app-header h1 { font-size: 17px; font-weight: 800; color: var(--accent); letter-spacing: -.4px; }
+    .header-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+    /* Profile Selector */
+    .profile-select {
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 7px 28px 7px 10px;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      -webkit-appearance: none;
+      appearance: none;
+      cursor: pointer;
+      outline: none;
+      flex-shrink: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 9px center;
+    }
+    .profile-select:focus { border-color: var(--accent); }
+
+    /* ========== CARDS ========== */
+    .card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 18px 20px;
+      margin-bottom: 12px;
+      border: 1px solid var(--border);
+    }
+    .card-title {
+      font-size: 10px; font-weight: 700; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;
+    }
+    .card-value { font-size: 26px; font-weight: 800; color: var(--text); }
+    .card-sub   { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+
+    /* ========== GRID ========== */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* ========== PAGE TITLE ========== */
+    .page-title { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+    .page-sub   { font-size: 13px; color: var(--text-muted); margin-bottom: 18px; }
+
+    /* ========== BADGES ========== */
+    .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .badge-green  { background: var(--accent-dim); color: var(--accent); }
+    .badge-orange { background: rgba(243,156,18,.15); color: var(--warning); }
+
+    /* ========== BUTTONS ========== */
+    .btn {
+      display: block; width: 100%; padding: 16px; border-radius: 14px;
+      font-size: 16px; font-weight: 700; border: none; cursor: pointer;
+      text-align: center; transition: opacity .15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:active { opacity: .75; }
+    .btn-primary   { background: var(--accent); color: #000; }
+    .btn-secondary { background: var(--bg-card2); color: var(--text); border: 1px solid var(--border); }
+    .btn-danger    { background: rgba(231,76,60,.15); color: var(--danger); border: 1px solid rgba(231,76,60,.3); }
+    .btn-sm { padding: 11px 16px; font-size: 14px; border-radius: 12px; }
+    .mt-8  { margin-top: 8px; }
+    .mt-12 { margin-top: 12px; }
+    .mt-16 { margin-top: 16px; }
+
+    /* ========== DAY TABS ========== */
+    .day-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .day-tab {
+      flex: 1; padding: 11px 8px; border-radius: 12px;
+      background: var(--bg-card2); border: 1px solid var(--border);
+      color: var(--text-muted); font-size: 14px; font-weight: 700;
+      cursor: pointer; text-align: center; transition: all .2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .day-tab.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+    /* ========== EXERCISE CARDS ========== */
+    .exercise-card {
+      background: var(--bg-card); border-radius: 14px; padding: 16px;
+      margin-bottom: 10px; border: 1px solid var(--border);
+    }
+    .exercise-card.done { opacity: .55; border-color: var(--accent); }
+    .exercise-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+    .exercise-name  { font-size: 15px; font-weight: 700; flex: 1; line-height: 1.3; }
+    .exercise-sets  { font-size: 13px; color: var(--accent); font-weight: 700; white-space: nowrap; }
+    .exercise-note  { font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-bottom: 10px; }
+    .exercise-row   { display: flex; gap: 8px; align-items: center; }
+    .weight-input {
+      flex: 1; background: var(--bg-card2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 14px; color: var(--text); font-size: 15px;
+    }
+    .weight-input:focus { outline: none; border-color: var(--accent); }
+    .weight-input::placeholder { color: var(--text-muted); }
+    .done-btn {
+      width: 46px; height: 46px; border-radius: 12px;
+      background: var(--bg-card2); border: 2px solid var(--border);
+      color: var(--text-muted); font-size: 20px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: all .2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .done-btn.checked { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+    /* ========== FORMS ========== */
+    .form-group { margin-bottom: 18px; }
+    .form-label {
+      display: block; font-size: 11px; font-weight: 700; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .8px; margin-bottom: 7px;
+    }
+    .form-input, .form-textarea {
+      width: 100%; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px 16px; color: var(--text);
+      font-size: 16px; font-family: inherit;
+    }
+    .form-input:focus, .form-textarea:focus { outline: none; border-color: var(--accent); }
+    .form-input::placeholder, .form-textarea::placeholder { color: var(--text-muted); }
+    .form-textarea { resize: vertical; min-height: 80px; }
+
+    /* ========== SLIDERS ========== */
+    .rating-group { margin-bottom: 18px; }
+    .rating-label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .rating-label { font-size: 14px; font-weight: 600; }
+    .rating-value { font-size: 16px; font-weight: 800; color: var(--accent); }
+    .rating-slider {
+      -webkit-appearance: none; width: 100%; height: 6px;
+      border-radius: 3px; background: var(--border); outline: none;
+    }
+    .rating-slider::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 26px; height: 26px; border-radius: 50%;
+      background: var(--accent); cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,200,150,.4);
+    }
+
+    /* ========== PROGRESS ENTRIES ========== */
+    .progress-entry {
+      background: var(--bg-card); border-radius: 12px;
+      padding: 14px 16px; margin-bottom: 8px; border: 1px solid var(--border);
+    }
+    .progress-entry-date { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+    .stat-row {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 14px; gap: 12px;
+    }
+    .stat-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .stat-label { color: var(--text-muted); flex-shrink: 0; }
+    .stat-val   { font-weight: 700; text-align: right; }
+
+    /* ========== WEIGHT CHART ========== */
+    .weight-chart { display: flex; align-items: flex-end; gap: 6px; height: 90px; padding: 4px 0 0; }
+    .wbar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; gap: 3px; }
+    .wbar { width: 100%; background: rgba(0,200,150,.3); border-radius: 4px 4px 0 0; border: 1px solid rgba(0,200,150,.5); min-height: 4px; }
+    .wbar-label { font-size: 9px; color: var(--text-muted); text-align: center; }
+
+    /* ========== NUTRITION ========== */
+    .macro-row {
+      display: flex; align-items: center; gap: 14px;
+      padding: 12px 0; border-bottom: 1px solid var(--border);
+    }
+    .macro-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .macro-icon { font-size: 26px; flex-shrink: 0; }
+    .macro-name { font-size: 13px; color: var(--text-muted); }
+    .macro-val  { font-size: 22px; font-weight: 800; color: var(--accent); }
+    .rule-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; line-height: 1.5;
+    }
+    .rule-item:last-child { border-bottom: none; }
+    .rule-icon { color: var(--accent); flex-shrink: 0; margin-top: 1px; }
+
+    /* ========== DISCLAIMERS ========== */
+    .disclaimer {
+      background: rgba(243,156,18,.07); border: 1px solid rgba(243,156,18,.2);
+      border-radius: 12px; padding: 12px 14px; font-size: 12px;
+      color: var(--text-muted); line-height: 1.6; margin-bottom: 14px;
+    }
+    .disclaimer strong { color: var(--warning); }
+
+    /* ========== COACH MISC ========== */
+    .demo-warning {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(243,156,18,.1); border: 1px solid rgba(243,156,18,.3);
+      border-radius: 20px; padding: 5px 14px; font-size: 12px;
+      color: var(--warning); font-weight: 700; margin-bottom: 18px;
+    }
+    .coach-msg {
+      background: rgba(0,200,150,.07); border-left: 3px solid var(--accent);
+      border-radius: 0 12px 12px 0; padding: 12px 14px;
+      font-size: 14px; line-height: 1.6; font-style: italic;
+    }
+    .coach-by { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+
+    /* ========== PROGRESS BAR ========== */
+    .progress-track { background: var(--bg-card2); border-radius: 8px; height: 8px; overflow: hidden; }
+    .progress-fill  { height: 100%; background: var(--accent); border-radius: 8px; transition: width .4s; }
+
+    /* ========== EMPTY STATE ========== */
+    .empty-state { text-align: center; padding: 32px 16px; color: var(--text-muted); }
+    .empty-state .e-icon { font-size: 36px; margin-bottom: 10px; }
+    .empty-state p { font-size: 13px; line-height: 1.6; }
+
+    /* ========== TOAST ========== */
+    .toast {
+      position: fixed; top: 68px; left: 50%;
+      transform: translateX(-50%) scale(.9);
+      background: var(--accent); color: #000;
+      padding: 11px 22px; border-radius: 24px; font-weight: 800; font-size: 14px;
+      z-index: 600; opacity: 0; pointer-events: none;
+      transition: opacity .25s, transform .25s; white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) scale(1); }
+
+    /* ========== BOTTOM NAV ========== */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: #111; border-top: 1px solid var(--border);
+      display: flex; z-index: 200;
+      height: calc(58px + env(safe-area-inset-bottom, 0px));
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    .nav-item {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 6px 2px; cursor: pointer;
+      border: none; background: none; gap: 2px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .nav-icon  { font-size: 20px; line-height: 1; }
+    .nav-label { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--text-muted); }
+    .nav-item.active .nav-label { color: var(--accent); }
+    .nav-dot   { width: 4px; height: 4px; border-radius: 50%; margin-top: 2px; }
+
+    /* ========== MISC ========== */
+    .divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+    .text-muted  { color: var(--text-muted); font-size: 13px; }
+    .text-accent { color: var(--accent); }
+    .text-danger { color: var(--danger); }
+
+    /* =============================================
+       NEU v0.2: PIN OVERLAY
+       ============================================= */
+    .pin-overlay {
+      position: fixed; inset: 0; background: var(--bg);
+      z-index: 500; display: none;
+      flex-direction: column; align-items: center; justify-content: center;
+      padding: 32px 24px;
+    }
+    .pin-overlay.show { display: flex; }
+    .pin-card { width: 100%; max-width: 320px; text-align: center; }
+    .pin-lock-icon { font-size: 52px; margin-bottom: 14px; }
+    .pin-title { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+    .pin-sub   { font-size: 14px; color: var(--text-muted); margin-bottom: 28px; line-height: 1.4; }
+    .pin-input-field {
+      width: 100%;
+      background: var(--bg-card); border: 2px solid var(--border); border-radius: 16px;
+      padding: 18px; color: var(--text); font-size: 30px; font-weight: 800;
+      text-align: center; letter-spacing: 14px; margin-bottom: 14px; font-family: monospace;
+    }
+    .pin-input-field:focus { outline: none; border-color: var(--accent); }
+    .pin-error { font-size: 13px; color: var(--danger); height: 18px; margin-bottom: 12px; }
+    .pin-hint  { font-size: 11px; color: var(--text-muted); margin-top: 14px; }
+
+    /* =============================================
+       NEU v0.2: REPORT MODAL (Bottom Sheet)
+       ============================================= */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.75);
+      z-index: 400; display: none;
+      align-items: flex-end; justify-content: center;
+      padding: 0 0 env(safe-area-inset-bottom, 0px);
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-card {
+      width: 100%; max-width: 480px;
+      background: var(--bg-card); border-radius: 24px 24px 0 0;
+      padding: 20px; max-height: 88vh; overflow-y: auto;
+    }
+    .modal-header {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;
+    }
+    .modal-title  { font-size: 18px; font-weight: 800; }
+    .modal-close {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--bg-card2); border: 1px solid var(--border);
+      color: var(--text-muted); font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .report-textarea {
+      width: 100%; background: var(--bg-card2); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px; color: var(--text);
+      font-size: 13px; font-family: 'Menlo', 'Monaco', monospace;
+      line-height: 1.6; height: 260px; resize: none; margin-bottom: 12px;
+    }
+
+    /* =============================================
+       NEU v0.2: EXPORT BUTTON ROW
+       ============================================= */
+    .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+
+<!-- =============================================
+     PIN OVERLAY (Coach-Schutz)
+     ============================================= -->
+<div id="pin-overlay" class="pin-overlay">
+  <div class="pin-card">
+    <div class="pin-lock-icon">🔒</div>
+    <h2 class="pin-title">Coach-Ansicht</h2>
+    <p class="pin-sub">Bitte PIN eingeben,<br>um fortzufahren.</p>
+    <input
+      type="password"
+      class="pin-input-field"
+      id="pin-input"
+      inputmode="numeric"
+      pattern="[0-9]*"
+      maxlength="4"
+      placeholder="••••"
+      autocomplete="off"
+      onkeydown="if(event.key==='Enter')checkPin()">
+    <div class="pin-error" id="pin-error"></div>
+    <button class="btn btn-primary" onclick="checkPin()">Entsperren</button>
+    <button class="btn btn-secondary mt-8" onclick="closePinOverlay()">Abbrechen</button>
+    <p class="pin-hint">Standard-PIN: 1234 · In Coach-Ansicht änderbar</p>
+  </div>
+</div>
+
+<!-- =============================================
+     REPORT MODAL (Wochenbericht)
+     ============================================= -->
+<div id="report-modal" class="modal-overlay">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="modal-title">Wochenbericht</span>
+      <button class="modal-close" onclick="closeReport()">✕</button>
+    </div>
+    <textarea class="report-textarea" id="report-text" readonly></textarea>
+    <button class="btn btn-primary btn-sm" onclick="copyReport()">📋 In Zwischenablage kopieren</button>
+    <button class="btn btn-secondary btn-sm mt-8" onclick="closeReport()">Schließen</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast" aria-live="polite"></div>
+
+<!-- =============================================
+     HEADER
+     ============================================= -->
+<header class="app-header">
+  <div>
+    <h1>Felix Coaching Hub</h1>
+    <div class="header-sub">Demo v0.2</div>
+  </div>
+  <select id="profile-selector" class="profile-select" onchange="switchProfile(this.value)" aria-label="Profil wählen">
+    <option value="max">Max M.</option>
+    <option value="sarah">Sarah M.</option>
+    <option value="tom">Tom F.</option>
+  </select>
+</header>
+
+<main>
+
+  <!-- ================================================
+       DASHBOARD
+       ================================================ -->
+  <section class="section active" id="sec-dashboard">
+
+    <div class="card" style="background:linear-gradient(135deg,#1a1a1a 0%,#1e2a23 100%);">
+      <div class="card-title">Willkommen zurück</div>
+      <div class="card-value" id="dash-name">Hey, Max!</div>
+      <div class="card-sub"  id="dash-goal">Ziel: Muskelaufbau &amp; Kraft</div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Status</div>
+        <span class="badge badge-green">On Track</span>
+      </div>
+      <div class="card">
+        <div class="card-title">Nächster Check-in</div>
+        <div style="font-size:15px;font-weight:700;" id="dash-next-ci">Montag</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Trainingsfortschritt diese Woche</div>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px;">
+        <div style="font-size:34px;font-weight:900;" id="dash-done">0</div>
+        <div class="text-muted" style="font-size:14px;">von 3 Einheiten</div>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="dash-progress-bar" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Kalorienziel</div>
+        <div class="card-value" id="dash-kcal">2.400</div>
+        <div class="card-sub">kcal / Tag</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Proteinziel</div>
+        <div class="card-value" id="dash-protein">180</div>
+        <div class="card-sub">g / Tag</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Coach-Nachricht</div>
+      <div class="coach-msg" id="dash-coach-msg">
+        Starke Woche! Bleib konsistent – Schlaf und Ernährung machen den entscheidenden Unterschied.
+      </div>
+      <div class="coach-by">– Felix</div>
+    </div>
+
+    <div class="card" id="dash-last-ci-card" style="display:none;">
+      <div class="card-title">Letzter Check-in</div>
+      <div id="dash-last-ci-content"></div>
+    </div>
+
+    <div class="disclaimer">
+      <strong>Hinweis:</strong> Dieses Coaching ersetzt keine ärztliche Beratung.
+      Bei Schmerzen, Krankheiten oder Essstörungen bitte fachlich abklären lassen.
+    </div>
+
+  </section>
+
+  <!-- ================================================
+       TRAININGSPLAN
+       ================================================ -->
+  <section class="section" id="sec-plan">
+    <div class="page-title">Trainingsplan</div>
+    <div class="page-sub">3 × Woche · Ganzkörper · Anfänger</div>
+
+    <div class="day-tabs">
+      <button class="day-tab active" onclick="switchDay('A')" id="tab-A">Tag A</button>
+      <button class="day-tab"        onclick="switchDay('B')" id="tab-B">Tag B</button>
+      <button class="day-tab"        onclick="switchDay('C')" id="tab-C">Tag C</button>
+    </div>
+
+    <div id="exercises-container"></div>
+
+    <button class="btn btn-secondary btn-sm mt-12" onclick="saveTrainingLog()">Einheit speichern ✓</button>
+  </section>
+
+  <!-- ================================================
+       WOCHEN-CHECK-IN
+       ================================================ -->
+  <section class="section" id="sec-checkin">
+    <div class="page-title">Wochen-Check-in</div>
+    <div class="page-sub" id="checkin-sub">Füll deinen Check-in für diese Woche aus.</div>
+
+    <div class="form-group">
+      <label class="form-label" for="ci-weight">Aktuelles Gewicht (kg)</label>
+      <input type="number" class="form-input" id="ci-weight" placeholder="z.B. 82.5" step="0.1" inputmode="decimal">
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="ci-sessions">Trainingseinheiten geschafft</label>
+      <input type="number" class="form-input" id="ci-sessions" placeholder="0 – 7" min="0" max="7" inputmode="numeric">
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="ci-cardio">Schritte / Cardio (grob)</label>
+      <input type="text" class="form-input" id="ci-cardio" placeholder="z.B. 8.000 Schritte oder 2× 30 min Walk">
+    </div>
+
+    <div class="rating-group">
+      <div class="rating-label-row">
+        <span class="rating-label">😴 Schlafqualität</span>
+        <span class="rating-value" id="ci-sleep-val">3</span>
+      </div>
+      <input type="range" class="rating-slider" id="ci-sleep" min="1" max="5" value="3"
+             oninput="document.getElementById('ci-sleep-val').textContent=this.value">
+    </div>
+    <div class="rating-group">
+      <div class="rating-label-row">
+        <span class="rating-label">⚡ Energie</span>
+        <span class="rating-value" id="ci-energy-val">3</span>
+      </div>
+      <input type="range" class="rating-slider" id="ci-energy" min="1" max="5" value="3"
+             oninput="document.getElementById('ci-energy-val').textContent=this.value">
+    </div>
+    <div class="rating-group">
+      <div class="rating-label-row">
+        <span class="rating-label">🍽️ Hunger</span>
+        <span class="rating-value" id="ci-hunger-val">3</span>
+      </div>
+      <input type="range" class="rating-slider" id="ci-hunger" min="1" max="5" value="3"
+             oninput="document.getElementById('ci-hunger-val').textContent=this.value">
+    </div>
+    <div class="rating-group">
+      <div class="rating-label-row">
+        <span class="rating-label">🧠 Stress</span>
+        <span class="rating-value" id="ci-stress-val">3</span>
+      </div>
+      <input type="range" class="rating-slider" id="ci-stress" min="1" max="5" value="3"
+             oninput="document.getElementById('ci-stress-val').textContent=this.value">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="ci-weektext">Wie lief die Woche?</label>
+      <textarea class="form-textarea" id="ci-weektext" placeholder="Kurze Zusammenfassung..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="ci-problems">Probleme / Schmerzen?</label>
+      <textarea class="form-textarea" id="ci-problems" placeholder="Nichts zu berichten → freilassen"></textarea>
+    </div>
+
+    <button class="btn btn-primary" onclick="saveCheckin()">Check-in speichern</button>
+  </section>
+
+  <!-- ================================================
+       FORTSCHRITT
+       ================================================ -->
+  <section class="section" id="sec-progress">
+    <div class="page-title">Fortschritt</div>
+
+    <div class="disclaimer">
+      Die Werte dienen der Verlaufskontrolle und ersetzen keine medizinische Beratung.
+    </div>
+
+    <!-- NEU v0.2: Export-Buttons -->
+    <div class="action-row">
+      <button class="btn btn-secondary btn-sm" onclick="generateReport()">📋 Wochenbericht</button>
+      <button class="btn btn-secondary btn-sm" onclick="exportCSV()">⬇ CSV Export</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Gewichtsentwicklung</div>
+      <div id="weight-chart"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Check-in Verlauf</div>
+      <div id="checkin-list"></div>
+    </div>
+  </section>
+
+  <!-- ================================================
+       ERNÄHRUNG
+       ================================================ -->
+  <section class="section" id="sec-nutrition">
+    <div class="page-title">Ernährung</div>
+
+    <div class="disclaimer">
+      <strong>Wichtig:</strong> Diese Empfehlungen sind allgemeine Hinweise für
+      gesunde Personen. Sie ersetzen keine professionelle Ernährungsberatung
+      und keine Behandlung von Krankheiten oder Essstörungen.
+    </div>
+
+    <!-- Tagesziele: IDs für dynamisches Update per Profil -->
+    <div class="card">
+      <div class="card-title">Deine Tagesziele</div>
+      <div class="macro-row">
+        <span class="macro-icon">🔥</span>
+        <div><div class="macro-name">Kalorien</div><div class="macro-val" id="nutr-kcal">2.400 kcal</div></div>
+      </div>
+      <div class="macro-row">
+        <span class="macro-icon">💪</span>
+        <div><div class="macro-name">Protein</div><div class="macro-val" id="nutr-protein">180 g</div></div>
+      </div>
+      <div class="macro-row">
+        <span class="macro-icon">🌾</span>
+        <div><div class="macro-name">Kohlenhydrate</div><div class="macro-val" id="nutr-carbs">250 g</div></div>
+      </div>
+      <div class="macro-row">
+        <span class="macro-icon">🥑</span>
+        <div><div class="macro-name">Fett</div><div class="macro-val" id="nutr-fat">70 g</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Grundregeln</div>
+      <div class="rule-item"><span class="rule-icon">✓</span>Protein zu jeder Hauptmahlzeit einplanen</div>
+      <div class="rule-item"><span class="rule-icon">✓</span>2–3 Liter Wasser täglich trinken</div>
+      <div class="rule-item"><span class="rule-icon">✓</span>80 % einfache, unverarbeitete Lebensmittel</div>
+      <div class="rule-item"><span class="rule-icon">✓</span>Keine Crash-Diät – langfristig denken</div>
+      <div class="rule-item"><span class="rule-icon">✓</span>Gewichtstrend über mehrere Wochen bewerten</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Beispielmahlzeiten</div>
+      <div class="rule-item"><span class="rule-icon">🍳</span><div><strong>Frühstück:</strong> 4 Eier + 80 g Haferflocken + 1 Banane</div></div>
+      <div class="rule-item"><span class="rule-icon">🍗</span><div><strong>Mittag:</strong> 200 g Hähnchen + 150 g Reis + Gemüse</div></div>
+      <div class="rule-item"><span class="rule-icon">🥤</span><div><strong>Post-Workout:</strong> 30 g Protein (Shake oder Quark + Obst)</div></div>
+      <div class="rule-item"><span class="rule-icon">🐟</span><div><strong>Abend:</strong> 200 g Lachs oder Rindfleisch + Kartoffeln + Salat</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Einkaufsliste Basics</div>
+      <div class="rule-item"><span class="rule-icon">🥩</span>Hähnchenbrust · Rinderhack · Lachs · Eier</div>
+      <div class="rule-item"><span class="rule-icon">🧀</span>Magerquark · Hüttenkäse · Griechischer Joghurt</div>
+      <div class="rule-item"><span class="rule-icon">🌾</span>Haferflocken · Reis · Kartoffeln · Vollkorn-Pasta</div>
+      <div class="rule-item"><span class="rule-icon">🥦</span>Brokkoli · Spinat · Paprika · Tomaten · Gurke</div>
+      <div class="rule-item"><span class="rule-icon">🫒</span>Olivenöl · Nüsse · Avocado</div>
+    </div>
+  </section>
+
+  <!-- ================================================
+       COACH-ANSICHT
+       ================================================ -->
+  <section class="section" id="sec-coach">
+    <div class="page-title">Coach-Ansicht</div>
+    <div class="demo-warning">⚠️ Demo – später mit sicherem Login schützen</div>
+
+    <div class="card">
+      <div class="card-title">Kundenprofil</div>
+      <div class="stat-row"><span class="stat-label">Name</span>        <span class="stat-val" id="coach-name">–</span></div>
+      <div class="stat-row"><span class="stat-label">Ziel</span>         <span class="stat-val" id="coach-goal">–</span></div>
+      <div class="stat-row"><span class="stat-label">Startgewicht</span> <span class="stat-val" id="coach-start-w">–</span></div>
+      <div class="stat-row"><span class="stat-label">Aktuelles Gewicht</span><span class="stat-val" id="coach-cur-w">– kg</span></div>
+      <div class="stat-row"><span class="stat-label">Start</span>        <span class="stat-val" id="coach-start-date">–</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Letzter Check-in</div>
+      <div id="coach-last-ci"><p class="text-muted">Noch kein Check-in vorhanden.</p></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Coach-Kommentar (erscheint im Dashboard)</div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <textarea class="form-textarea" id="coach-note-input" placeholder="Nachricht an den Kunden..." rows="3"></textarea>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="saveCoachNote()">Kommentar speichern</button>
+    </div>
+
+    <!-- NEU v0.2: PIN-Einstellungen -->
+    <div class="card">
+      <div class="card-title">PIN-Einstellungen</div>
+      <p class="text-muted" style="margin-bottom:14px;">Standard-PIN: <strong style="color:var(--accent);">1234</strong> – bitte vor echtem Einsatz ändern.</p>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label class="form-label" for="new-pin-input">Neuer PIN (genau 4 Ziffern)</label>
+        <input type="password" class="form-input" id="new-pin-input"
+               placeholder="••••" inputmode="numeric" maxlength="4"
+               onkeydown="if(event.key==='Enter')changePin()">
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="changePin()">PIN ändern</button>
+      <hr class="divider">
+      <button class="btn btn-danger btn-sm" onclick="lockCoach()">🔒 Sitzung sperren</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Alle Check-ins (Coach-Übersicht)</div>
+      <div id="coach-all-ci"><p class="text-muted">Keine Check-ins vorhanden.</p></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- =============================================
+     BOTTOM NAV
+     ============================================= -->
+<nav class="bottom-nav" role="navigation" aria-label="Hauptnavigation">
+  <button class="nav-item active" onclick="navigate('dashboard')" id="nav-dashboard">
+    <span class="nav-icon">🏠</span><span class="nav-label">Dashboard</span><span class="nav-dot" id="dot-dashboard"></span>
+  </button>
+  <button class="nav-item" onclick="navigate('plan')" id="nav-plan">
+    <span class="nav-icon">💪</span><span class="nav-label">Plan</span><span class="nav-dot" id="dot-plan"></span>
+  </button>
+  <button class="nav-item" onclick="navigate('checkin')" id="nav-checkin">
+    <span class="nav-icon">✅</span><span class="nav-label">Check-in</span><span class="nav-dot" id="dot-checkin"></span>
+  </button>
+  <button class="nav-item" onclick="navigate('progress')" id="nav-progress">
+    <span class="nav-icon">📈</span><span class="nav-label">Fortschritt</span><span class="nav-dot" id="dot-progress"></span>
+  </button>
+  <button class="nav-item" onclick="navigate('nutrition')" id="nav-nutrition">
+    <span class="nav-icon">🥗</span><span class="nav-label">Ernährung</span><span class="nav-dot" id="dot-nutrition"></span>
+  </button>
+  <button class="nav-item" onclick="navigate('coach')" id="nav-coach">
+    <span class="nav-icon">👤</span><span class="nav-label">Coach</span><span class="nav-dot" id="dot-coach"></span>
+  </button>
+</nav>
+
+<!-- =============================================
+     JAVASCRIPT
+     ============================================= -->
+<script>
+'use strict';
+
+// ============================================================
+//  Felix Coaching Hub – v0.2
+//  localStorage Prefix: fch_v0_1_
+//  NEU: Mehrere Profile, PIN-Schutz, CSV-Export, Wochenbericht, PWA
+// ============================================================
+
+const STORE = 'fch_v0_1_';
+
+// ---- PROFILE DEFINITIONS ----
+const profiles = [
+  {
+    id: 'max', name: 'Max', fullName: 'Max Mustermann',
+    goal: 'Muskelaufbau & Kraftsteigerung',
+    startWeight: 85.0, startDate: '01.06.2026',
+    kcal: 2400, protein: 180, carbs: 250, fat: 70
+  },
+  {
+    id: 'sarah', name: 'Sarah', fullName: 'Sarah Müller',
+    goal: 'Abnehmen & Körper straffen',
+    startWeight: 72.0, startDate: '15.06.2026',
+    kcal: 1800, protein: 130, carbs: 180, fat: 60
+  },
+  {
+    id: 'tom', name: 'Tom', fullName: 'Tom Fischer',
+    goal: 'Maximale Kraft & Masse aufbauen',
+    startWeight: 90.0, startDate: '01.07.2026',
+    kcal: 3200, protein: 210, carbs: 350, fat: 90
+  }
+];
+
+// ---- TRAINING PLAN (gleich für alle Profile in v0.2) ----
+const trainingPlan = {
+  A: {
+    label: 'Tag A – Ganzkörper',
+    exercises: [
+      { id:'A1', name:'Beinpresse',           sets:3, reps:'12–15',    note:'Füße schulterbreit, volle Streckung, Knie nicht einknicken.' },
+      { id:'A2', name:'Brustpresse Maschine', sets:3, reps:'10–12',    note:'Ellbogen leicht unterhalb der Schulter, kontrolliert absenken.' },
+      { id:'A3', name:'Latzug weit',          sets:3, reps:'10–12',    note:'Stange zur oberen Brust, Schulterblätter aktiv zusammenziehen.' },
+      { id:'A4', name:'Rudern sitzend',       sets:3, reps:'12–15',    note:'Rücken gerade, Zug zu den unteren Rippen, kurz halten.' },
+      { id:'A5', name:'Schulterpresse',       sets:3, reps:'10–12',    note:'Kein Hohlkreuz, langsam absenken bis 90°.' },
+      { id:'A6', name:'Bauchmaschine',        sets:3, reps:'15–20',    note:'Ausatmen beim Zusammenziehen, Ellbogen nicht wegdrücken.' }
+    ]
+  },
+  B: {
+    label: 'Tag B – Ganzkörper',
+    exercises: [
+      { id:'B1', name:'Hack Squat / Kniebeuge-Maschine', sets:3, reps:'10–12', note:'Knie über Zehen, tief genug, keine Fersenabhebung.' },
+      { id:'B2', name:'RDL mit Kurzhanteln',             sets:3, reps:'10–12', note:'Leicht gebeugte Knie, Oberkörper gerade, Hüfte zurück.' },
+      { id:'B3', name:'Butterfly / Flys',                sets:3, reps:'12–15', note:'Kontrolliert öffnen – nicht zu weit, Schulter schonen.' },
+      { id:'B4', name:'Latzug eng / Untergriff',         sets:3, reps:'10–12', note:'Bizeps aktiv einbeziehen, Ellbogen dicht am Körper.' },
+      { id:'B5', name:'Seitheben',                       sets:3, reps:'15–20', note:'Leichtes Gewicht, langer Weg, nicht mit Schwung.' },
+      { id:'B6', name:'Plank',                           sets:3, reps:'30–45 s', note:'Körper gerade wie ein Brett, Gesäß nicht heben, gleichmäßig atmen.' }
+    ]
+  },
+  C: {
+    label: 'Tag C – Ganzkörper',
+    exercises: [
+      { id:'C1', name:'Beinstrecker',              sets:3, reps:'12–15', note:'Kurz oben halten, kontrolliert absenken, kein Schwingen.' },
+      { id:'C2', name:'Beinbeuger liegend',        sets:3, reps:'12–15', note:'Hüfte flach auf der Bank, volle Bewegung.' },
+      { id:'C3', name:'Brustpresse schräg',        sets:3, reps:'10–12', note:'Obere Brust ansprechen, Ellbogen ca. 45° vom Körper.' },
+      { id:'C4', name:'Rudermaschine / T-Bar Row', sets:3, reps:'10–12', note:'Zug zu den unteren Rippen, Schulterblätter zusammenziehen.' },
+      { id:'C5', name:'Face Pulls',                sets:3, reps:'15–20', note:'Seil zur Stirn, Außenrotation aktiv ausführen.' },
+      { id:'C6', name:'Crunch Maschine',           sets:3, reps:'15–20', note:'Volle Bewegung, nicht zu viel Gewicht, Tempo kontrolliert.' }
+    ]
+  }
+};
+
+// ---- STORAGE: GLOBAL (Profil-unabhängig) ----
+function storeG(key, val) {
+  try { localStorage.setItem(STORE + key, JSON.stringify(val)); } catch(_) {}
+}
+function loadG(key) {
+  try { const r = localStorage.getItem(STORE + key); return r !== null ? JSON.parse(r) : null; } catch(_) { return null; }
+}
+
+// ---- STORAGE: PROFIL-SPEZIFISCH ----
+// Keys: fch_v0_1_[profileId]_[key]
+function store(key, val) {
+  try { localStorage.setItem(STORE + activeProfile + '_' + key, JSON.stringify(val)); } catch(_) {}
+}
+function load(key) {
+  try { const r = localStorage.getItem(STORE + activeProfile + '_' + key); return r !== null ? JSON.parse(r) : null; } catch(_) { return null; }
+}
+
+// ---- RUNTIME STATE ----
+let activeProfile = loadG('active_profile') || 'max';
+let coachUnlocked = false;
+let currentDay    = 'A';
+let checkins      = [];
+let trainLogs     = {};
+
+function reloadData() {
+  checkins  = load('checkins')       || [];
+  trainLogs = load('training_logs')  || {};
+}
+
+function getCurrentProfile() {
+  return profiles.find(p => p.id === activeProfile) || profiles[0];
+}
+
+// ---- PROFILE SWITCH ----
+function switchProfile(id) {
+  activeProfile = id;
+  storeG('active_profile', id);
+  reloadData();
+  document.getElementById('profile-selector').value = id;
+  renderDashboard();
+  renderNutrition();
+  // Aktive Sektion neu rendern
+  const active = document.querySelector('.section.active');
+  if (active) {
+    const sid = active.id.replace('sec-', '');
+    if (sid === 'progress')  renderProgress();
+    if (sid === 'plan')      renderExercises(currentDay);
+    if (sid === 'coach')     renderCoachView();
+    if (sid === 'checkin')   document.getElementById('checkin-sub').textContent =
+      'Check-in für ' + getCurrentProfile().name;
+  }
+  toast('Profil: ' + getCurrentProfile().fullName);
+}
+
+// ---- TOAST ----
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+// ---- PIN OVERLAY ----
+function showPinOverlay() {
+  document.getElementById('pin-error').textContent = '';
+  document.getElementById('pin-input').value = '';
+  document.getElementById('pin-overlay').classList.add('show');
+  setTimeout(() => document.getElementById('pin-input').focus(), 150);
+}
+
+function closePinOverlay() {
+  document.getElementById('pin-overlay').classList.remove('show');
+  document.getElementById('pin-input').value = '';
+  document.getElementById('pin-error').textContent = '';
+}
+
+function checkPin() {
+  const entered = document.getElementById('pin-input').value.trim();
+  const stored  = loadG('coach_pin') || '1234';
+  if (entered === stored) {
+    coachUnlocked = true;
+    closePinOverlay();
+    navigateTo('coach');
+  } else {
+    document.getElementById('pin-error').textContent = 'Falscher PIN – bitte nochmal versuchen.';
+    document.getElementById('pin-input').value = '';
+    document.getElementById('pin-input').focus();
+  }
+}
+
+function lockCoach() {
+  coachUnlocked = false;
+  navigateTo('dashboard');
+  toast('Coach-Ansicht gesperrt.');
+}
+
+function changePin() {
+  const np = document.getElementById('new-pin-input').value.trim();
+  if (!/^\d{4}$/.test(np)) { toast('PIN muss genau 4 Ziffern enthalten.'); return; }
+  storeG('coach_pin', np);
+  document.getElementById('new-pin-input').value = '';
+  toast('PIN erfolgreich geändert!');
+}
+
+// ---- NAVIGATION ----
+function navigate(section) {
+  // PIN-Check für Coach-Bereich
+  if (section === 'coach' && !coachUnlocked) {
+    showPinOverlay();
+    return;
+  }
+  navigateTo(section);
+}
+
+function navigateTo(section) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('[id^="dot-"]').forEach(d => { d.style.background = ''; });
+
+  document.getElementById('sec-'  + section).classList.add('active');
+  document.getElementById('nav-'  + section).classList.add('active');
+  document.getElementById('dot-'  + section).style.background = 'var(--accent)';
+
+  if (section === 'dashboard') renderDashboard();
+  if (section === 'plan')      renderExercises(currentDay);
+  if (section === 'progress')  renderProgress();
+  if (section === 'coach')     renderCoachView();
+
+  window.scrollTo(0, 0);
+}
+
+// ---- DASHBOARD ----
+function renderDashboard() {
+  const p = getCurrentProfile();
+  document.getElementById('dash-name').textContent    = 'Hey, ' + p.name + '!';
+  document.getElementById('dash-goal').textContent    = 'Ziel: ' + p.goal;
+  document.getElementById('dash-kcal').textContent    = p.kcal.toLocaleString('de-DE');
+  document.getElementById('dash-protein').textContent = p.protein;
+
+  // Coach-Nachricht
+  const note = load('coach_note');
+  if (note) document.getElementById('dash-coach-msg').textContent = note;
+
+  // Trainingsfortschritt diese Woche
+  const wk   = weekKey();
+  const done = Math.min((trainLogs[wk] || []).length, 3);
+  document.getElementById('dash-done').textContent           = done;
+  document.getElementById('dash-progress-bar').style.width  = Math.round(done / 3 * 100) + '%';
+
+  // Nächster Check-in-Termin (kommender Montag)
+  const today      = new Date();
+  const daysUntil  = (8 - today.getDay()) % 7 || 7;
+  const nextMon    = new Date(today);
+  nextMon.setDate(today.getDate() + daysUntil);
+  document.getElementById('dash-next-ci').textContent =
+    'Mo, ' + nextMon.getDate() + '.' + (nextMon.getMonth() + 1) + '.';
+
+  // Letzter Check-in
+  const last = checkins[checkins.length - 1];
+  const card = document.getElementById('dash-last-ci-card');
+  if (last) {
+    card.style.display = 'block';
+    document.getElementById('dash-last-ci-content').innerHTML =
+      row('Datum',              fmtDate(last.date))           +
+      row('Gewicht',            last.weight + ' kg')          +
+      row('Schlaf / Energie',   last.sleep + ' / ' + last.energy);
+  } else {
+    card.style.display = 'none';
+  }
+}
+
+// ---- NUTRITION (profil-dynamisch) ----
+function renderNutrition() {
+  const p = getCurrentProfile();
+  document.getElementById('nutr-kcal').textContent    = p.kcal.toLocaleString('de-DE') + ' kcal';
+  document.getElementById('nutr-protein').textContent = p.protein + ' g';
+  document.getElementById('nutr-carbs').textContent   = p.carbs   + ' g';
+  document.getElementById('nutr-fat').textContent     = p.fat     + ' g';
+}
+
+// ---- TRAINING PLAN ----
+function switchDay(day) {
+  currentDay = day;
+  ['A','B','C'].forEach(d =>
+    document.getElementById('tab-' + d).classList.toggle('active', d === day)
+  );
+  renderExercises(day);
+}
+
+function renderExercises(day) {
+  const plan   = trainingPlan[day];
+  const wk     = weekKey();
+  const dayLog = (trainLogs[wk] || []).find(l => l.day === day) || { weights:{}, done:{} };
+  const out    = [];
+
+  out.push('<p class="text-muted" style="margin-bottom:12px;">' + safeHtml(plan.label) + '</p>');
+
+  plan.exercises.forEach(ex => {
+    const isDone = !!dayLog.done[ex.id];
+    const weight = dayLog.weights[ex.id] || '';
+    out.push(`
+      <div class="exercise-card ${isDone ? 'done' : ''}" id="card-${ex.id}">
+        <div class="exercise-header">
+          <span class="exercise-name">${safeHtml(ex.name)}</span>
+          <span class="exercise-sets">${ex.sets}×${ex.reps}</span>
+        </div>
+        <div class="exercise-note">${safeHtml(ex.note)}</div>
+        <div class="exercise-row">
+          <input type="number" class="weight-input" id="w-${ex.id}"
+                 placeholder="kg" value="${safeAttr(weight)}" inputmode="decimal" step="0.5"
+                 onchange="saveWeight('${day}','${ex.id}',this.value)">
+          <button class="done-btn ${isDone ? 'checked' : ''}" id="btn-${ex.id}"
+                  onclick="toggleDone('${day}','${ex.id}')" aria-label="Erledigt markieren">
+            ${isDone ? '✓' : '○'}
+          </button>
+        </div>
+      </div>`);
+  });
+
+  document.getElementById('exercises-container').innerHTML = out.join('');
+}
+
+function ensureDayLog(wk, day) {
+  if (!trainLogs[wk]) trainLogs[wk] = [];
+  if (!trainLogs[wk].find(l => l.day === day))
+    trainLogs[wk].push({ day, weights:{}, done:{} });
+}
+
+function toggleDone(day, exId) {
+  const wk = weekKey();
+  ensureDayLog(wk, day);
+  const log = trainLogs[wk].find(l => l.day === day);
+  log.done[exId] = !log.done[exId];
+  store('training_logs', trainLogs);
+
+  const card = document.getElementById('card-' + exId);
+  const btn  = document.getElementById('btn-'  + exId);
+  if (card) card.classList.toggle('done', log.done[exId]);
+  if (btn)  { btn.classList.toggle('checked', log.done[exId]); btn.textContent = log.done[exId] ? '✓' : '○'; }
+}
+
+function saveWeight(day, exId, value) {
+  const wk = weekKey();
+  ensureDayLog(wk, day);
+  trainLogs[wk].find(l => l.day === day).weights[exId] = value;
+  store('training_logs', trainLogs);
+}
+
+function saveTrainingLog() {
+  const wk     = weekKey();
+  const dayLog = (trainLogs[wk] || []).find(l => l.day === currentDay);
+  const cnt    = dayLog ? Object.values(dayLog.done).filter(Boolean).length : 0;
+  toast('Tag ' + currentDay + ' gespeichert – ' + cnt + ' Übungen ✓');
+}
+
+// ---- CHECK-IN ----
+function saveCheckin() {
+  const w = parseFloat(document.getElementById('ci-weight').value);
+  if (!w || w < 30 || w > 300) { toast('Bitte ein gültiges Gewicht eingeben.'); return; }
+
+  checkins.push({
+    date:     new Date().toISOString(),
+    weight:   w,
+    sessions: parseInt(document.getElementById('ci-sessions').value) || 0,
+    cardio:   document.getElementById('ci-cardio').value.trim(),
+    sleep:    parseInt(document.getElementById('ci-sleep').value),
+    energy:   parseInt(document.getElementById('ci-energy').value),
+    hunger:   parseInt(document.getElementById('ci-hunger').value),
+    stress:   parseInt(document.getElementById('ci-stress').value),
+    weekText: document.getElementById('ci-weektext').value.trim(),
+    problems: document.getElementById('ci-problems').value.trim()
+  });
+
+  store('checkins', checkins);
+
+  // Formular zurücksetzen
+  ['ci-weight','ci-sessions','ci-cardio','ci-weektext','ci-problems']
+    .forEach(id => { document.getElementById(id).value = ''; });
+  ['ci-sleep','ci-energy','ci-hunger','ci-stress'].forEach(id => {
+    document.getElementById(id).value = 3;
+    document.getElementById(id + '-val').textContent = '3';
+  });
+
+  toast('Check-in gespeichert! 🎉');
+  navigateTo('progress');
+}
+
+// ---- PROGRESS ----
+function renderProgress() {
+  renderWeightChart();
+  renderCheckinList();
+}
+
+function renderWeightChart() {
+  const el = document.getElementById('weight-chart');
+  if (!checkins.length) {
+    el.innerHTML = '<div class="empty-state"><div class="e-icon">📊</div><p>Noch kein Check-in vorhanden.<br>Nach dem ersten Check-in erscheint hier die Gewichtskurve.</p></div>';
+    return;
+  }
+
+  const recent  = checkins.slice(-8);
+  const weights = recent.map(c => c.weight);
+  const minW    = Math.min(...weights) - 0.5;
+  const maxW    = Math.max(...weights) + 0.5;
+  const span    = maxW - minW || 1;
+
+  const bars = recent.map(c => {
+    const h = Math.round(((c.weight - minW) / span) * 62 + 8);
+    return `<div class="wbar-wrap">
+      <div class="wbar" style="height:${h}px" title="${c.weight} kg"></div>
+      <div class="wbar-label">${c.weight}</div>
+    </div>`;
+  }).join('');
+
+  const p    = getCurrentProfile();
+  const diff = (checkins[checkins.length - 1].weight - p.startWeight).toFixed(1);
+  const sign = diff > 0 ? '+' : '';
+
+  el.innerHTML =
+    '<div class="weight-chart">' + bars + '</div>' +
+    '<div class="stat-row" style="margin-top:10px;">' +
+    '  <span class="stat-label">Gesamt-Trend (vs. Startgewicht)</span>' +
+    '  <span class="stat-val text-accent">' + sign + diff + ' kg</span>' +
+    '</div>';
+}
+
+function renderCheckinList() {
+  const el = document.getElementById('checkin-list');
+  if (!checkins.length) {
+    el.innerHTML = '<p class="text-muted">Noch keine Check-ins vorhanden.</p>';
+    return;
+  }
+
+  el.innerHTML = [...checkins].reverse().slice(0, 12).map(c => `
+    <div class="progress-entry">
+      <div class="progress-entry-date">${fmtDate(c.date)}</div>
+      ${row('Gewicht', c.weight + ' kg')}
+      ${row('Einheiten', c.sessions)}
+      ${row('S/E/H/Str', c.sleep + '/' + c.energy + '/' + c.hunger + '/' + c.stress)}
+      ${c.weekText ? `<div class="stat-row" style="flex-direction:column;align-items:flex-start;gap:2px;">
+        <span class="stat-label">Woche</span>
+        <span style="font-size:13px;">${safeHtml(c.weekText)}</span>
+      </div>` : ''}
+      ${c.problems ? `<div class="stat-row" style="flex-direction:column;align-items:flex-start;gap:2px;">
+        <span class="stat-label text-danger">Probleme</span>
+        <span style="font-size:13px;">${safeHtml(c.problems)}</span>
+      </div>` : ''}
+    </div>`).join('');
+}
+
+// ---- COACH VIEW ----
+function renderCoachView() {
+  const p    = getCurrentProfile();
+  const last = checkins[checkins.length - 1];
+
+  document.getElementById('coach-name').textContent       = p.fullName;
+  document.getElementById('coach-goal').textContent       = p.goal;
+  document.getElementById('coach-start-w').textContent    = p.startWeight + ' kg';
+  document.getElementById('coach-start-date').textContent = p.startDate;
+  document.getElementById('coach-cur-w').textContent      = last ? last.weight + ' kg' : '– kg';
+
+  // Letzter Check-in
+  const ci = document.getElementById('coach-last-ci');
+  if (last) {
+    ci.innerHTML =
+      row('Datum',    fmtDate(last.date))                 +
+      row('Gewicht',  last.weight + ' kg')                +
+      row('Einheiten', last.sessions)                     +
+      row('Schlaf',   last.sleep  + '/5')                 +
+      row('Energie',  last.energy + '/5')                 +
+      row('Hunger',   last.hunger + '/5')                 +
+      row('Stress',   last.stress + '/5')                 +
+      (last.weekText  ? `<div class="stat-row" style="flex-direction:column;align-items:flex-start;gap:2px;">
+        <span class="stat-label">Woche</span><span style="font-size:13px;">${safeHtml(last.weekText)}</span>
+      </div>` : '') +
+      (last.problems  ? `<div class="stat-row" style="flex-direction:column;align-items:flex-start;gap:2px;">
+        <span class="stat-label text-danger">Probleme</span><span style="font-size:13px;">${safeHtml(last.problems)}</span>
+      </div>` : '');
+  } else {
+    ci.innerHTML = '<p class="text-muted">Noch kein Check-in vorhanden.</p>';
+  }
+
+  // Coach-Notiz laden
+  const savedNote = load('coach_note');
+  document.getElementById('coach-note-input').value = savedNote || '';
+
+  // Alle Check-ins
+  const allCi = document.getElementById('coach-all-ci');
+  if (!checkins.length) {
+    allCi.innerHTML = '<p class="text-muted">Keine Check-ins vorhanden.</p>';
+  } else {
+    allCi.innerHTML = [...checkins].reverse().map(c => `
+      <div class="progress-entry">
+        <div class="progress-entry-date">${fmtDate(c.date)}</div>
+        ${row('Gewicht / Einheiten', c.weight + ' kg · ' + c.sessions + ' Einh.')}
+        ${row('S/E/H/Str', c.sleep + '/' + c.energy + '/' + c.hunger + '/' + c.stress)}
+        ${c.problems ? `<div style="font-size:12px;color:var(--danger);margin-top:4px;">⚠ ${safeHtml(c.problems)}</div>` : ''}
+      </div>`).join('');
+  }
+}
+
+function saveCoachNote() {
+  const note = document.getElementById('coach-note-input').value.trim();
+  if (!note) { toast('Bitte eine Nachricht eingeben.'); return; }
+  store('coach_note', note);
+  document.getElementById('dash-coach-msg').textContent = note;
+  toast('Coach-Nachricht gespeichert!');
+}
+
+// ---- WOCHENBERICHT EXPORT (NEU v0.2) ----
+function generateReport() {
+  const last = checkins[checkins.length - 1];
+  if (!last) { toast('Noch kein Check-in vorhanden.'); return; }
+
+  const p    = getCurrentProfile();
+  const wk   = weekKey();
+  const diff = (last.weight - p.startWeight).toFixed(1);
+  const sign = diff > 0 ? '+' : '';
+  const note = load('coach_note') || '–';
+  const stars = n => '⭐'.repeat(Math.max(0, Math.min(5, n)));
+
+  const lines = [
+    '━━━━━ WOCHENBERICHT ' + wk + ' ━━━━━',
+    'Kunde:  ' + p.fullName,
+    'Datum:  ' + fmtDate(last.date),
+    '',
+    '📊 KÖRPER',
+    'Gewicht:    ' + last.weight + ' kg',
+    'Start:      ' + p.startWeight + ' kg',
+    'Differenz:  ' + sign + diff + ' kg',
+    '',
+    '💪 TRAINING',
+    'Einheiten:  ' + last.sessions + '/3',
+    'Cardio:     ' + (last.cardio || '–'),
+    '',
+    '📈 SUBJEKTIVE WERTE (1–5)',
+    'Schlaf:   ' + stars(last.sleep)  + ' (' + last.sleep  + ')',
+    'Energie:  ' + stars(last.energy) + ' (' + last.energy + ')',
+    'Hunger:   ' + stars(last.hunger) + ' (' + last.hunger + ')',
+    'Stress:   ' + stars(last.stress) + ' (' + last.stress + ')',
+    '',
+    '📝 WIE LIEF DIE WOCHE?',
+    last.weekText || '–',
+    '',
+    '⚠ PROBLEME / SCHMERZEN',
+    last.problems || 'Keine',
+    '',
+    '💬 COACH-NACHRICHT',
+    note,
+    '',
+    '──────────────────────────',
+    'Felix Coaching Hub v0.2'
+  ];
+
+  document.getElementById('report-text').value = lines.join('\n');
+  document.getElementById('report-modal').classList.add('show');
+}
+
+function closeReport() {
+  document.getElementById('report-modal').classList.remove('show');
+}
+
+async function copyReport() {
+  const text = document.getElementById('report-text').value;
+  try {
+    await navigator.clipboard.writeText(text);
+    toast('In Zwischenablage kopiert! 📋');
+  } catch(_) {
+    try {
+      document.getElementById('report-text').select();
+      document.execCommand('copy');
+      toast('Bericht kopiert!');
+    } catch(__) {
+      toast('Bitte Text manuell markieren und kopieren.');
+    }
+  }
+}
+
+// ---- CSV EXPORT (NEU v0.2) ----
+function exportCSV() {
+  if (!checkins.length) { toast('Keine Check-in-Daten vorhanden.'); return; }
+
+  const p   = getCurrentProfile();
+  const esc = s => '"' + String(s || '').replace(/"/g, '""') + '"';
+
+  const header = [
+    'Datum', 'Gewicht (kg)', 'Einheiten', 'Cardio/Schritte',
+    'Schlaf (1-5)', 'Energie (1-5)', 'Hunger (1-5)', 'Stress (1-5)',
+    'Wochenbericht', 'Probleme/Schmerzen'
+  ].join(';');
+
+  const rows = checkins.map(c => [
+    fmtDate(c.date),
+    String(c.weight).replace('.', ','),
+    c.sessions,
+    esc(c.cardio),
+    c.sleep, c.energy, c.hunger, c.stress,
+    esc(c.weekText),
+    esc(c.problems)
+  ].join(';'));
+
+  // BOM (﻿) für Excel-Kompatibilität unter Windows
+  const csv  = '﻿' + header + '\n' + rows.join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'checkins_' + p.id + '_' + new Date().toISOString().slice(0,10) + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('CSV wird heruntergeladen...');
+}
+
+// ---- UTILITIES ----
+function weekKey() {
+  const d    = new Date();
+  const jan1 = new Date(d.getFullYear(), 0, 1);
+  const wk   = Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+  return d.getFullYear() + '-KW' + String(wk).padStart(2, '0');
+}
+
+function fmtDate(iso) {
+  return new Date(iso).toLocaleString('de-DE', {
+    day:'2-digit', month:'2-digit', year:'numeric',
+    hour:'2-digit', minute:'2-digit'
+  });
+}
+
+function safeHtml(str) {
+  const d = document.createElement('div');
+  d.appendChild(document.createTextNode(String(str)));
+  return d.innerHTML;
+}
+
+function safeAttr(str) {
+  return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function row(label, val) {
+  return `<div class="stat-row">
+    <span class="stat-label">${safeHtml(label)}</span>
+    <span class="stat-val">${safeHtml(String(val))}</span>
+  </div>`;
+}
+
+// ---- INIT ----
+(function init() {
+  // Profil-Daten laden
+  reloadData();
+  document.getElementById('profile-selector').value = activeProfile;
+
+  // Initiales Render
+  renderDashboard();
+  renderNutrition();
+  renderExercises(currentDay);
+
+  // Aktiven Nav-Dot setzen
+  document.getElementById('dot-dashboard').style.background = 'var(--accent)';
+
+  // Service Worker registrieren (nur auf http/https, nicht file://)
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    navigator.serviceWorker.register('./sw.js')
+      .then(() => console.log('SW registered'))
+      .catch(() => {}); // Kein Fehler wenn SW nicht verfügbar
+  }
+})();
+</script>
+
+</body>
+</html>
