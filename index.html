@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#080808">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PB V12.8.15-test">
-<title>Plateau-Brecher V12.8.15-test</title>
+<meta name="apple-mobile-web-app-title" content="PB V12.8.20-test">
+<title>Plateau-Brecher V12.8.20-test</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -1165,14 +1165,14 @@ main{padding:14px;max-width:860px;}
 <body>
 <div class="consent-overlay" id="consentOverlay">
   <div class="consent-box">
-    <h2 class="splash-h2">SYSTEM-START V12.8.15-test</h2>
+    <h2 class="splash-h2">SYSTEM-START V12.8.20-test</h2>
     <p class="splash-p">Daten werden lokal gespeichert und via API synchronisiert. Fehler-Logging ist aktiv.</p>
     <button class="save-btn" onclick="acceptConsent()">Akzeptieren &amp; Starten</button>
   </div>
 </div>
 <header>
   <div>
-    <div class="logo">PB<span class="splash-logo-ver"> V12.8.15-test</span></div>
+    <div class="logo">PB<span class="splash-logo-ver"> V12.8.20-test</span></div>
     <span class="hbadge" id="todayBadge">Lädt…</span>
     <div class="splash-build">Build: <span id="buildDateTxt"></span></div>
   </div>
@@ -1235,7 +1235,7 @@ main{padding:14px;max-width:860px;}
     <div class="step-desc">Nur ändern, wenn <b>SCRIPT_CODE</b> aktualisiert wurde. App-Testversionen brauchen nicht automatisch ein neues Apps-Script-Deployment.</div>
     <div class="setup-mini-grid">
       <div class="setup-mini-card"><b>Aktuelle Script-Basis:</b><br>V11.9.1</div>
-      <div class="setup-mini-card"><b>App-Version:</b><br>V12.8.15-test</div>
+      <div class="setup-mini-card"><b>App-Version:</b><br>V12.8.20-test</div>
     </div>
     <div class="setup-note"><strong>Hinweis:</strong> Wenn die Sheet-Verbindung bereits funktioniert, muss dieser Code für diese Testversion normalerweise nicht neu deployed werden.</div>
     <div class="code-box" id="scriptCodeBox">Lädt…</div>
@@ -1248,6 +1248,11 @@ main{padding:14px;max-width:860px;}
       <input class="url-input" id="apiUrlInput" type="url" placeholder="https://script.google.com/macros/s/…/exec">
       <button class="url-save-btn" onclick="saveApiUrl()">Speichern</button>
     </div>
+    <div class="url-input-wrap">
+      <input class="url-input" id="apiSecretInput" type="password" placeholder="Shared Secret (Script Property API_SHARED_SECRET)">
+      <button class="url-save-btn" onclick="saveApiUrl()">Speichern</button>
+    </div>
+    <div class="setup-note"><strong>Hinweis:</strong> Secret muss identisch im Apps-Script-Backend als Script Property <code>API_SHARED_SECRET</code> gesetzt sein, sonst lehnt das Backend alle Anfragen ab.</div>
     <button class="test-btn" onclick="testApi()"><svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:curren<tColor;fill:none;stroke-width:2;stroke-linecap:round;"><polyline points="20 6 9 17 4 12"/></svg>Verbindung testen</button>
     <div class="status" id="setupStatus"></div>
     <div class="setup-source-note">
@@ -1712,9 +1717,60 @@ const PLAN = [{"weeks":[{"weekLabel":"Woche 1","isDeload":false,"isSchool":false
 // STORAGE
 // ============================================================
 const SK='pb_v12_0_test';
-const APP_VERSION='V12.8.15-test';
-const BUILD_DATE='24.06.2026';
+const APP_VERSION='V12.8.20-test';
+const BUILD_DATE='06.07.2026';
 /*
+CHANGELOG V12.8.20-test
+- Audit-Fix P1: checkStagnation() konnte den 'decline'-Zweig nie erreichen (Vergleich
+  a&lt;sessions[0] verglich a mit sich selbst, da a bereits sessions[0] ist - immer false).
+  Die Deload-/Regressions-Erkennung konnte dadurch nur "Stagnation" oder nichts melden, nie
+  einen echten Rueckgang.
+- Reihenfolge und Bedingung korrigiert: eine echte, durchgaengig fallende Serie (a&lt;b&&b&lt;c)
+  wird jetzt als 'decline' erkannt; ein gleichbleibender oder nur teilweise fallender Verlauf
+  (a&lt;=b&&b&lt;=c, aber nicht durchgaengig fallend) bleibt 'stagnation'.
+- Keine PLAN-Daten, keine Sheet-/Sync-Logik, keine PR-Berechnungslogik geaendert.
+
+CHANGELOG V12.8.19-test
+- Audit-Fix P1: Umbenennen einer Uebung hat den bestehenden PR-Rekord (store['rec_'+alterName])
+  nicht migriert - der historische Bestwert war nach einer Umbenennung verwaist und tauchte in
+  Records/Statistiken nicht mehr auf.
+- Neue Funktion migratePrRecordOnRename(oldName,newName): verschiebt den PR-Rekord auf den neuen
+  Namen, sofern am Zielnamen noch kein besserer Rekord existiert (kein Ueberschreiben eines
+  bereits besseren Wertes). Wird von beiden Rename-Pfaden aufgerufen (editExName-Einzelslot und
+  applyRenameGlobal-Multislot).
+- Keine PLAN-Daten, keine Sheet-/Sync-Logik, keine sonstige PR-Berechnungslogik geaendert.
+
+CHANGELOG V12.8.18-test
+- Audit-Fix P1: saveToSheet() nutzt mode:'no-cors' und konnte serverseitige Fehler (Lock-Timeout,
+  falscher Tab, UNAUTHORIZED) nicht erkennen - die App zeigte "gespeichert" an, obwohl das Sheet
+  moeglicherweise nicht geschrieben wurde, und markierte die Daten als gesendet (kein Retry mehr).
+- Nach dem no-cors-POST wird jetzt per Rueckfrage (bestehender getPlan-GET-Endpunkt) verifiziert,
+  ob mindestens der erste gesendete Datensatz tatsaechlich im Sheet angekommen ist. Nur bei
+  bestaetigtem Schreibvorgang wird "gespeichert" angezeigt und der Dirty-Status zurueckgesetzt.
+- Schlaegt die Verifikation fehl (oder ist die Rueckfrage selbst nicht erreichbar), wird der
+  optimistische Dirty-Reset rueckgaengig gemacht, die Daten werden in den Offline-Puffer gelegt
+  und ein Fehlerstatus angezeigt, statt eine falsche Erfolgsmeldung zu zeigen.
+- Keine PLAN-Daten, keine Apps-Script-Datei, keine PR-/Stats-Logik geaendert.
+
+CHANGELOG V12.8.17-test
+- Audit-Fix P1: PR-Fastpath (savePRToSheet) sendete bisher nur den berechneten 1RM-Wert (orm),
+  kein tatsaechliches Gewicht/keine Wiederholungen. Das Backend fiel dadurch auf orm als
+  "Gewicht" und 1 als "Wiederholungen" zurueck - fabrizierte Datenpunkte in Bestleistungen.
+- savePRToSheet sendet jetzt zusaetzlich weight/reps, wenn beim Satzabschluss (toggleDone)
+  echte Satzdaten vorliegen. Manuelle PR-Eingabe (savePRManual, kein Satz vorhanden) bleibt
+  unveraendert, da dort kein echtes Gewicht/keine Wiederholungen existieren.
+- Keine PLAN-Daten, keine Sync-/Sheet-Struktur, keine sonstige PR-/Stats-Logik geaendert.
+
+CHANGELOG V12.8.16-test
+- Audit-Fix P0: Google-Apps-Script-Backend war ohne Authentifizierung erreichbar (jeder mit der
+  Web-App-URL konnte Trainingsdaten schreiben). App sendet jetzt ein Shared Secret bei jedem
+  Schreib- und Lesevorgang zum Sheet-Backend sowie beim Admin-Log-Versand mit.
+- Neues Secret-Feld im Setup-Bildschirm (Schritt 4), wird in store._apiSecret gespeichert.
+- Ohne passendes Script Property im Apps-Script-Backend lehnt dieses ab sofort alle Anfragen ab
+  (siehe 03_APPS_SCRIPT/aktuell/CHANGELOG_2026-07-06.md) - Secret muss nach dem naechsten Deploy
+  hier eingetragen werden, sonst funktioniert Sync/Speichern nicht mehr.
+- Keine PLAN-Daten, keine PR-/Stats-/Bestleistungen-Berechnungslogik geaendert.
+
 CHANGELOG V12.8.15-test
 - PLAN-Diagnose zeigt bei fehlender aktueller Kalenderwoche einen Vorschlag fuer die naechste Planwoche.
 - Der Vorschlag wird aus der letzten vollstaendigen PLAN-Woche abgeleitet und nur angezeigt.
@@ -1781,7 +1837,7 @@ function logToAdmin(type,message,opts={}){
     const cleanDetail=String(opts.detail||'').substring(0,500);
     const cleanStack=String(opts.stack||'').substring(0,800);
     const cleanHttpStatus=String(opts.httpStatus||'');
-    const payload={
+    const payload=withAuth({
       type:       'log',
       type_detail: originalType,
       msg:        cleanMsg,
@@ -1797,7 +1853,7 @@ function logToAdmin(type,message,opts={}){
       device:     navigator.userAgent.slice(0,300),
       stack:      cleanStack,
       httpStatus: cleanHttpStatus
-    };
+    });
     fetch(ADMIN_LOG_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
       .catch(err=>console.warn('[Admin Log] send failed',err&&err.message?err.message:err));
   }catch(_){}
@@ -1947,6 +2003,19 @@ function getMachinePRFromLocalHistory(exName,machine){
 function setRecord(n,o,d,w,reps,source){
   const prev=getRecord(n)||{};
   store['rec_'+n]={...prev,orm:Math.round(o*10)/10,date:d,weight:w||null,reps:reps||null,source:source||prev.source||'local'};
+  persist();
+}
+// Verschiebt einen PR-Rekord auf einen neuen Uebungsnamen (bei Umbenennung).
+// Ueberschreibt einen bereits vorhandenen, besseren Rekord am Zielnamen nicht.
+function migratePrRecordOnRename(oldName,newName){
+  if(!oldName||!newName||oldName===newName)return;
+  const oldRec=getRecord(oldName);
+  if(!oldRec)return;
+  const newRec=getRecord(newName);
+  if(!newRec||(parseFloat(oldRec.orm)||0)>(parseFloat(newRec.orm)||0)){
+    store['rec_'+newName]=oldRec;
+  }
+  delete store['rec_'+oldName];
   persist();
 }
 function maybeUpdateRecord(n,o,d,w,reps,source){
@@ -2172,8 +2241,16 @@ function toggleTheme(){
 // API
 // ============================================================
 let API_URL=store._apiUrl||'';
+let API_SECRET=store._apiSecret||'';
 let lastSync=0;
-function saveApiUrl(){API_URL=document.getElementById('apiUrlInput').value.trim();store._apiUrl=API_URL;persist();updateApiStatus();showSetupStatus('ok','✓ URL gespeichert!');}
+function saveApiUrl(){
+  API_URL=document.getElementById('apiUrlInput').value.trim();store._apiUrl=API_URL;
+  const secretEl=document.getElementById('apiSecretInput');
+  if(secretEl){API_SECRET=secretEl.value.trim();store._apiSecret=API_SECRET;}
+  persist();updateApiStatus();showSetupStatus('ok','✓ URL & Secret gespeichert!');
+}
+function withAuth(payloadObj){return {...payloadObj, secret:API_SECRET||''};}
+function appendAuthParam(url){return url+'&secret='+encodeURIComponent(API_SECRET||'');}
 function updateApiStatus(){
   const dot=document.getElementById('apiDot'),txt=document.getElementById('apiStatusTxt');
   if(API_URL){dot.className='api-dot connected';txt.textContent='API verbunden ✓';}
@@ -2579,6 +2656,7 @@ function init(){
     ?(todayPos.missing?'Plan fehlt':getTodayBadgeLabel(PLAN[C].weeks[W].days[D],todayPos.mode))
     :'Rest';
   if(store._apiUrl){API_URL=store._apiUrl;const el=document.getElementById('apiUrlInput');if(el)el.value=API_URL;}
+  if(store._apiSecret){API_SECRET=store._apiSecret;const secretEl=document.getElementById('apiSecretInput');if(secretEl)secretEl.value=API_SECRET;}
   if(store._aiKey){const el=document.getElementById('aiKeyInput');if(el)el.value=store._aiKey;}
   // Groq Key laden
   if(!store._consent){document.getElementById('consentOverlay').style.display='flex';}
@@ -2942,15 +3020,16 @@ function logFinalSheetGetFailure(context,e){
 }
 
 async function fetchSheetGetWithRetry(url,context={}){
+  const authedUrl=appendAuthParam(url);
   try{
-    return await fetchWithTimeout(url,{method:'GET'});
+    return await fetchWithTimeout(authedUrl,{method:'GET'});
   }catch(e){
     if(!isRetryableSheetGetError(e))throw e;
     showStatus('err','Sync fehlgeschlagen - Retry laeuft');
     addToErrorLog('SYNC_RETRY',(context.scope||'sheetGet')+': '+getSafeSyncErrorMessage(e));
     await delay(SHEET_GET_RETRY_DELAY);
     try{
-      return await fetchWithTimeout(url,{method:'GET'});
+      return await fetchWithTimeout(authedUrl,{method:'GET'});
     }catch(retryError){
       if(isRetryableSheetGetError(retryError))logFinalSheetGetFailure(context,retryError);
       throw retryError;
@@ -3182,10 +3261,11 @@ function checkStagnation(exIdx){
     }
   }
   if(sessions.length<3)return null; // nicht genug Daten
-  // Stagnation: alle 3 gleich oder sinkend
   const [a,b,c]=sessions; // a=letzte, b=vorletzte, c=drittletzte
+  // Durchgaengig fallend (jede Session schlechter als die vorherige) => decline.
+  if(a<b&&b<c)return'decline';
+  // Gleichbleibend oder nur teilweise fallend, aber nicht durchgaengig => stagnation.
   if(a<=b&&b<=c)return'stagnation';
-  if(a<sessions[0])return'decline';
   return null;
 }
 function calc1RM(d){
@@ -4169,7 +4249,7 @@ function toggleDone(idx){
   haptic(d.done?20:10);
   if(d.done){
     const orm=calc1RM(d);
-    if(orm){const exName=getExName(idx);const best=getBestSetFromTrainingData(d)||{};const isPR=checkPR(exName,orm,best.weight||parseFloat(d.g1)||null,best.reps||null);if(isPR&&API_URL)savePRToSheet(exName,orm);}
+    if(orm){const exName=getExName(idx);const best=getBestSetFromTrainingData(d)||{};const rawWeight=best.weight||parseFloat(d.g1)||null;const rawReps=best.reps||null;const isPR=checkPR(exName,orm,rawWeight,rawReps);if(isPR&&API_URL)savePRToSheet(exName,orm,rawWeight,rawReps);}
   }
   renderWorkout();
   if(d.done){
@@ -4608,7 +4688,7 @@ function editExName(idx){
           }
         }
       }
-      setExerciseDisplayName(C,W,D,idx,newName);persist();
+      setExerciseDisplayName(C,W,D,idx,newName);migratePrRecordOnRename(oldName,newName);persist();
       const sheetSet=new Set(["ZYKLUS "+(C+1)]);
       otherSlots.forEach(({c})=>sheetSet.add("ZYKLUS "+(c+1)));
       if(otherSlots.length>0){
@@ -4617,7 +4697,7 @@ function editExName(idx){
       } else {
         if(API_URL){
           const originalName=PLAN[C].weeks[W].days[D].exercises[idx];
-          const payload=JSON.stringify({type:"rename",oldName,newName,originalName,sheets:[...sheetSet]});
+          const payload=JSON.stringify(withAuth({type:"rename",oldName,newName,originalName,sheets:[...sheetSet]}));
           showStatus("loading","⏳ Name im Sheet wird aktualisiert…");
           fetch(API_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:payload})
             .then(()=>{showStatus("ok","✓ Übungsname aktualisiert");addToErrorLog("RENAME",""+oldName+" → "+newName);})
@@ -4681,6 +4761,7 @@ function applyRenameGlobal(oldName,newName,slots,sheets,originalName){
       }
     }
   });
+  migratePrRecordOnRename(oldName,newName);
   persist();
   renderWorkout();
 
@@ -4688,7 +4769,7 @@ function applyRenameGlobal(oldName,newName,slots,sheets,originalName){
   if(!API_URL){addToErrorLog('INFO','Rename lokal gespeichert (kein API)');return;}
   const finalSheets=sheets&&sheets.length?sheets:['ZYKLUS '+(C+1)];
   const orig=originalName||oldName;
-  const payload=JSON.stringify({type:'rename',oldName,newName,originalName:orig,sheets:finalSheets});
+  const payload=JSON.stringify(withAuth({type:'rename',oldName,newName,originalName:orig,sheets:finalSheets}));
   showStatus('loading','⏳ Name im Sheet wird aktualisiert…');
   fetch(API_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:payload})
     .then(()=>{
@@ -6145,10 +6226,13 @@ function showTab(id,btn){
   if(id==='ki'){initKiTab();}
 }
 
-async function savePRToSheet(exName,orm){
+async function savePRToSheet(exName,orm,rawWeight,rawReps){
   if(!API_URL)return;
   try{
-    const payload=JSON.stringify({type:'pr',exercise:exName,orm,date:getCurrentDateStr(),cycle:C+1});
+    const payloadObj={type:'pr',exercise:exName,orm,date:getCurrentDateStr(),cycle:C+1};
+    if(rawWeight)payloadObj.weight=rawWeight;
+    if(rawReps)payloadObj.reps=rawReps;
+    const payload=JSON.stringify(withAuth(payloadObj));
     await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:payload});
   }catch(e){}
 }
@@ -6292,7 +6376,7 @@ async function saveToSheet(){
     const {_exIdx,...rest} = e;
     return rest;
   });
-  const payload = JSON.stringify({sheet:sheetName, date:day.date, exercises});
+  const payload = JSON.stringify(withAuth({sheet:sheetName, date:day.date, exercises}));
   const localPrUpdates=toSend.reduce((count,e)=>{
     const data={g1:e.g1,r1:e.r1,g2:e.g2,r2:e.r2,g3:e.g3,r3:e.r3};
     return count+(updateLocalPRFromTrainingData(e.uebung,data,day.date,'save')?1:0);
@@ -6308,17 +6392,30 @@ async function saveToSheet(){
   localStorage.setItem(prevKey, JSON.stringify(newPrev));
 
   try{
-    // no-cors: Fire-and-Forget — kein Response-Parsing möglich
+    // no-cors: Fire-and-Forget — kein Response-Parsing möglich, daher Verifikation per Rückfrage
     await fetch(API_URL,{
       method:'POST',
       mode:'no-cors',
       headers:{'Content-Type':'text/plain'},
       body:payload
     });
-    showStatus('ok','✓ '+toSend.length+' Übung(en) gesendet / Sync angestoßen ('+day.date+')');
+
+    const confirmed=await verifySheetSave(sheetName,day.date,toSend);
+    if(!confirmed){
+      // Speichern konnte nicht bestaetigt werden (z.B. UNAUTHORIZED, Lock-Timeout, falscher Tab).
+      // Optimistischen Dirty-Reset rueckgaengig machen, damit ein erneuter Save-Versuch greift.
+      localStorage.setItem(prevKey,JSON.stringify(prev));
+      bufferOffline(payload);
+      showStatus('err','⚠ Speichern konnte nicht bestätigt werden — bitte erneut versuchen');
+      addToErrorLog('SYNC_UNVERIFIED','Speichern nicht bestätigt: '+toSend.length+' Übung(en) ('+day.date+')');
+      setBtnLoading(false);
+      return;
+    }
+
+    showStatus('ok','✓ '+toSend.length+' Übung(en) gespeichert & bestätigt ('+day.date+')');
     showCoachSummary(buildTrainingSummary(toSend));
     haptic(30);
-    addToErrorLog('SYNC_OK','Bulk gesendet / Sync angestoßen: '+toSend.length+' Übungen ('+day.date+')');
+    addToErrorLog('SYNC_OK','Bulk gespeichert & bestätigt: '+toSend.length+' Übungen ('+day.date+')');
     updateLastSync();
   }catch(e){
     bufferOffline(payload);
@@ -6326,6 +6423,34 @@ async function saveToSheet(){
     addToErrorLog('OFFLINE','Offline-Buffer: '+e.message);
   }
   setBtnLoading(false);
+}
+
+// Liest das gerade gespeicherte Datum per bestehendem getPlan-GET erneut aus und prueft,
+// ob mindestens der erste gesendete Datensatz (Uebung + g1) tatsaechlich im Sheet steht.
+// Dient als Ersatz fuer eine echte HTTP-Antwort, die mode:'no-cors' nicht liefert.
+async function verifySheetSave(sheetName,date,toSend){
+  if(!toSend.length)return true;
+  try{
+    const resp=await fetchSheetGetWithRetry(API_URL+'?action=getPlan&sheet='+encodeURIComponent(sheetName)+'&date='+encodeURIComponent(date),{scope:'saveVerify'});
+    if(!resp.ok)return false;
+    const text=await resp.text();
+    if(!text||!text.trim())return false;
+    let data;
+    try{data=JSON.parse(text);}catch(pe){return false;}
+    if(!Array.isArray(data))return false;
+    const rows=extractSheetRowsForDate(data,date);
+    if(!rows.length)return false;
+    const canary=toSend[0];
+    const canaryName=String(canary.uebung||canary.originalName||'').trim().toLowerCase();
+    const match=rows.find(r=>r.name.trim().toLowerCase()===canaryName);
+    if(!match)return false;
+    const sentG1=String(canary.g1||'').replace(',','.').trim();
+    const savedG1=String(match.row[6]||'').replace(',','.').trim();
+    if(sentG1&&sentG1!==savedG1)return false;
+    return true;
+  }catch(e){
+    return false;
+  }
 }
 
 function setBtnLoading(on){
