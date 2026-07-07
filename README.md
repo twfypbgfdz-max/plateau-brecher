@@ -1,26 +1,20 @@
-# Plateau-Brecher App
+# Plateau-Brecher (Deploy-Repo)
 
-Private Trainings-App für Krafttraining, PR-Tracking, Stats, Deload-Hinweise und Google-Sheet-Sync.
+Dies ist **nur** das Deploy-/Live-Repo der Plateau-Brecher Personal App.
+
+- Ausgeliefert wird ausschließlich `index.html` (GitHub Pages, root).
+- Entwicklung, Tests, Changelogs und Apps-Script-Backend liegen in der
+  Source-of-Truth: `twfypbgfdz-max/App`.
+- Dieses Repo enthält bewusst keine Testversionen, kein Archiv und keinen
+  Backend-Code.
+
+## Nicht direkt bearbeiten
+
+`index.html` wird ausschließlich durch Veröffentlichung aus dem `App`-Repo
+aktualisiert (siehe `DEPLOY_LOG.md` für die Historie). Keine manuellen
+Änderungen an dieser Datei in diesem Repo.
 
 ## Struktur
 
-- `01_PERSONAL_APP` = persönliche Trainings-App
-- `02_PUBLIC_APP` = öffentliche Version
-- `03_APPS_SCRIPT` = Google Apps Script
-- `04_SHEETS` = Sheet-Bezug / Dokumentation
-- `05_FEHLER_LOGS` = Fehlerlogs
-- `06_DEPLOYMENT` = Deployment-Notizen
-- `99_ARCHIV_ALT` = alte Archivstände
-
-## Regeln
-
-- Personal und Public getrennt halten
-- Keine Stable-Dateien direkt ändern
-- Tests zuerst in Testdateien
-- Keine großen Refactors ohne Freigabe
-- Apps Script nur ändern, wenn nötig
-- Vor größeren Änderungen Backup/Testversion erstellen
-
-## Aktueller Fokus
-
-V12.8-test: Sync-Stabilisierung, mobile UX, PR-/Stats-Verbesserungen.
+- `index.html` — der aktuelle Live-Stand.
+- `DEPLOY_LOG.md` — welche `App`-Version/welcher Commit zuletzt veröffentlicht wurde.
