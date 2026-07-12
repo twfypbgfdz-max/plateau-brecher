@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#080808">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PB V12.8.20-test">
-<title>Plateau-Brecher V12.8.20-test</title>
+<meta name="apple-mobile-web-app-title" content="PB V13.2.4-test">
+<title>Plateau-Brecher V13.2.4-test</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -913,6 +913,34 @@ main{padding:14px;max-width:860px;}
 .splash-build{font-family:'DM Mono',monospace;font-size:8px;color:var(--mu);margin-top:1px;}
 .hdate-span{font-family:'DM Mono',monospace;font-size:9px;color:var(--mu);}
 .flex-row-wrap{display:flex;gap:4px;flex-wrap:wrap;}
+.plan-select-row{margin-bottom:7px;align-items:center;}
+.plan-select-wrap{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;flex:1;min-width:0;}
+.plan-select{width:100%;min-height:32px;background:rgba(255,255,255,.024);border:1px solid var(--bor);border-radius:var(--r);color:var(--tx);font-family:'DM Mono',monospace;font-size:10px;padding:7px 9px;outline:none;}
+.plan-copy-btn{min-height:32px;background:rgba(255,255,255,.024);border:1px solid rgba(255,255,255,.08);color:var(--tx2);font-family:'DM Mono',monospace;font-size:8.5px;padding:6px 10px;border-radius:var(--r);cursor:pointer;letter-spacing:.6px;white-space:nowrap;}
+.plan-copy-btn:hover{border-color:rgba(200,255,0,.28);color:var(--acc);background:rgba(200,255,0,.035);}
+.plan-week-view{border:1px solid rgba(255,255,255,.075);background:rgba(255,255,255,.018);border-radius:var(--r);padding:9px;margin:0 0 10px;min-width:0;overflow:hidden;}
+.plan-week-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:7px;min-width:0;}
+.plan-week-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px;color:var(--tx);line-height:1;}
+.plan-week-meta{font-family:'DM Mono',monospace;font-size:8.5px;color:var(--mu);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.plan-week-grid{display:grid;grid-template-columns:1fr;gap:5px;min-width:0;}
+.plan-week-day{display:grid;grid-template-columns:44px minmax(50px,.75fr) minmax(0,1fr) 52px;gap:7px;align-items:center;width:100%;min-width:0;min-height:32px;padding:6px 7px;border:1px solid rgba(255,255,255,.055);background:rgba(0,0,0,.08);border-radius:var(--r);font-family:'DM Mono',monospace;font-size:9px;color:var(--tx2);text-align:left;cursor:pointer;}
+.plan-week-day:hover{border-color:rgba(200,255,0,.22);background:rgba(200,255,0,.025);}
+.plan-week-day.active{border-color:rgba(200,255,0,.32);background:rgba(200,255,0,.04);color:var(--tx);}
+.plan-week-date{color:var(--acc);font-weight:700;}
+.plan-week-tag,.plan-week-muscle{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.plan-week-tag{color:var(--tx);}
+.plan-week-count{text-align:right;color:var(--mu);white-space:nowrap;}
+.plan-day-detail{margin-top:8px;border:1px solid rgba(200,255,0,.16);background:rgba(200,255,0,.025);border-radius:var(--r);padding:9px;min-width:0;}
+.plan-day-detail-head{display:grid;grid-template-columns:44px minmax(0,1fr) 54px;gap:8px;align-items:start;margin-bottom:8px;font-family:'DM Mono',monospace;}
+.plan-day-detail-date{font-size:10px;color:var(--acc);font-weight:700;}
+.plan-day-detail-main{min-width:0;}
+.plan-day-detail-tag{font-family:'Barlow Condensed',sans-serif;font-size:18px;line-height:1.05;color:var(--tx);letter-spacing:.8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.plan-day-detail-muscle{font-size:9px;color:var(--tx2);line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.plan-day-detail-count{font-size:9px;color:var(--mu);text-align:right;white-space:nowrap;}
+.plan-day-ex-list{display:grid;gap:4px;margin:0;padding:0;list-style:none;min-width:0;}
+.plan-day-ex-item{display:grid;grid-template-columns:20px minmax(0,1fr);gap:6px;align-items:center;min-width:0;min-height:25px;padding:5px 7px;background:rgba(0,0,0,.1);border:1px solid rgba(255,255,255,.055);border-radius:var(--r);font-family:'DM Mono',monospace;font-size:9px;color:var(--tx2);}
+.plan-day-ex-num{color:var(--mu);font-size:8px;text-align:right;}
+.plan-day-ex-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .sel-row-cycle{margin-bottom:7px;}
 .sel-row-day{margin-bottom:12px;}
 .bw-row{display:flex;align-items:baseline;}
@@ -1032,6 +1060,12 @@ main{padding:14px;max-width:860px;}
   .sel-row{margin-bottom:5px;}
   .sel-row-day{margin-bottom:8px;}
   .dbtn{min-height:32px;padding:5px 9px;}
+  .plan-week-head{align-items:flex-start;flex-direction:column;gap:3px;}
+  .plan-week-meta{width:100%;white-space:normal;}
+  .plan-week-day{grid-template-columns:42px minmax(0,1fr) 44px;gap:6px;}
+  .plan-week-muscle{grid-column:2 / 4;}
+  .plan-day-detail-head{grid-template-columns:42px minmax(0,1fr);gap:6px;}
+  .plan-day-detail-count{grid-column:2;text-align:left;}
   .cinfo{padding:8px 10px;margin-bottom:8px;gap:7px;}
   .ctitle{font-size:17px;letter-spacing:1.2px;}
   .info-row{gap:6px;margin-bottom:8px;}
@@ -1165,14 +1199,14 @@ main{padding:14px;max-width:860px;}
 <body>
 <div class="consent-overlay" id="consentOverlay">
   <div class="consent-box">
-    <h2 class="splash-h2">SYSTEM-START V12.8.20-test</h2>
+    <h2 class="splash-h2">SYSTEM-START V13.2.4-test</h2>
     <p class="splash-p">Daten werden lokal gespeichert und via API synchronisiert. Fehler-Logging ist aktiv.</p>
     <button class="save-btn" onclick="acceptConsent()">Akzeptieren &amp; Starten</button>
   </div>
 </div>
 <header>
   <div>
-    <div class="logo">PB<span class="splash-logo-ver"> V12.8.20-test</span></div>
+    <div class="logo">PB<span class="splash-logo-ver"> V13.2.4-test</span></div>
     <span class="hbadge" id="todayBadge">Lädt…</span>
     <div class="splash-build">Build: <span id="buildDateTxt"></span></div>
   </div>
@@ -1189,6 +1223,7 @@ main{padding:14px;max-width:860px;}
 
 <div class="tabs">
   <button class="tab active" onclick="showTab('workout',this)"><svg viewBox="0 0 24 24"><path d="M6 4v16M18 4v16M6 12h12M2 7h4M18 7h4M2 17h4M18 17h4"/></svg>Training</button>
+  <button class="tab" onclick="showTab('plan',this)"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="9" x2="21" y2="9"/></svg>Plan</button>
   <button class="tab" onclick="showTab('setup',this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Setup</button>
   <button class="tab" onclick="showTab('records',this)"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>PRs</button>
   <button class="tab" onclick="showTab('progress',this)"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Stats</button>
@@ -1200,9 +1235,7 @@ main{padding:14px;max-width:860px;}
 <!-- TRAINING TAB -->
 <div class="sec active" id="tab-workout">
   <div id="selfCheckBanner" class="sc-banner"></div>
-  <div class="sel-row sel-row-cycle"><span class="sel-label">Zyklus</span><div id="cycleSelRow" class="flex-row-wrap"></div></div>
-  <div class="sel-row"><span class="sel-label">Woche</span><div id="weekSelRow" class="flex-row-wrap"></div></div>
-  <div class="cinfo" id="cinfo"></div>
+  <div class="sel-row sel-row-cycle"><span class="sel-label">Zyklus</span><div id="cycleSelRowWorkout" class="flex-row-wrap"></div></div>
   <div class="sel-row sel-row-day" id="daySelRow"></div>
   <div class="info-row">
     <div class="bw-box">
@@ -1224,6 +1257,15 @@ main{padding:14px;max-width:860px;}
   <div class="coach-summary-box" id="coachSummaryBox"></div>
 </div>
 
+<!-- PLAN TAB -->
+<div class="sec" id="tab-plan">
+  <div class="sel-row plan-select-row"><span class="sel-label">Plan</span><div id="planSelRow" class="plan-select-wrap"></div></div>
+  <div class="sel-row sel-row-cycle"><span class="sel-label">Zyklus</span><div id="cycleSelRow" class="flex-row-wrap"></div></div>
+  <div class="sel-row"><span class="sel-label">Woche</span><div id="weekSelRow" class="flex-row-wrap"></div></div>
+  <div id="planWeekView" class="plan-week-view"></div>
+  <div class="cinfo" id="cinfo"></div>
+</div>
+
 <!-- SETUP TAB -->
 <div class="sec" id="tab-setup">
   <h2 class="setup-h2">Google Sheet verbinden</h2>
@@ -1235,7 +1277,7 @@ main{padding:14px;max-width:860px;}
     <div class="step-desc">Nur ändern, wenn <b>SCRIPT_CODE</b> aktualisiert wurde. App-Testversionen brauchen nicht automatisch ein neues Apps-Script-Deployment.</div>
     <div class="setup-mini-grid">
       <div class="setup-mini-card"><b>Aktuelle Script-Basis:</b><br>V11.9.1</div>
-      <div class="setup-mini-card"><b>App-Version:</b><br>V12.8.20-test</div>
+      <div class="setup-mini-card"><b>App-Version:</b><br>V13.2.4-test</div>
     </div>
     <div class="setup-note"><strong>Hinweis:</strong> Wenn die Sheet-Verbindung bereits funktioniert, muss dieser Code für diese Testversion normalerweise nicht neu deployed werden.</div>
     <div class="code-box" id="scriptCodeBox">Lädt…</div>
@@ -1285,6 +1327,13 @@ main{padding:14px;max-width:860px;}
             <button class="test-btn" onclick="document.getElementById('importFile').click()">📥 Backup importieren</button>
             <button class="test-btn" id="restoreSnapshotBtn" onclick="restoreImportSnapshot()" style="display:none;">↩ Snapshot wiederherstellen</button>
           </div>
+        </div>
+        <div class="setup-action-group">
+          <div class="setup-action-label">Cockpit</div>
+          <div class="setup-action-row">
+            <button class="test-btn" onclick="exportCockpitTrainingSummary()">🩺 Cockpit-Daten exportieren</button>
+          </div>
+          <div class="step-desc">Read-only Zusammenfassung fuer das Felix Cockpit (training-summary.json). Keine Secrets, kein vollstaendiges Backup.</div>
         </div>
         <div class="danger-zone">
           <div class="setup-action-label">Gefahrenzone</div>
@@ -1717,9 +1766,47 @@ const PLAN = [{"weeks":[{"weekLabel":"Woche 1","isDeload":false,"isSchool":false
 // STORAGE
 // ============================================================
 const SK='pb_v12_0_test';
-const APP_VERSION='V12.8.20-test';
-const BUILD_DATE='06.07.2026';
+const APP_VERSION='V13.2.4-test';
+const BUILD_DATE='12.07.2026';
 /*
+CHANGELOG V13.2.0-test
+- Lokale Daten-Keys fuer Plan-Kopien planId-basiert gekapselt: Satzdaten, Stats,
+  Koerpergewicht, Readiness, Tages-/Uebungsnamen, Selfcheck-Status, Panel-States,
+  Sparkline-States und Save-Dirty-Keys.
+- Hauptplan plan_v12_import bleibt rueckwaertskompatibel und liest/schreibt die
+  bestehenden Legacy-Keys weiter. Keine Massenmigration und keine alten Keys geloescht.
+- Sheet-Sync/Save ist fuer Plan-Kopien bewusst deaktiviert, bis V13.5 einen
+  plan-bewussten Sync einfuehrt. Der Hauptplan nutzt den bisherigen Sheet-Sync weiter.
+- Sheet-Payload, Sheet-Schema, Apps Script, currentSyncKey(c,w,d) und globale PR-Keys
+  rec_* bleiben unveraendert.
+
+CHANGELOG V13.1.0-test
+- Alle direkten lesenden PLAN-Zugriffe auf die V13-Abstraktion umgestellt
+  (getPlanCycles(), getPlanWeek(c,w), getPlanDay(c,w,d), getActivePlan()).
+- PLAN existiert nur noch als Legacy-Datenkonstante, Import-Basis und Fallback.
+- Betroffen: Workout-Rendering, PR-Rebuild, Analyse/Snapshots, Rename und
+  Sheet-Lesezugriffe. Sync-Funktionen nur beim Plan-Lesen, nicht beim Sync-Key.
+- Keine store-Keys, keine Sheet-/Sync-Key-Semantik, keine PLAN-Daten geaendert.
+- Kein neuer Tab, kein Struktur-Editor, keine Datenmigration.
+
+CHANGELOG V13.0.1-test
+- Plan-Auswahl im Trainingstab ergaenzt: aktiver Trainingsplan wird angezeigt und lokal
+  wechselbar gespeichert.
+- Bestehender V13-Import wird als "Hauptplan" gefuehrt; vorhandene V13.0.0-Stores werden
+  kompatibel aktualisiert.
+- Neuer Plan kann als lokale Kopie des aktiven Plans erstellt werden. Kopiert wird nur die
+  Planstruktur, keine Trainingsdaten, keine alten Positionskeys.
+- Keine Backend-, Sheet-/Sync-, Public-App-, Coaching-App-, AI-Router- oder Kalenderfunktion
+  geaendert.
+
+CHANGELOG V13.0.0-test
+- Neue V13-Testbasis aus V12.8.20-test erstellt.
+- Plan-Abstraktion vorbereitet: getActivePlan(), getPlanCycles(), getPlanWeek(c,w)
+  und getPlanDay(c,w,d) liefern zunaechst kompatibel den bestehenden PLAN.
+- Beim ersten Start wird der eingebettete V12-PLAN lokal nach store._plannerV13 importiert.
+  Alte Trainingsdaten, Positionskeys, Sheet-/Sync-Logik und Backend bleiben unveraendert.
+- Keine Wochen-/Tage-Kopierfunktion, keine grosse UI-Aenderung.
+
 CHANGELOG V12.8.20-test
 - Audit-Fix P1: checkStagnation() konnte den 'decline'-Zweig nie erreichen (Vergleich
   a&lt;sessions[0] verglich a mit sich selbst, da a bereits sessions[0] ist - immer false).
@@ -1902,6 +1989,288 @@ if(Object.keys(store).length===0){try{const old=JSON.parse(localStorage.getItem(
 
 function persist(){try{localStorage.setItem(SK,JSON.stringify(store));}catch(e){}}
 function saveStore(){persist();}
+function persistPlannerV13Only(){
+  try{
+    const current=JSON.parse(localStorage.getItem(SK)||'{}');
+    current._plannerV13=store._plannerV13;
+    localStorage.setItem(SK,JSON.stringify(current));
+  }catch(e){
+    persist();
+  }
+}
+function cloneLegacyPlanToPlannerV13(){
+  const cycles=(Array.isArray(PLAN)?PLAN:[]).map((cycle,cIdx)=>({
+    id:'cycle_'+(cIdx+1),
+    label:'Zyklus '+(cIdx+1),
+    weeks:(cycle.weeks||[]).map((week,wIdx)=>({
+      id:'cycle_'+(cIdx+1)+'_week_'+(wIdx+1),
+      label:week.weekLabel||('Woche '+(wIdx+1)),
+      weekLabel:week.weekLabel||('Woche '+(wIdx+1)),
+      isDeload:!!week.isDeload,
+      isSchool:!!week.isSchool,
+      days:(week.days||[]).map((day,dIdx)=>({
+        id:'cycle_'+(cIdx+1)+'_week_'+(wIdx+1)+'_day_'+(dIdx+1),
+        date:day.date||'',
+        tag:day.tag||'',
+        muscle:day.muscle||'',
+        exercises:Array.isArray(day.exercises)?day.exercises.slice():[]
+      }))
+    }))
+  }));
+  return {
+    schemaVersion:1,
+    createdAt:new Date().toISOString(),
+    source:'V12_PLAN_IMPORT',
+    activePlanId:'plan_v12_import',
+    plans:[{
+      id:'plan_v12_import',
+      name:'Hauptplan',
+      source:'V12_PLAN_IMPORT',
+      cycles
+    }],
+    templates:{days:getPlanTemplates().slice(),weeks:[],plans:[]}
+  };
+}
+function ensurePlannerV13(){
+  const existing=store._plannerV13;
+  if(existing&&typeof existing==='object'){
+    let changed=false;
+    if(existing.schemaVersion!==2){existing.schemaVersion=2;changed=true;}
+    existing.plans=Array.isArray(existing.plans)?existing.plans:[];
+    if(!existing.plans.length){
+      store._plannerV13=cloneLegacyPlanToPlannerV13();
+      store._plannerV13.schemaVersion=2;
+      persistPlannerV13Only();
+      return store._plannerV13;
+    }
+    existing.plans.forEach((plan,idx)=>{
+      if(!plan.id){plan.id='plan_'+Date.now()+'_'+idx;changed=true;}
+      if(idx===0&&(plan.name==='V12 Import'||!plan.name)){plan.name='Hauptplan';changed=true;}
+      if(!plan.name){plan.name='Trainingsplan '+(idx+1);changed=true;}
+      if(!Array.isArray(plan.cycles)){plan.cycles=[];changed=true;}
+    });
+    if(!existing.activePlanId||!existing.plans.some(p=>p.id===existing.activePlanId)){
+      existing.activePlanId=existing.plans[0].id;
+      changed=true;
+    }
+    if(!existing.templates||typeof existing.templates!=='object'){existing.templates={days:getPlanTemplates().slice(),weeks:[],plans:[]};changed=true;}
+    if(!Array.isArray(existing.templates.days)){existing.templates.days=[];changed=true;}
+    if(!Array.isArray(existing.templates.weeks)){existing.templates.weeks=[];changed=true;}
+    if(!Array.isArray(existing.templates.plans)){existing.templates.plans=[];changed=true;}
+    store._plannerV13=existing;
+    if(changed)persistPlannerV13Only();
+    return store._plannerV13;
+  }
+  store._plannerV13=cloneLegacyPlanToPlannerV13();
+  store._plannerV13.schemaVersion=2;
+  persistPlannerV13Only();
+  return store._plannerV13;
+}
+function getPlannerV13(){
+  return ensurePlannerV13();
+}
+function getActivePlanObject(){
+  const planner=getPlannerV13();
+  return planner.plans.find(p=>p.id===planner.activePlanId)||planner.plans[0]||null;
+}
+function getActivePlan(){
+  const plan=getActivePlanObject();
+  return Array.isArray(plan?.cycles)?plan.cycles:(Array.isArray(PLAN)?PLAN:[]);
+}
+function getPlanCycles(){
+  return getActivePlan();
+}
+function getPlanWeek(c,w){
+  return getPlanCycles()?.[c]?.weeks?.[w]||null;
+}
+function getPlanDay(c,w,d){
+  return getPlanWeek(c,w)?.days?.[d]||null;
+}
+function getActivePlanId(){
+  return getPlannerV13()?.activePlanId||'plan_v12_import';
+}
+function isLegacyMainPlan(planId){
+  return (planId||getActivePlanId())==='plan_v12_import';
+}
+function safePlanId(planId){
+  return String(planId||'plan_unknown').replace(/[^a-zA-Z0-9_-]/g,'_');
+}
+function scopedKey(legacyKey,planId){
+  const pid=planId||getActivePlanId();
+  return isLegacyMainPlan(pid)?legacyKey:'plan_'+safePlanId(pid)+'__'+legacyKey;
+}
+function canUseSheetSyncForActivePlan(){
+  return isLegacyMainPlan();
+}
+function getSheetSyncBlockedMessage(){
+  return 'Cloud-Sync ist für Plan-Kopien vorerst deaktiviert. Nutze den Hauptplan für Sheet-Sync.';
+}
+function dataKey(c,w,d,e,planId){
+  return scopedKey(c+'_'+w+'_'+d+'_'+e,planId);
+}
+function statsKey(c,w,d,planId){
+  return scopedKey('stats_'+c+'_'+w+'_'+d,planId);
+}
+function bwKey(c,w,d,planId){
+  return scopedKey('bw_'+c+'_'+w+'_'+d,planId);
+}
+function dirtyKey(c,w,d,planId){
+  return scopedKey('pb_prev_'+c+'_'+w+'_'+d,planId);
+}
+function daynameKey(c,w,d,planId){
+  return scopedKey('dayname_'+c+'_'+w+'_'+d,planId);
+}
+function planTagKey(day){
+  return String(day?.tag||'').replace(/[^a-zA-Z0-9]/g,'_');
+}
+function exnameTagKey(c,w,d,idx,planId){
+  const tag=planTagKey(getPlanDay(c,w,d));
+  return scopedKey('exname_global_'+c+'_'+tag+'_'+idx,planId);
+}
+function exnameCycleKey(c,idx,planId){
+  return scopedKey('exname_global_'+c+'_'+idx,planId);
+}
+function exnameDayKey(c,w,d,idx,planId){
+  return scopedKey('exname_'+c+'_'+w+'_'+d+'_'+idx,planId);
+}
+function exnameInstanceKey(c,w,d,idx,planId){
+  const pid=safePlanId(planId||getActivePlanId());
+  const day=getPlanDay(c,w,d);
+  const dayId=safePlanId(day?.id||('position_'+c+'_'+w+'_'+d));
+  const date=safePlanId(day?.date||'no_date');
+  return 'exname_instance_'+pid+'_'+dayId+'_'+date+'_'+c+'_'+w+'_'+d+'_'+idx;
+}
+function clonePlanForPlanner(plan){
+  return JSON.parse(JSON.stringify(plan||{}));
+}
+function clampPlanSelection(){
+  const cycles=getPlanCycles();
+  if(!cycles.length){C=0;W=0;D=0;return;}
+  C=Math.min(Math.max(C,0),cycles.length-1);
+  const weeks=cycles[C]?.weeks||[];
+  W=Math.min(Math.max(W,0),Math.max(weeks.length-1,0));
+  const days=weeks[W]?.days||[];
+  D=Math.min(Math.max(D,0),Math.max(days.length-1,0));
+}
+function renderPlanSelector(){
+  const row=document.getElementById('planSelRow');
+  if(!row)return;
+  const planner=getPlannerV13();
+  const plans=planner.plans||[];
+  const options=plans.map(plan=>'<option value="'+escHtml(plan.id)+'" '+(plan.id===planner.activePlanId?'selected':'')+'>'+escHtml(plan.name||'Trainingsplan')+'</option>').join('');
+  row.innerHTML='<select class="plan-select" id="planSelect" onchange="setActivePlan(this.value)">'+options+'</select>'
+    +'<button class="plan-copy-btn" type="button" onclick="createPlanCopyFromActive()">Kopie</button>';
+}
+let planWeekDetailContext='';
+let planWeekDetailDayIndex=null;
+function getShortPlanDayName(day){
+  const raw=String(day?.tag||'').split(':')[0].trim();
+  return raw||'Tag';
+}
+function getCleanPlanDayLabel(day){
+  const raw=String(day?.tag||'');
+  const label=raw.split(':')[1]?raw.split(':')[1]:raw;
+  return String(label||'Training').split('(')[0].trim()||'Training';
+}
+function getPlanWeekDetailContext(){
+  return getActivePlanId()+'|'+C+'|'+W;
+}
+function getPlanWeekDetailDayIndex(days){
+  const context=getPlanWeekDetailContext();
+  if(planWeekDetailContext!==context){
+    planWeekDetailContext=context;
+    planWeekDetailDayIndex=null;
+  }
+  const fallback=Math.min(Math.max(D,0),Math.max(days.length-1,0));
+  return Number.isInteger(planWeekDetailDayIndex)&&planWeekDetailDayIndex>=0&&planWeekDetailDayIndex<days.length?planWeekDetailDayIndex:fallback;
+}
+function renderPlanDayDetail(day,dayIndex){
+  if(!day)return '<div class="plan-day-detail"><div class="weekly-sub">Kein Trainingstag ausgewaehlt.</div></div>';
+  const exercises=Array.isArray(day.exercises)?day.exercises:[];
+  const list=exercises.length
+    ? exercises.map((_,i)=>'<li class="plan-day-ex-item"><span class="plan-day-ex-num">'+(i+1)+'.</span><span class="plan-day-ex-name">'+escHtml(getHistoricalExName(C,W,dayIndex,i)||'Unbenannte Uebung')+'</span></li>').join('')
+    : '<li class="plan-day-ex-item"><span class="plan-day-ex-num">-</span><span class="plan-day-ex-name">Keine Uebungen hinterlegt</span></li>';
+  return '<div class="plan-day-detail">'
+    +'<div class="plan-day-detail-head">'
+    +'<div class="plan-day-detail-date">'+escHtml(day.date||'-')+'</div>'
+    +'<div class="plan-day-detail-main"><div class="plan-day-detail-tag">'+escHtml(getCleanPlanDayLabel(day))+'</div><div class="plan-day-detail-muscle">'+escHtml(day.muscle||'-')+'</div></div>'
+    +'<div class="plan-day-detail-count">'+exercises.length+' &Uuml;b.</div>'
+    +'</div><ul class="plan-day-ex-list">'+list+'</ul></div>';
+}
+function renderPlanWeekView(){
+  const box=document.getElementById('planWeekView');
+  if(!box)return;
+  if(ACTIVE_PLAN_DIAG){
+    box.innerHTML='<div class="plan-week-head"><div class="plan-week-title">Wochenansicht</div><div class="plan-week-meta">Keine aktuelle Planwoche</div></div><div class="weekly-sub">Fuer die aktuelle Diagnose ist keine Planwoche geladen.</div>';
+    return;
+  }
+  const week=getPlanWeek(C,W);
+  const days=Array.isArray(week?.days)?week.days:[];
+  if(!week||!days.length){
+    box.innerHTML='<div class="plan-week-head"><div class="plan-week-title">Wochenansicht</div><div class="plan-week-meta">Keine Daten</div></div><div class="weekly-sub">Keine Tage fuer diese Planwoche gefunden.</div>';
+    return;
+  }
+  const detailIndex=getPlanWeekDetailDayIndex(days);
+  const activePlan=getActivePlanObject();
+  const totalExercises=days.reduce((sum,day)=>sum+(Array.isArray(day.exercises)?day.exercises.length:0),0);
+  const rows=days.map((day,i)=>{
+    const count=Array.isArray(day.exercises)?day.exercises.length:0;
+    const dayId=day?.id||('position_'+C+'_'+W+'_'+i);
+    return '<button class="plan-week-day '+(i===detailIndex?'active':'')+'" type="button" onclick="selectPlanWeekDetailDay('+i+')" aria-pressed="'+(i===detailIndex?'true':'false')+'" data-day-id="'+escHtml(dayId)+'">'
+      +'<div class="plan-week-date">'+escHtml(day.date||'-')+'</div><div class="plan-week-tag">'+escHtml(getShortPlanDayName(day))+'</div>'
+      +'<div class="plan-week-muscle">'+escHtml(day.muscle||getCleanPlanDayLabel(day))+'</div><div class="plan-week-count">'+count+' &Uuml;b.</div></button>';
+  }).join('');
+  box.innerHTML='<div class="plan-week-head"><div class="plan-week-title">Wochenansicht</div><div class="plan-week-meta">'+escHtml(activePlan?.name||'Trainingsplan')+' &middot; '+escHtml(week.weekLabel||week.label||('Woche '+(W+1)))+' &middot; '+days.length+' Tage &middot; '+totalExercises+' &Uuml;b.</div></div><div class="plan-week-grid">'+rows+'</div>'+renderPlanDayDetail(days[detailIndex]||null,detailIndex);
+}
+function selectPlanWeekDetailDay(i){
+  const days=getPlanWeek(C,W)?.days||[];
+  if(!Number.isInteger(i)||i<0||i>=days.length)return;
+  planWeekDetailContext=getPlanWeekDetailContext();
+  planWeekDetailDayIndex=i;
+  renderPlanWeekView();
+}
+function rerenderPlanSurface(){
+  clearPlanDiagnosis();
+  clampPlanSelection();
+  renderPlanSelector();
+  renderCycleRow();
+  renderWeekRow();
+  renderPlanWeekView();
+  renderDayRow();
+  renderWorkout();
+  loadBW();
+}
+function setActivePlan(planId){
+  const planner=getPlannerV13();
+  if(!planner.plans.some(p=>p.id===planId))return;
+  planner.activePlanId=planId;
+  persistPlannerV13Only();
+  invalidateActiveSync();
+  rerenderPlanSurface();
+}
+function createPlanCopyFromActive(){
+  const planner=getPlannerV13();
+  const active=getActivePlanObject();
+  if(!active)return;
+  const copy=clonePlanForPlanner(active);
+  const baseName=String(active.name||'Trainingsplan').trim()||'Trainingsplan';
+  const name=prompt('Name fuer den neuen Plan:', 'Kopie von '+baseName);
+  if(name===null)return;
+  const cleanName=String(name||'').trim();
+  if(!cleanName){showStatus('err','Planname fehlt');return;}
+  copy.id='plan_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+  copy.name=cleanName;
+  copy.source='LOCAL_COPY';
+  copy.createdAt=new Date().toISOString();
+  copy.copiedFrom=active.id||'';
+  planner.plans.push(copy);
+  planner.activePlanId=copy.id;
+  persistPlannerV13Only();
+  invalidateActiveSync();
+  C=0;W=0;D=0;
+  rerenderPlanSurface();
+  showStatus('ok','Plan erstellt: '+cleanName);
+}
 function getPlanTemplates(){
   return Array.isArray(store._planTemplates)?store._planTemplates:[];
 }
@@ -1910,7 +2279,7 @@ function savePlanTemplates(list){
   persist();
 }
 function createTemplateFromCurrentDay(){
-  const day=PLAN?.[C]?.weeks?.[W]?.days?.[D];
+  const day=getPlanDay(C,W,D);
   if(!day||!Array.isArray(day.exercises)){alert('Keine gueltige Trainingstag-Vorlage gefunden.');return;}
   const ok=confirm('Es werden nur Übungen gespeichert. Trainingsdaten, Notizen, Geräte und PRs werden nicht übernommen.');
   if(!ok)return;
@@ -1958,7 +2327,7 @@ function buildMachineWarning(current,prevData){
   if(curr===prev)return '';
   return '<div class="machine-warning">Anderes Ger&auml;t als beim letzten Training &ndash; Vergleich eingeschr&auml;nkt.</div>';
 }
-function getD(c,w,d,e){const k=c+'_'+w+'_'+d+'_'+e;if(!store[k])store[k]={g1:'',r1:'',g2:'',r2:'',g3:'',r3:'',notes:'',done:false,machine:'Standard'};return store[k];}
+function getD(c,w,d,e){const k=dataKey(c,w,d,e);if(!store[k])store[k]={g1:'',r1:'',g2:'',r2:'',g3:'',r3:'',notes:'',done:false,machine:'Standard'};return store[k];}
 function getRecord(n){return store['rec_'+n]||null;}
 function getBestSetFromTrainingData(d){
   let best=null;
@@ -1975,8 +2344,8 @@ function getMachinePRFromLocalHistory(exName,machine){
   const wanted=normExLookupName(exName);
   if(!wanted)return null;
   let best=null;
-  for(let c=0;c<PLAN.length;c++){
-    const weeks=PLAN[c]?.weeks||[];
+  for(let c=0;c<getPlanCycles().length;c++){
+    const weeks=getPlanCycles()[c]?.weeks||[];
     for(let w=0;w<weeks.length;w++){
       const week=weeks[w];
       if(!week||week.isDeload)continue;
@@ -2119,19 +2488,23 @@ function importPRsFromSheetTrainingHistory(c,data){
 function rebuildPRsFromHistory(silent=true) {
   if(silent&&Array.isArray(store.prBestleistungenNames)&&store.prBestleistungenNames.length>0)return 0;
   let updated = 0;
+  const planId=getActivePlanId();
+  const prefix=isLegacyMainPlan(planId)?'':'plan_'+safePlanId(planId)+'__';
+  const re=isLegacyMainPlan(planId)?/^\d+_\d+_\d+_\d+$/:new RegExp('^'+prefix.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(\\d+)_(\\d+)_(\\d+)_(\\d+)$');
   for(const key of Object.keys(store)){
     // Keys haben Format: c_w_d_e (alles Zahlen)
-    if(!/^\d+_\d+_\d+_\d+$/.test(key)) continue;
-    const [c,w,d,e] = key.split('_').map(Number);
-    if(!PLAN[c]?.weeks[w]?.days[d]?.exercises[e]) continue;
-    const exName = PLAN[c].weeks[w].days[d].exercises[e];
+    const m=key.match(re);
+    if(!m) continue;
+    const [c,w,d,e] = (isLegacyMainPlan(planId)?key.split('_'):m.slice(1)).map(Number);
+    if(!getPlanDay(c,w,d)?.exercises[e]) continue;
+    const exName = getPlanDay(c,w,d).exercises[e];
     const data = store[key];
     if(!data?.g1) continue;
     const orm = calc1RM(data);
     if(!orm || orm <= 0) continue;
     const rec = getRecord(exName);
     if(!rec || orm > rec.orm){
-      const date = PLAN[c].weeks[w].days[d].date || getCurrentDateStr();
+      const date = getPlanDay(c,w,d).date || getCurrentDateStr();
       const rawWeight = parseFloat(data.g1)||null;
       setRecord(exName, Math.round(orm*10)/10, date, rawWeight);
       updated++;
@@ -2144,7 +2517,7 @@ function rebuildPRsFromHistory(silent=true) {
 function getCurrentDateStr(){const n=new Date();return String(n.getDate()).padStart(2,'0')+'.'+String(n.getMonth()+1).padStart(2,'0');}
 
 function saveTrainingStats(){
-  const k='stats_'+C+'_'+W+'_'+D;
+  const k=statsKey(C,W,D);
   store[k]={
     kcal:document.getElementById('kcalInput')?.value||'',
     pulse:document.getElementById('pulseInput')?.value||'',
@@ -2153,7 +2526,7 @@ function saveTrainingStats(){
   persist();
 }
 function loadTrainingStats(){
-  const k='stats_'+C+'_'+W+'_'+D;
+  const k=statsKey(C,W,D);
   const s=store[k]||{};
   const ki=document.getElementById('kcalInput');
   const pi=document.getElementById('pulseInput');
@@ -2367,9 +2740,9 @@ function renderDataQualityCard(){
 // ============================================================
 let C=0,W=0,D=0;
 
-function saveBW(val){store['bw_'+C+'_'+W+'_'+D]=val;persist();}
+function saveBW(val){store[bwKey(C,W,D)]=val;persist();}
 function loadBW(){
-  const val=store['bw_'+C+'_'+W+'_'+D]||'';
+  const val=store[bwKey(C,W,D)]||'';
   const el=document.getElementById('bwInput');
   if(el)el.value=val;
   loadTrainingStats();
@@ -2384,6 +2757,180 @@ function exportBackup(){
   a.href=URL.createObjectURL(blob);
   a.download='pb_backup_'+new Date().toISOString().slice(0,10)+'.json';
   a.click();
+}
+
+// ============================================================
+// COCKPIT EXPORT — read-only, secret-free training summary
+// ============================================================
+function buildCockpitTrainingSummary(){
+  const now=new Date();
+  const year=now.getFullYear();
+  const planner=store&&store._plannerV13;
+  const plans=Array.isArray(planner?.plans)?planner.plans:[];
+  const activePlanId=planner?.activePlanId||'plan_v12_import';
+  const activePlanObject=plans.find(plan=>plan&&plan.id===activePlanId)||plans[0]||null;
+  const activePlan={
+    id:String(activePlanObject?.id||activePlanId),
+    name:String(activePlanObject?.name||(activePlanId==='plan_v12_import'?'Hauptplan':'Trainingsplan'))
+  };
+  const cycles=Array.isArray(activePlanObject?.cycles)?activePlanObject.cycles:(Array.isArray(PLAN)?PLAN:[]);
+  const planWeekAt=(c,w)=>cycles?.[c]?.weeks?.[w]||null;
+  const planDayAt=(c,w,d)=>planWeekAt(c,w)?.days?.[d]||null;
+  const isoDay=dt=>{try{return dt?new Date(dt).toISOString().slice(0,10):null;}catch(e){return null;}};
+  const musclesOf=day=>String(day?.muscle||'').split('/').map(s=>s.trim()).filter(Boolean);
+  const nameOf=day=>String(day?.tag||'').trim();
+  const scopedReadKey=legacyKey=>activePlan.id==='plan_v12_import'?legacyKey:'plan_'+safePlanId(activePlan.id)+'__'+legacyKey;
+  const exerciseNameAt=(c,w,d,i,day)=>{
+    const baseDay=day||planDayAt(c,w,d);
+    if(!baseDay)return '';
+    const dayId=safePlanId(baseDay.id||('position_'+c+'_'+w+'_'+d));
+    const date=safePlanId(baseDay.date||'no_date');
+    const tag=String(baseDay.tag||'').replace(/[^a-zA-Z0-9]/g,'_');
+    const instanceKey='exname_instance_'+safePlanId(activePlan.id)+'_'+dayId+'_'+date+'_'+c+'_'+w+'_'+d+'_'+i;
+    return String(store[instanceKey]
+      ||store[scopedReadKey('exname_global_'+c+'_'+tag+'_'+i)]
+      ||store[scopedReadKey('exname_global_'+c+'_'+i)]
+      ||store[scopedReadKey('exname_'+c+'_'+w+'_'+d+'_'+i)]
+      ||baseDay.exercises?.[i]
+      ||'');
+  };
+  const exerciseDataAt=(c,w,d,i)=>store[scopedReadKey(c+'_'+w+'_'+d+'_'+i)]||null;
+  const dayHasData=(c,w,d,day)=>(day?.exercises||[]).some((_,i)=>{
+    const raw=exerciseDataAt(c,w,d,i);
+    return !!(raw&&calcTotal(raw));
+  });
+  const exerciseSummaryAt=(c,w,d,day)=>(day?.exercises||[]).map((_,i)=>{
+    const data=exerciseDataAt(c,w,d,i);
+    return {
+      position:i,
+      name:exerciseNameAt(c,w,d,i,day),
+      completed:!!(data&&calcTotal(data)),
+      volume:data?calcTotal(data)||0:0
+    };
+  });
+
+  let entries=[];
+  for(let c=0;c<cycles.length;c++){
+    const weeks=cycles[c]?.weeks||[];
+    for(let w=0;w<weeks.length;w++){
+      const days=weeks[w]?.days||[];
+      for(let d=0;d<days.length;d++){
+        const day=days[d];
+        const dt=parsePlanDateToDateObject(day?.date,year);
+        if(dt)entries.push({c,w,d,dt,day,weekLabel:weeks[w]?.weekLabel||('Woche '+(w+1)),completed:dayHasData(c,w,d,day)});
+      }
+    }
+  }
+  entries.sort((a,b)=>a.dt-b.dt);
+
+  const selectedC=Math.min(Math.max(Number(C)||0,0),Math.max(cycles.length-1,0));
+  const selectedWeeks=cycles[selectedC]?.weeks||[];
+  const selectedW=Math.min(Math.max(Number(W)||0,0),Math.max(selectedWeeks.length-1,0));
+  const selectedDays=selectedWeeks[selectedW]?.days||[];
+  const selectedD=Math.min(Math.max(Number(D)||0,0),Math.max(selectedDays.length-1,0));
+  const selectedWeek=planWeekAt(selectedC,selectedW);
+  const selectedDay=planDayAt(selectedC,selectedW,selectedD);
+  const exercises=exerciseSummaryAt(selectedC,selectedW,selectedD,selectedDay);
+  const cycle={index:selectedC,number:selectedC+1};
+  const week={index:selectedW,number:selectedW+1,label:selectedWeek?.weekLabel||null,isDeload:!!selectedWeek?.isDeload};
+  const currentDay={
+    index:selectedD,
+    number:selectedD+1,
+    id:selectedDay?.id||null,
+    date:selectedDay?.date||null,
+    name:nameOf(selectedDay)||null,
+    muscleGroups:musclesOf(selectedDay),
+    completed:dayHasData(selectedC,selectedW,selectedD,selectedDay)
+  };
+  const summary={
+    exerciseCount:exercises.length,
+    completedExercises:exercises.filter(ex=>ex.completed).length,
+    totalVolume:exercises.reduce((sum,ex)=>sum+ex.volume,0)
+  };
+
+  const todayStart=new Date(year,now.getMonth(),now.getDate());
+  const completedPast=entries.filter(e=>e.completed&&e.dt<=todayStart).sort((a,b)=>b.dt-a.dt);
+  let currentWeek={label:null,cycle:0,week:0,isDeload:false};
+  let todaySession={name:null,muscleGroups:[],status:'unknown'};
+  let nextSession={name:null,muscleGroups:[],plannedLabel:null};
+  const exact=entries.find(e=>e.dt.getTime()===todayStart.getTime());
+  const monday=getMondayOfDate(todayStart);
+  const sunday=new Date(monday);sunday.setDate(monday.getDate()+6);sunday.setHours(23,59,59,999);
+  const weekEntries=entries.filter(e=>e.dt>=monday&&e.dt<=sunday);
+  const weekEntry=exact||weekEntries.find(e=>e.dt>=todayStart)||weekEntries[weekEntries.length-1]||null;
+  if(weekEntry){
+    const wk=planWeekAt(weekEntry.c,weekEntry.w);
+    currentWeek={label:wk?.weekLabel||('Woche '+(weekEntry.w+1)),cycle:weekEntry.c+1,week:weekEntry.w+1,isDeload:!!wk?.isDeload};
+  }
+  todaySession=exact
+    ?{name:nameOf(exact.day),muscleGroups:musclesOf(exact.day),status:exact.completed?'completed':'planned'}
+    :{name:null,muscleGroups:[],status:'rest'};
+  const upcoming=entries.find(e=>e.dt>todayStart);
+  if(upcoming)nextSession={name:nameOf(upcoming.day),muscleGroups:musclesOf(upcoming.day),plannedLabel:isoDay(upcoming.dt)};
+
+  const lastSession=completedPast.length
+    ?{name:nameOf(completedPast[0].day),muscleGroups:musclesOf(completedPast[0].day),completedAt:isoDay(completedPast[0].dt)}
+    :{name:null,muscleGroups:[],completedAt:null};
+  const sessionsThisWeek={planned:weekEntries.length,completed:weekEntries.filter(e=>e.completed).length};
+  let recentPRs=[];
+  try{
+    recentPRs=Object.keys(store).filter(key=>key.indexOf('rec_')===0).map(key=>{
+      const record=store[key]||{};
+      return {exercise:key.slice(4),value:record.weight!=null?String(record.weight)+' kg':record.orm!=null?String(record.orm)+' kg (e1RM)':'',reps:record.reps!=null?Number(record.reps):null,date:record.date!=null?String(record.date):null};
+    }).filter(record=>record.value).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).slice(0,5);
+  }catch(e){recentPRs=[];}
+  const recentMuscleGroups=[];
+  const seenMuscles=new Set();
+  completedPast.forEach(entry=>musclesOf(entry.day).forEach(muscle=>{
+    if(seenMuscles.has(muscle)||recentMuscleGroups.length>=8)return;
+    seenMuscles.add(muscle);recentMuscleGroups.push({name:muscle,lastTrainedAt:isoDay(entry.dt)});
+  }));
+  const history=entries.filter(e=>e.dt<=todayStart).sort((a,b)=>b.dt-a.dt).slice(0,14)
+    .map(e=>({date:isoDay(e.dt),session:nameOf(e.day),completed:!!e.completed}));
+  const insights=[];
+  if(summary.completedExercises===summary.exerciseCount&&summary.exerciseCount>0){
+    insights.push({type:'good',severity:'positive',title:'Training',text:'Aktuelle Einheit vollstaendig erfasst'});
+  }else if(summary.completedExercises>0){
+    insights.push({type:'load',severity:'info',title:'Training',text:summary.completedExercises+' von '+summary.exerciseCount+' Uebungen erfasst'});
+  }
+
+  return {
+    schemaVersion:2,
+    generatedAt:now.toISOString(),
+    source:'plateau-brecher',
+    appVersion:APP_VERSION,
+    activePlan,
+    cycle,
+    week,
+    currentDay,
+    exercises,
+    summary,
+    currentWeek,
+    todaySession,
+    nextSession,
+    lastSession,
+    sessionsThisWeek,
+    recentPRs,
+    recentMuscleGroups,
+    history,
+    insights
+  };
+}
+
+function exportCockpitTrainingSummary(){
+  try{
+    const summary=buildCockpitTrainingSummary();
+    const blob=new Blob([JSON.stringify(summary,null,2)],{type:'application/json'});
+    const a=document.createElement('a');
+    const url=URL.createObjectURL(blob);
+    a.href=url;
+    a.download='training-summary.json';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),0);
+    if(typeof showSetupStatus==='function')showSetupStatus('ok','Cockpit-Export erstellt (training-summary.json).');
+  }catch(e){
+    if(typeof showSetupStatus==='function')showSetupStatus('err','Cockpit-Export fehlgeschlagen.');
+  }
 }
 
 function createLocalSnapshot(reason,key){
@@ -2490,11 +3037,13 @@ function planWeekKey(date){
 }
 function collectPlanDateEntries(year){
   const entries=[];
-  for(let c=0;c<PLAN.length;c++){
-    for(let w=0;w<PLAN[c].weeks.length;w++){
-      const week=PLAN[c].weeks[w];
+  const cycles=getPlanCycles();
+  for(let c=0;c<cycles.length;c++){
+    for(let w=0;w<(cycles[c].weeks||[]).length;w++){
+      const week=getPlanWeek(c,w);
+      if(!week||!Array.isArray(week.days))continue;
       for(let d=0;d<week.days.length;d++){
-        const day=week.days[d];
+        const day=getPlanDay(c,w,d);
         const dt=parsePlanDateToDateObject(day.date,year);
         if(dt)entries.push({c,w,d,dt,day,weekLabel:week.weekLabel||('Woche '+(w+1))});
       }
@@ -2549,7 +3098,7 @@ function findLastCompletePlanWeek(entriesOrCoverage){
         monday:week.monday,
         range:week.range,
         entries:required.map(tag=>byTag[tag]),
-        isDeload:week.entries.some(entry=>!!PLAN[entry.c]?.weeks?.[entry.w]?.isDeload),
+        isDeload:week.entries.some(entry=>!!getPlanWeek(entry.c,entry.w)?.isDeload),
         sourceLabel:week.entries[0]?('Z'+(week.entries[0].c+1)+' / W'+(week.entries[0].w+1)+' / '+(week.entries[0].weekLabel||'')):''
       };
     }
@@ -2645,6 +3194,7 @@ function getTodayBadgeLabel(day,mode){
 }
 function init(){
   if(store._theme==='light')document.documentElement.setAttribute('data-theme','light');
+  ensurePlannerV13();
   const now=new Date();
   const days=['So','Mo','Di','Mi','Do','Fr','Sa'];
   const months=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
@@ -2653,7 +3203,7 @@ function init(){
   ACTIVE_PLAN_DIAG=todayPos&&todayPos.missing?todayPos:null;
   if(todayPos&&!todayPos.missing){C=todayPos.c;W=todayPos.w;D=todayPos.d;}
   document.getElementById('todayBadge').textContent=todayPos
-    ?(todayPos.missing?'Plan fehlt':getTodayBadgeLabel(PLAN[C].weeks[W].days[D],todayPos.mode))
+    ?(todayPos.missing?'Plan fehlt':getTodayBadgeLabel(getPlanDay(C,W,D),todayPos.mode))
     :'Rest';
   if(store._apiUrl){API_URL=store._apiUrl;const el=document.getElementById('apiUrlInput');if(el)el.value=API_URL;}
   if(store._apiSecret){API_SECRET=store._apiSecret;const secretEl=document.getElementById('apiSecretInput');if(secretEl)secretEl.value=API_SECRET;}
@@ -2666,7 +3216,7 @@ function init(){
   document.getElementById('scriptCodeBox').textContent=SCRIPT_CODE;
   const bdt=document.getElementById('buildDateTxt');if(bdt)bdt.textContent=BUILD_DATE;
   if(store._lastSync){const el=document.getElementById('lastSyncTxt');if(el)el.textContent='Sync: '+store._lastSync;}
-  renderCycleRow();renderWeekRow();renderDayRow();renderWorkout();
+  renderPlanSelector();renderCycleRow();renderWeekRow();renderPlanWeekView();renderDayRow();renderWorkout();
   selfCheck();
   // PR-Rebuild aus Trainingshistorie (still)
   setTimeout(()=>rebuildPRsFromHistory(true), 500);
@@ -2679,7 +3229,7 @@ function init(){
 // Zeigt Warnungen/Fehler direkt im Training-Tab
 // ============================================================
 function getSelfCheckDismissKey(){
-  return 'selfcheck_dismiss_'+C+'_'+W+'_'+D;
+  return scopedKey('selfcheck_dismiss_'+C+'_'+W+'_'+D);
 }
 
 function getSelfCheckSignature(issue){
@@ -2747,7 +3297,7 @@ function selfCheck(){
   // 5. Heutiges Datum außerhalb Trainingsplan
   const now = new Date();
   const ts = String(now.getDate()).padStart(2,'0')+'.'+String(now.getMonth()+1).padStart(2,'0');
-  const inPlan = PLAN.some(cyc => cyc.weeks.some(wk => wk.days.some(d => d.date===ts)));
+  const inPlan = getPlanCycles().some(cyc => cyc.weeks.some(wk => wk.days.some(d => d.date===ts)));
   if(!inPlan){
     issues.push({
       level:'warn',
@@ -2913,7 +3463,7 @@ function buildSelfCheckDeloadDetails(ds){
 }
 
 function getStagnatingExerciseDetails(){
-  const day=PLAN[C]?.weeks[W]?.days[D];
+  const day=getPlanDay(C,W,D);
   const result=[];
   if(!day) return result;
   day.exercises.forEach((exName)=>{
@@ -2923,11 +3473,11 @@ function getStagnatingExerciseDetails(){
     let prevOrm = 0;
     outer:
     for(let ci=C; ci>=0; ci--){
-      const weeks=PLAN[ci].weeks;
+      const weeks=getPlanCycles()[ci].weeks;
       const startW=(ci===C)?W:weeks.length-1;
       for(let wi=startW; wi>=0; wi--){
-        if(PLAN[ci].weeks[wi]?.isDeload) continue;
-        const days=PLAN[ci].weeks[wi].days;
+        if(getPlanWeek(ci,wi)?.isDeload) continue;
+        const days=getPlanWeek(ci,wi).days;
         const startDi=(ci===C && wi===W)?D-1:days.length-1;
         if(startDi<0) continue;
         for(let di=startDi; di>=0; di--){
@@ -3081,6 +3631,10 @@ function shortSheetSyncStatus(sheetName,day,dayRows,matched,hasValues,data=null)
 
 async function syncAllFromSheet(manual=false){
   if(!API_URL)return;
+  if(!canUseSheetSyncForActivePlan()){
+    showStatus('err',getSheetSyncBlockedMessage());
+    return;
+  }
   // Snapshot von C/W/D beim Aufruf — nicht beim async Callback
   const snapC=C,snapW=W,snapD=D;
   if(!manual&&Date.now()-lastAutoSyncAt<AUTO_SYNC_COOLDOWN)return;
@@ -3090,7 +3644,7 @@ async function syncAllFromSheet(manual=false){
   try{
     showStatus('ok','↻ Lade Sheet-Daten…');
     const sheetName='ZYKLUS '+(snapC+1);
-    const day=PLAN[snapC].weeks[snapW].days[snapD];
+    const day=getPlanDay(snapC,snapW,snapD);
     syncDate=day?.date||'';
     const matched=new Set();
     const bestleistungenImported=await importBestleistungenFromSheet();
@@ -3171,25 +3725,34 @@ function manualSyncCurrentDay(){
 // SELECTORS
 // ============================================================
 function renderCycleRow(){
-  document.getElementById('cycleSelRow').innerHTML=PLAN.map((_,i)=>
+  const html=getPlanCycles().map((_,i)=>
     '<button class="dbtn '+(i===C?'active':'')+'" onclick="setC('+i+',this)">Z'+(i+1)+'</button>'
   ).join('');
+  ['cycleSelRow','cycleSelRowWorkout'].forEach(id=>{
+    const row=document.getElementById(id);
+    if(row)row.innerHTML=html;
+  });
 }
-function setC(i,btn){clearPlanDiagnosis();C=i;W=0;D=0;invalidateActiveSync();btn.parentElement.querySelectorAll('.dbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderWeekRow();renderDayRow();renderWorkout();loadBW();}
+function setC(i,btn){clearPlanDiagnosis();C=i;W=0;D=0;invalidateActiveSync();renderCycleRow();renderWeekRow();renderPlanWeekView();renderDayRow();renderWorkout();loadBW();}
 function renderWeekRow(){
-  document.getElementById('weekSelRow').innerHTML=PLAN[C].weeks.map((w,i)=>
+  const weeks=getPlanCycles()?.[C]?.weeks||[];
+  document.getElementById('weekSelRow').innerHTML=weeks.map((w,i)=>
     '<button class="dbtn '+(i===W?'active':'')+'" onclick="setW('+i+',this)">'+(w.isDeload?'W'+(i+1)+' 🔻':'W'+(i+1))+'</button>'
   ).join('');
 }
-function setW(i,btn){clearPlanDiagnosis();W=i;D=0;invalidateActiveSync();btn.parentElement.querySelectorAll('.dbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderDayRow();renderWorkout();loadBW();}
+function setW(i,btn){clearPlanDiagnosis();W=i;D=0;invalidateActiveSync();btn.parentElement.querySelectorAll('.dbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderPlanWeekView();renderDayRow();renderWorkout();loadBW();}
 function renderDayRow(){
   if(ACTIVE_PLAN_DIAG){
     document.getElementById('daySelRow').innerHTML='<div class="weekly-sub">Keine Tagesauswahl fuer '+ACTIVE_PLAN_DIAG.range+' im PLAN gefunden.</div>';
     return;
   }
-  const week=PLAN[C].weeks[W];
+  const week=getPlanWeek(C,W);
+  if(!week){
+    document.getElementById('daySelRow').innerHTML='<div class="weekly-sub">Keine Tagesauswahl gefunden.</div>';
+    return;
+  }
   const days=week.days;
-  const prevDay=D>0?D-1:(W>0?PLAN[C].weeks[W-1].days.length-1:-1);
+  const prevDay=D>0?D-1:(W>0?(getPlanWeek(C,W-1)?.days?.length||1)-1:-1);
   const nextDay=D<days.length-1?D+1:-1;
   let html='<div class="flex-row-wrap day-row-wrap">';
   // Prev arrow
@@ -3200,29 +3763,29 @@ function renderDayRow(){
     return'<button class="dbtn dbtn-day '+(i===D?'active':'')+'" onclick="setD('+i+',this)"><span class="day-date-lbl">'+day.date+'</span>'+ts+'</button>';
   }).join('');
   // Next arrow
-  html+='<button class="dbtn dbtn-nav" onclick="nextDay()" '+(D===days.length-1&&W===PLAN[C].weeks.length-1&&C===PLAN.length-1?'disabled style="opacity:.3"':'')+'>›</button>';
+  html+='<button class="dbtn dbtn-nav" onclick="nextDay()" '+(D===days.length-1&&W===(getPlanCycles()?.[C]?.weeks||[]).length-1&&C===getPlanCycles().length-1?'disabled style="opacity:.3"':'')+'>›</button>';
   html+='</div>';
   document.getElementById('daySelRow').innerHTML=html;
 }
-function setD(i,btn){clearPlanDiagnosis();D=i;invalidateActiveSync();document.querySelectorAll('#daySelRow .dbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderWorkout();loadBW();if(API_URL)syncAllFromSheet();}
+function setD(i,btn){clearPlanDiagnosis();D=i;invalidateActiveSync();document.querySelectorAll('#daySelRow .dbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderPlanWeekView();renderWorkout();loadBW();if(API_URL)syncAllFromSheet();}
 function prevDay(){
   clearPlanDiagnosis();
   if(D>0){D--;}
-  else if(W>0){W--;D=PLAN[C].weeks[W].days.length-1;}
-  else if(C>0){C--;W=PLAN[C].weeks.length-1;D=PLAN[C].weeks[W].days.length-1;renderCycleRow();renderWeekRow();}
+  else if(W>0){W--;D=(getPlanWeek(C,W)?.days?.length||1)-1;}
+  else if(C>0){C--;W=(getPlanCycles()?.[C]?.weeks||[]).length-1;D=(getPlanWeek(C,W)?.days?.length||1)-1;renderCycleRow();renderWeekRow();}
   else return;
   invalidateActiveSync();
-  renderDayRow();renderWorkout();loadBW();
+  renderPlanWeekView();renderDayRow();renderWorkout();loadBW();
 }
 function nextDay(){
   clearPlanDiagnosis();
-  const days=PLAN[C].weeks[W].days;
+  const days=getPlanWeek(C,W)?.days||[];
   if(D<days.length-1){D++;}
-  else if(W<PLAN[C].weeks.length-1){W++;D=0;renderWeekRow();}
-  else if(C<PLAN.length-1){C++;W=0;D=0;renderCycleRow();renderWeekRow();}
+  else if(W<(getPlanCycles()?.[C]?.weeks||[]).length-1){W++;D=0;renderWeekRow();}
+  else if(C<getPlanCycles().length-1){C++;W=0;D=0;renderCycleRow();renderWeekRow();}
   else return;
   invalidateActiveSync();
-  renderDayRow();renderWorkout();loadBW();
+  renderPlanWeekView();renderDayRow();renderWorkout();loadBW();
 }
 
 // ============================================================
@@ -3242,12 +3805,12 @@ function calcPOS(d){ return calcTotal(d)||0; }
 
 // Stagnation über letzte 3 Einheiten prüfen
 function checkStagnation(exIdx){
-  const day=PLAN[C].weeks[W].days[D];
+  const day=getPlanDay(C,W,D);
   const sessions=[];
   // Rückwärts durch Wochen/Zyklen gehen
   let found=0;
   for(let ci=C;ci>=0&&found<3;ci--){
-    const cyc=PLAN[ci];
+    const cyc=getPlanCycles()[ci];
     const wStart=(ci===C)?W:cyc.weeks.length-1;
     for(let wi=wStart;wi>=0&&found<3;wi--){
       const week=cyc.weeks[wi];
@@ -3287,7 +3850,7 @@ const READINESS_DEFAULT={
 };
 
 function getReadinessKey(c=C,w=W,d=D){
-  return 'readiness_'+c+'_'+w+'_'+d;
+  return scopedKey('readiness_'+c+'_'+w+'_'+d);
 }
 
 function getReadiness(){
@@ -3338,7 +3901,7 @@ function buildReadinessContext(){
 
 function getReadinessTrainingCaution(exName){
   const ctx=buildReadinessContext();
-  const day=PLAN[C]?.weeks[W]?.days[D]||{};
+  const day=getPlanDay(C,W,D)||{};
   const text=((day.tag||'')+' '+(day.muscle||'')+' '+String(exName||'')).toLowerCase();
   const relevant=[];
   const p=ctx.readiness.pain||{};
@@ -3361,7 +3924,7 @@ function getReadinessTrainingCaution(exName){
 function renderReadinessBlock(){
   const r=getReadiness();
   const ctx=buildReadinessContext();
-  const open=!!store['_readiness_open'];
+  const open=!!store[scopedKey('_readiness_open_'+C+'_'+W+'_'+D)];
   const chip=(field,value,label)=>'<button class="readiness-chip '+(r[field]===value?'active':'')+'" onclick="event.stopPropagation();saveReadiness(\''+field+'\',\''+value+'\')">'+label+'</button>';
   const painInput=(key,label)=>'<div class="readiness-field"><div class="readiness-label">'+label+'</div><input class="pain-input" type="number" min="0" max="10" step="1" value="'+(r.pain[key]||0)+'" oninput="saveReadiness(\'pain\',this.value,\''+key+'\')"></div>';
   const field=(name,label,opts)=>'<div class="readiness-field"><div class="readiness-label">'+label+'</div><div class="readiness-options">'+opts.map(o=>chip(name,o[0],o[1])).join('')+'</div></div>';
@@ -3384,7 +3947,8 @@ function renderReadinessBlock(){
 }
 
 function toggleReadinessPanel(){
-  store['_readiness_open']=!store['_readiness_open'];
+  const key=scopedKey('_readiness_open_'+C+'_'+W+'_'+D);
+  store[key]=!store[key];
   persist();
   renderWorkout();
 }
@@ -3446,7 +4010,7 @@ function getRecommendationDataBasis(exName,machine){
   if(!wanted||!currentPos)return{level:'thin',count:0};
 
   for(let w=W;w>=0&&entries.length<3;w--){
-    const week=PLAN[C].weeks[w];
+    const week=getPlanWeek(C,w);
     if(!week||week.isDeload)continue;
     const days=week.days||[];
     const startD=(w===W)?D-1:days.length-1;
@@ -3476,7 +4040,7 @@ function getRecommendationDataBasis(exName,machine){
 }
 
 function buildExerciseRecommendation(i,machine){
-  const week=PLAN[C].weeks[W],day=week.days[D];
+  const week=getPlanWeek(C,W),day=week.days[D];
   const exName=getExName(i);
   const d=getD(C,W,D,i);
   const orm=calc1RM(d);
@@ -3536,7 +4100,7 @@ function buildExerciseRecommendation(i,machine){
 }
 
 function getDayRecommendationHighlight(){
-  const day=PLAN[C].weeks[W].days[D];
+  const day=getPlanDay(C,W,D);
   for(let i=0;i<day.exercises.length;i++){
     const rec=buildExerciseRecommendation(i);
     if(rec&&rec.level==='ok')return getExName(i).split('(')[0].trim()+' '+rec.text;
@@ -3549,7 +4113,7 @@ function getDayRecommendationHighlight(){
 }
 
 function buildTrainingSummary(toSend){
-  const day=PLAN[C].weeks[W].days[D];
+  const day=getPlanDay(C,W,D);
   const exercises=day.exercises.map((_,i)=>({idx:i,name:getExName(i),data:getD(C,W,D,i),rec:buildExerciseRecommendation(i)}))
     .filter(x=>x.data.g1||x.data.r1);
   const totalVol=exercises.reduce((sum,x)=>sum+(calcTotal(x.data)||0),0);
@@ -3591,7 +4155,7 @@ function buildTrainingSummary(toSend){
 const AI = {
   // Returns structured training data snapshot for AI analysis
   getSnapshot(){
-    const day=PLAN[C].weeks[W].days[D];
+    const day=getPlanDay(C,W,D);
     const exercises=day.exercises.map((ex,i)=>{
       const d=getD(C,W,D,i);
       const name=getExName(i);
@@ -3620,12 +4184,12 @@ const AI = {
     });
     return {
       cycle:C+1,week:W+1,tag:day.tag,muscle:day.muscle,date:day.date,
-      bodyWeight:store['bw_'+C+'_'+W+'_'+D]||null,
+      bodyWeight:store[bwKey(C,W,D)]||null,
       exercises,
-      stats:store['stats_'+C+'_'+W+'_'+D]||{},
+      stats:store[statsKey(C,W,D)]||{},
       llmContext:'Trainingseinheit: '+day.tag+' ('+day.date+', Zyklus '+(C+1)+')\n'
         +'Muskelgruppe: '+day.muscle+'\n'
-        +(store['bw_'+C+'_'+W+'_'+D]?'Körpergewicht: '+store['bw_'+C+'_'+W+'_'+D]+' kg\n':'')
+        +(store[bwKey(C,W,D)]?'Körpergewicht: '+store[bwKey(C,W,D)]+' kg\n':'')
         +exercises.map(e=>e.summary+(e.current.g1?' | '+e.current.g1+'kg×'+e.current.r1+(e.current.rpe?' RPE'+e.current.rpe:''):'')).join('\n')
     };
   },
@@ -3752,7 +4316,7 @@ function isLimbsLimitedSetExercise(exName,day){
   return /hack\s*squat/.test(name)||/(bizeps|trizeps|curl|hammer|seitheben)/.test(name);
 }
 function getVisibleSetCountForExercise(i){
-  const day=PLAN[C]?.weeks?.[W]?.days?.[D];
+  const day=getPlanDay(C,W,D);
   return isLimbsLimitedSetExercise(getExName(i),day)?2:3;
 }
 function hasExerciseSetData(d){
@@ -3779,7 +4343,7 @@ function renderLastTrainingBox(prevEntry,machine,idx){
     .map(([g,r],idx)=>({idx:idx+1,g:String(data[g]||'').trim(),r:String(data[r]||'').trim()}))
     .filter(s=>s.g||s.r);
   if(!sets.length)return '';
-  const date=prevEntry?.date||PLAN[prevEntry.c]?.weeks?.[prevEntry.w]?.days?.[prevEntry.d]?.date||'';
+  const date=prevEntry?.date||getPlanDay(prevEntry.c,prevEntry.w,prevEntry.d)?.date||'';
   const note=String(data.notes||'').trim();
   return '<div class="last-training-box">'
     +'<div class="last-training-head"><span>Letztes Mal</span><span class="last-training-date">'+escHtml(date)+'</span></div>'
@@ -3795,7 +4359,7 @@ function collectExerciseSetHistory(exName,limit=4,machine){
   const rows=[];
   if(!wanted)return rows;
   for(let c=C;c>=0&&rows.length<limit;c--){
-    const weeks=PLAN[c]?.weeks||[];
+    const weeks=getPlanCycles()[c]?.weeks||[];
     const wStart=(c===C)?W:weeks.length-1;
     for(let w=wStart;w>=0&&rows.length<limit;w--){
       const week=weeks[w];
@@ -3821,7 +4385,7 @@ function collectExerciseSetHistory(exName,limit=4,machine){
   return rows;
 }
 function getExercisePanelOpenKey(panel,idx){
-  return panel+'_open_'+C+'_'+W+'_'+D+'_'+idx;
+  return scopedKey(panel+'_open_'+C+'_'+W+'_'+D+'_'+idx);
 }
 
 function isExercisePanelOpen(panel,idx){
@@ -3873,7 +4437,7 @@ function renderWorkout(){
     document.getElementById('workoutContent').innerHTML=renderMissingPlanWeekDiagnosis(ACTIVE_PLAN_DIAG);
     return;
   }
-  const week=PLAN[C]?.weeks?.[W],day=week?.days?.[D];
+  const week=getPlanWeek(C,W),day=getPlanDay(C,W,D);
   if(!week||!day){
     const diag={missing:true,range:'Z'+(C+1)+' / W'+(W+1)+' / D'+(D+1),prev:null,next:null};
     document.getElementById('cinfo').innerHTML='<div class="ctitle">PLAN-DIAGNOSE</div><div class="cdate">Ungültige Planposition</div>';
@@ -3940,7 +4504,7 @@ function renderWorkout(){
 
   loadBW();
 
-  const customDayName=store['dayname_'+C+'_'+W+'_'+D]||day.tag;
+  const customDayName=store[daynameKey(C,W,D)]||day.tag;
   const fatigueChip=checkFatigueHint()?'<span class="ai-chip warn fatigue-chip">🔸 Hohe Fatigue — Deload empfohlen</span>':'';
 
   let html='<div class="whead">'
@@ -4166,7 +4730,7 @@ function renderSetComparison(comparison){
 
 function updateSetComparisonUI(idx){
   const d=getD(C,W,D,idx);
-  const week=PLAN[C].weeks[W];
+  const week=getPlanWeek(C,W);
   const machineValue=getMachineValue(d);
   const prevEntry=week.isDeload
     ? findPreviousExerciseEntry(getExName(idx),{sameCycleOnly:true,machine:machineValue})
@@ -4205,7 +4769,7 @@ function clearSetValues(i,setNo){
 }
 
 function applyPreviousSet(i){
-  const week=PLAN[C].weeks[W];
+  const week=getPlanWeek(C,W);
   const exName=getExName(i);
   const machineValue=getMachineValue(getD(C,W,D,i));
   const prevEntry=week.isDeload
@@ -4254,7 +4818,7 @@ function toggleDone(idx){
   renderWorkout();
   if(d.done){
     const next=idx+1;
-    if(next<PLAN[C].weeks[W].days[D].exercises.length)
+    if(next<getPlanDay(C,W,D).exercises.length)
       setTimeout(()=>{
         document.getElementById('eb'+next)?.classList.add('open');
         const nextCard=document.getElementById('ec'+next);
@@ -4265,11 +4829,11 @@ function toggleDone(idx){
 }
 
 function getExName(idx){
-  const tag=PLAN[C].weeks[W].days[D].tag.replace(/[^a-zA-Z0-9]/g,'_');
-  return store['exname_global_'+C+'_'+tag+'_'+idx]
-    || store['exname_global_'+C+'_'+idx]  // Rückwärtskompatibilität alter Keys
-    || store['exname_'+C+'_'+W+'_'+D+'_'+idx]
-    || PLAN[C].weeks[W].days[D].exercises[idx];
+  return store[exnameInstanceKey(C,W,D,idx)]
+    || store[exnameTagKey(C,W,D,idx)]
+    || store[exnameCycleKey(C,idx)]
+    || store[exnameDayKey(C,W,D,idx)]
+    || getPlanDay(C,W,D).exercises[idx];
 }
 
 function normExLookupName(name){
@@ -4370,24 +4934,32 @@ function findSheetExerciseIndex(rowEx,day,c,w,d,matched,rowIdx,rowCount){
 
 function setExerciseDisplayName(c,w,d,idx,name){
   const clean=String(name||'').trim();
-  const day=PLAN[c]?.weeks?.[w]?.days?.[d];
+  const day=getPlanDay(c,w,d);
   if(!clean||!day||!day.exercises[idx])return false;
-  const tag=day.tag.replace(/[^a-zA-Z0-9]/g,'_');
-  const key='exname_global_'+c+'_'+tag+'_'+idx;
-  const legacyKey='exname_'+c+'_'+w+'_'+d+'_'+idx;
+  const key=exnameTagKey(c,w,d,idx);
+  const legacyKey=exnameDayKey(c,w,d,idx);
   const changed=store[key]!==clean||store[legacyKey]!==undefined;
   store[key]=clean;
-  if(store[legacyKey]!==undefined)delete store[legacyKey];
+  return changed;
+}
+
+function setExerciseInstanceName(c,w,d,idx,name){
+  const clean=String(name||'').trim();
+  const day=getPlanDay(c,w,d);
+  if(!clean||!day||!day.exercises[idx])return false;
+  const key=exnameInstanceKey(c,w,d,idx);
+  const changed=store[key]!==clean;
+  store[key]=clean;
   return changed;
 }
 
 function getHistoricalExName(c,w,d,idx){
-  const day=PLAN[c]?.weeks?.[w]?.days?.[d];
+  const day=getPlanDay(c,w,d);
   if(!day)return '';
-  const tag=day.tag.replace(/[^a-zA-Z0-9]/g,'_');
-  return store['exname_global_'+c+'_'+tag+'_'+idx]
-    || store['exname_global_'+c+'_'+idx]
-    || store['exname_'+c+'_'+w+'_'+d+'_'+idx]
+  return store[exnameInstanceKey(c,w,d,idx)]
+    || store[exnameTagKey(c,w,d,idx)]
+    || store[exnameCycleKey(c,idx)]
+    || store[exnameDayKey(c,w,d,idx)]
     || day.exercises[idx]
     || '';
 }
@@ -4399,10 +4971,10 @@ function findPreviousExerciseEntry(exName,opts={}){
   if(!wanted)return null;
   for(let c=C;c>=0;c--){
     if(sameCycleOnly&&c!==C)continue;
-    const weeks=PLAN[c]?.weeks||[];
+    const weeks=getPlanCycles()?.[c]?.weeks||[];
     const startW=(c===C)?W:weeks.length-1;
     for(let w=startW;w>=0;w--){
-      const week=weeks[w];
+      const week=getPlanWeek(c,w);
       if(!week||week.isDeload)continue;
       const days=week.days||[];
       const startD=(c===C&&w===W)?D-1:days.length-1;
@@ -4428,10 +5000,11 @@ function findPreviousExerciseEntry(exName,opts={}){
 
 function getPlanDayPosition(c,w,d){
   let order=0;
-  for(let wi=0;wi<PLAN[c].weeks.length;wi++){
-    const days=PLAN[c].weeks[wi].days||[];
+  const weeks=getPlanCycles()?.[c]?.weeks||[];
+  for(let wi=0;wi<weeks.length;wi++){
+    const days=getPlanWeek(c,wi)?.days||[];
     for(let di=0;di<days.length;di++){
-      if(wi===w&&di===d)return{c,w:wi,d:di,order,isDeload:!!PLAN[c].weeks[wi].isDeload};
+      if(wi===w&&di===d)return{c,w:wi,d:di,order,isDeload:!!getPlanWeek(c,wi)?.isDeload};
       order++;
     }
   }
@@ -4440,8 +5013,10 @@ function getPlanDayPosition(c,w,d){
 
 function getPlanPositionByDate(c,date){
   let order=0;
-  for(let wi=0;wi<PLAN[c].weeks.length;wi++){
-    const week=PLAN[c].weeks[wi];
+  const weeks=getPlanCycles()?.[c]?.weeks||[];
+  for(let wi=0;wi<weeks.length;wi++){
+    const week=getPlanWeek(c,wi);
+    if(!week)continue;
     const days=week.days||[];
     for(let di=0;di<days.length;di++){
       if(dateKeysMatch(date,days[di].date)){
@@ -4506,7 +5081,7 @@ async function ensureSheetHistoryForCycle(c){
 }
 
 function requestSheetHistoryForDeload(){
-  const week=PLAN[C]?.weeks[W];
+  const week=getPlanWeek(C,W);
   if(!week?.isDeload||!API_URL)return;
   const key='ZYKLUS '+(C+1);
   if(sheetHistoryCache[key]||sheetHistoryLoading[key])return;
@@ -4561,7 +5136,7 @@ function missingSheetPlanRowsMessage(date,expected){
 }
 
 function applySheetNamesToDay(c,w,d,rows){
-  const day=PLAN[c]?.weeks?.[w]?.days?.[d];
+  const day=getPlanDay(c,w,d);
   if(!day)return{ok:false,changed:false,message:'Training nicht gefunden'};
   const names=(rows||[]).map(r=>String(r.name||'').trim()).filter(Boolean);
   if(names.length<day.exercises.length)return{ok:false,changed:false,message:sheetPlanRowCountMessage(day.exercises.length,names.length)};
@@ -4677,26 +5252,25 @@ function editExName(idx){
     if(newName&&newName!==oldName){
       // Andere Slots suchen — tag-spezifischer Key
       let otherSlots=[];
-      for(let c=0;c<PLAN.length;c++){
-        for(let w=0;w<PLAN[c].weeks.length;w++){
-          for(let d=0;d<PLAN[c].weeks[w].days.length;d++){
-            const t=PLAN[c].weeks[w].days[d].tag.replace(/[^a-zA-Z0-9]/g,"_");
-            PLAN[c].weeks[w].days[d].exercises.forEach((ex,i)=>{
-              const n=store["exname_global_"+c+"_"+t+"_"+i]||store["exname_global_"+c+"_"+i]||ex;
-              if(n===oldName&&!(c===C&&d===D&&i===idx)) otherSlots.push({c,w,d,i});
+      for(let c=0;c<getPlanCycles().length;c++){
+        for(let w=0;w<getPlanCycles()[c].weeks.length;w++){
+          for(let d=0;d<getPlanWeek(c,w).days.length;d++){
+            getPlanDay(c,w,d).exercises.forEach((ex,i)=>{
+              const n=getHistoricalExName(c,w,d,i)||ex;
+              if(n===oldName&&!(c===C&&w===W&&d===D&&i===idx)) otherSlots.push({c,w,d,i});
             });
           }
         }
       }
-      setExerciseDisplayName(C,W,D,idx,newName);migratePrRecordOnRename(oldName,newName);persist();
+      setExerciseInstanceName(C,W,D,idx,newName);migratePrRecordOnRename(oldName,newName);persist();
       const sheetSet=new Set(["ZYKLUS "+(C+1)]);
       otherSlots.forEach(({c})=>sheetSet.add("ZYKLUS "+(c+1)));
       if(otherSlots.length>0){
-        const originalName=PLAN[C].weeks[W].days[D].exercises[idx];
-        showRenameDialog(oldName,newName,otherSlots,[...sheetSet],originalName);
+        const originalName=getPlanDay(C,W,D).exercises[idx];
+        showRenameDialog(oldName,newName,otherSlots,[...sheetSet],originalName,{c:C,w:W,d:D,i:idx});
       } else {
         if(API_URL){
-          const originalName=PLAN[C].weeks[W].days[D].exercises[idx];
+          const originalName=getPlanDay(C,W,D).exercises[idx];
           const payload=JSON.stringify(withAuth({type:"rename",oldName,newName,originalName,sheets:[...sheetSet]}));
           showStatus("loading","⏳ Name im Sheet wird aktualisiert…");
           fetch(API_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:payload})
@@ -4712,7 +5286,7 @@ function editExName(idx){
   el.onkeydown=(e)=>{if(e.key==='Enter'){e.preventDefault();el.blur();}};
 }
 
-function showRenameDialog(oldName,newName,slots,sheets,originalName){
+function showRenameDialog(oldName,newName,slots,sheets,originalName,currentSlot){
   const existing=document.getElementById('renameDialog');
   if(existing)existing.remove();
   const dlg=document.createElement('div');
@@ -4723,6 +5297,7 @@ function showRenameDialog(oldName,newName,slots,sheets,originalName){
   dlg.dataset.orig=originalName||oldName;
   dlg.dataset.slots=JSON.stringify(slots);
   dlg.dataset.sheets=JSON.stringify(sheets||['ZYKLUS '+(C+1)]);
+  dlg.dataset.current=JSON.stringify(currentSlot||null);
   dlg.innerHTML='<div class="rename-lbl">Umbenennen</div>'
     +'<div class="rename-body"><b class="rename-acc">'+oldName+'</b> → <b>'+newName+'</b><br><span class="rename-sub">'+slots.length+' weitere Einheit(en) haben diese Übung.</span></div>'
     +'<div class="rename-btns">'
@@ -4736,8 +5311,9 @@ function showRenameDialog(oldName,newName,slots,sheets,originalName){
     const o=d.dataset.old,n=d.dataset.new,orig=d.dataset.orig||o;
     const s=JSON.parse(d.dataset.slots||'[]');
     const sh=JSON.parse(d.dataset.sheets||'[]');
+    const current=JSON.parse(d.dataset.current||'null');
     d.remove();
-    applyRenameGlobal(o,n,s,sh,orig);
+    applyRenameGlobal(o,n,current?[current,...s]:s,sh,orig);
   });
   setTimeout(()=>{if(document.getElementById('renameDialog'))dlg.remove();},8000);
 }
@@ -4746,16 +5322,18 @@ function applyRenameGlobal(oldName,newName,slots,sheets,originalName){
   // 1. Lokal speichern — alle Slots mit tag-spezifischem Key
   slots.forEach(({c,w,d,i})=>{
     if(w!==undefined&&d!==undefined){
-      const cur=getHistoricalExName(c,w,d,i);
-      if(cur===oldName||PLAN[c].weeks[w].days[d].exercises[i]===oldName){
-        setExerciseDisplayName(c,w,d,i,newName);
+      const instanceKey=exnameInstanceKey(c,w,d,i);
+      const hasInstanceOverride=Object.prototype.hasOwnProperty.call(store,instanceKey);
+      const instanceName=hasInstanceOverride?String(store[instanceKey]||'').trim():'';
+      if(hasInstanceOverride&&(!instanceName||instanceName===oldName||instanceName===newName)){
+        delete store[instanceKey];
       }
+      setExerciseDisplayName(c,w,d,i,newName);
     } else {
-      for(let ww=0;ww<PLAN[c].weeks.length;ww++){
-        for(let dd=0;dd<PLAN[c].weeks[ww].days.length;dd++){
-          const ex=PLAN[c].weeks[ww].days[dd].exercises[i];
-          const tag=PLAN[c].weeks[ww].days[dd].tag.replace(/[^a-zA-Z0-9]/g,'_');
-          const cur=store['exname_global_'+c+'_'+tag+'_'+i]||store['exname_global_'+c+'_'+i]||ex||'';
+      for(let ww=0;ww<getPlanCycles()[c].weeks.length;ww++){
+        for(let dd=0;dd<getPlanWeek(c,ww).days.length;dd++){
+          const ex=getPlanDay(c,ww,dd).exercises[i];
+          const cur=getHistoricalExName(c,ww,dd,i)||ex||'';
           if(cur===oldName||ex===oldName) setExerciseDisplayName(c,ww,dd,i,newName);
         }
       }
@@ -4791,7 +5369,7 @@ function editDayName(c,w,d){
   el.style.borderBottom='1px solid var(--acc)';
   el.onblur=()=>{
     const newName=el.textContent.trim();
-    if(newName){store['dayname_'+c+'_'+w+'_'+d]=newName;persist();}
+    if(newName){store[daynameKey(c,w,d)]=newName;persist();}
     el.contentEditable='false';el.style.borderBottom='none';
     el.onblur=null;el.onkeydown=null;
   };
@@ -4903,8 +5481,8 @@ function computeLocalMetrics() {
   let rpeW1=[], rpeW2=[];
   let tempW=W, tempC=C, weeksFound=0;
   while(weeksFound<2){
-    if(tempW<0){tempC--;if(tempC<0)break;tempW=(PLAN[tempC]?.weeks.length||1)-1;}
-    const week=PLAN[tempC]?.weeks[tempW];
+    if(tempW<0){tempC--;if(tempC<0)break;tempW=(getPlanCycles()[tempC]?.weeks.length||1)-1;}
+    const week=getPlanWeek(tempC,tempW);
     if(!week){tempW--;continue;}
     if(!week.isDeload){
       week.days.forEach((day,di)=>{
@@ -4931,7 +5509,7 @@ function computeLocalMetrics() {
   // ── Stagnation + ORM-Trend: über Übungsname, defensiv ────
   // currOrm: NUR aus dem aktuell ausgewählten Training (C/W/D)
   // prevOrm: rückwärts durch frühere Einträge, aktueller Tag ausgeschlossen
-  const day=PLAN[C]?.weeks[W]?.days[D];
+  const day=getPlanDay(C,W,D);
   let ormNow=0, ormOld=0, ormCount=0, stagCount=0;
   if(day){
     day.exercises.forEach((exName)=>{
@@ -4947,11 +5525,11 @@ function computeLocalMetrics() {
       let prevOrm = 0, prevData = null, prevPos = null, prevIdx = -1;
       outer2:
       for(let ci=C; ci>=0; ci--){
-        const weeks = PLAN[ci].weeks;
+        const weeks = getPlanCycles()[ci].weeks;
         const startW = (ci===C) ? W : weeks.length-1;
         for(let wi=startW; wi>=0; wi--){
-          if(PLAN[ci].weeks[wi]?.isDeload) continue;
-          const days = PLAN[ci].weeks[wi].days;
+          if(getPlanWeek(ci,wi)?.isDeload) continue;
+          const days = getPlanWeek(ci,wi).days;
           // In gleicher Woche nur Tage vor D, in früheren Wochen alle Tage
           const startDi = (ci===C && wi===W) ? D-1 : days.length-1;
           if(startDi < 0) continue;
@@ -4991,7 +5569,7 @@ function computeLocalMetrics() {
   }
 
   // ── Push/Pull + Volumen: nur aktuelle Woche ────────────────
-  const curWeek=PLAN[C]?.weeks[W];
+  const curWeek=getPlanWeek(C,W);
   if(curWeek){
     curWeek.days.forEach((d2,di)=>{
       const m2=(d2.muscle||'').toLowerCase();
@@ -5017,8 +5595,8 @@ function computeLocalMetrics() {
   // Finde letzte Nicht-Deload-Woche vor aktueller
   let prevC=C, prevW=W-1;
   while(true){
-    if(prevW<0){prevC--;if(prevC<0)break;prevW=(PLAN[prevC]?.weeks.length||1)-1;}
-    const wk=PLAN[prevC]?.weeks[prevW];
+    if(prevW<0){prevC--;if(prevC<0)break;prevW=(getPlanCycles()[prevC]?.weeks.length||1)-1;}
+    const wk=getPlanWeek(prevC,prevW);
     if(!wk){prevW--;continue;}
     if(!wk.isDeload){
       wk.days.forEach((d2,di)=>{
@@ -5057,8 +5635,8 @@ function calcDeloadSignal() {
   let weeksSinceDeload = 0, wsdReliable = false;
   let tempC = C, tempW = W, searching = true;
   while(searching){
-    if(tempW < 0){ tempC--; if(tempC < 0) break; tempW = (PLAN[tempC]?.weeks.length||1) - 1; }
-    const wk = PLAN[tempC]?.weeks[tempW];
+    if(tempW < 0){ tempC--; if(tempC < 0) break; tempW = (getPlanCycles()[tempC]?.weeks.length||1) - 1; }
+    const wk = getPlanWeek(tempC,tempW);
     if(!wk){ tempW--; continue; }
     if(wk.isDeload){ wsdReliable = true; searching = false; break; }
     weeksSinceDeload++;
@@ -5067,7 +5645,7 @@ function calcDeloadSignal() {
   }
 
   // In Deload-Woche → kein Signal
-  if(PLAN[C]?.weeks[W]?.isDeload) return { type:'none', level:0, reasons:[], dataBasis: m.dataBasis };
+  if(getPlanWeek(C,W)?.isDeload) return { type:'none', level:0, reasons:[], dataBasis: m.dataBasis };
 
   // Datenbasis-Guard: bei 'none' → kein Signal
   if(m.dataBasis === 'none') return { type:'none', level:0, reasons:['Keine Trainingsdaten vorhanden'], dataBasis:'none' };
@@ -5332,7 +5910,7 @@ const SWAP_POOL={
 
 function openSwap(idx){
   _swapIdx=idx;
-  const day=PLAN[C].weeks[W].days[D];
+  const day=getPlanDay(C,W,D);
   const muscle=day.muscle||'';
   const currentName=getExName(idx);
   document.getElementById('swapSubtitle').textContent='Aktuelle Übung: '+currentName;
@@ -5370,8 +5948,7 @@ function closeSwap(){
 
 function confirmSwap(name){
   if(_swapIdx===null)return;
-  const tag=PLAN[C].weeks[W].days[D].tag.replace(/[^a-zA-Z0-9]/g,'_');
-  store['exname_global_'+C+'_'+tag+'_'+_swapIdx]=name;
+  setExerciseInstanceName(C,W,D,_swapIdx,name);
   persist();
   closeSwap();
   renderWorkout();
@@ -5398,7 +5975,7 @@ function getMuscleBucketForExercise(exName,day){
 }
 
 function getWeekVolumeSummary(c=C,w=W){
-  const week=PLAN[c]?.weeks[w];
+  const week=getPlanWeek(c,w);
   const buckets={Brust:0,Rücken:0,Schultern:0,Arme:0,Beine:0,Core:0};
   let total=0,doneDays=0;
   if(!week)return{total:0,doneDays:0,targetDays:0,buckets};
@@ -5420,7 +5997,7 @@ function getWeekVolumeSummary(c=C,w=W){
 
 function getPreviousComparableWeekVolume(c=C,w=W){
   for(let wi=w-1;wi>=0;wi--){
-    const week=PLAN[c]?.weeks[wi];
+    const week=getPlanWeek(c,wi);
     if(!week||week.isDeload)continue;
     const s=getWeekVolumeSummary(c,wi);
     if(s.total>0)return s.total;
@@ -5519,13 +6096,15 @@ function initProgressTab(){
   const sel=document.getElementById('progExSelect');
   if(!sel)return;
   const muscleMap={};
-  for(let c=0;c<PLAN.length;c++){
-    for(const week of PLAN[c].weeks){
-      for(const day of week.days){
+  for(let c=0;c<getPlanCycles().length;c++){
+    for(let w=0;w<getPlanCycles()[c].weeks.length;w++){
+      const week=getPlanWeek(c,w);
+      for(let d=0;d<week.days.length;d++){
+        const day=getPlanDay(c,w,d);
         const muscle=(day.muscle||'Sonstige').split('/')[0].trim();
         if(!muscleMap[muscle])muscleMap[muscle]=new Set();
         (day.exercises||[]).forEach((ex,i)=>{
-          const name=store['exname_global_'+c+'_'+i]||ex;
+          const name=getHistoricalExName(c,w,d,i)||ex;
           muscleMap[muscle].add(name);
         });
       }
@@ -5560,7 +6139,7 @@ function renderProgress(){
 }
 
 function getStoredExerciseData(c,w,d,e){
-  return store[c+'_'+w+'_'+d+'_'+e]||null;
+  return store[dataKey(c,w,d,e)]||null;
 }
 
 function getTrainingFrequencyDateKey(date){
@@ -5571,9 +6150,9 @@ function getTrainingFrequencyEntries(){
   const now=new Date();
   const year=now.getFullYear();
   const entries=[];
-  for(let c=0;c<PLAN.length;c++){
-    for(let w=0;w<PLAN[c].weeks.length;w++){
-      const week=PLAN[c].weeks[w];
+  for(let c=0;c<getPlanCycles().length;c++){
+    for(let w=0;w<getPlanCycles()[c].weeks.length;w++){
+      const week=getPlanWeek(c,w);
       for(let d=0;d<week.days.length;d++){
         const day=week.days[d];
         const date=getPlanDateForYear(day?.date,year);
@@ -5685,9 +6264,9 @@ function getProgressAnalysisEntries(){
   const now=new Date();
   const year=now.getFullYear();
   const entries=[];
-  for(let c=0;c<PLAN.length;c++){
-    for(let w=0;w<PLAN[c].weeks.length;w++){
-      const week=PLAN[c].weeks[w];
+  for(let c=0;c<getPlanCycles().length;c++){
+    for(let w=0;w<getPlanCycles()[c].weeks.length;w++){
+      const week=getPlanWeek(c,w);
       for(let d=0;d<week.days.length;d++){
         const day=week.days[d];
         const date=getPlanDateForYear(day?.date,year);
@@ -5888,10 +6467,10 @@ function renderMuscleHeatmap(){
   const muscleVol={};
   let totalPull=0,totalPush=0;
 
-  for(let c=0;c<PLAN.length;c++){
-    for(let w=0;w<PLAN[c].weeks.length;w++){
-      for(let d=0;d<PLAN[c].weeks[w].days.length;d++){
-        const day=PLAN[c].weeks[w].days[d];
+  for(let c=0;c<getPlanCycles().length;c++){
+    for(let w=0;w<getPlanCycles()[c].weeks.length;w++){
+      for(let d=0;d<getPlanWeek(c,w).days.length;d++){
+        const day=getPlanDay(c,w,d);
         if(!day.date)continue;
         // Datum parsen DD.MM
         const [dd,mm]=day.date.split('.').map(Number);
@@ -5973,14 +6552,14 @@ function renderProgressChart(){
 
   // Sammle alle 1RM-Datenpunkte für diese Übung über alle Zyklen/Wochen
   const pts=[];
-  for(let c=0;c<PLAN.length;c++){
-    for(let w=0;w<PLAN[c].weeks.length;w++){
-      const week=PLAN[c].weeks[w];
+  for(let c=0;c<getPlanCycles().length;c++){
+    for(let w=0;w<getPlanCycles()[c].weeks.length;w++){
+      const week=getPlanWeek(c,w);
       if(week.isDeload)continue;
       for(let d=0;d<week.days.length;d++){
         const day=week.days[d];
         (day.exercises||[]).forEach((ex,i)=>{
-          const name=store['exname_global_'+c+'_'+i]||ex;
+          const name=getHistoricalExName(c,w,d,i)||ex;
           if(name!==exName)return;
           const data=getD(c,w,d,i);
           const orm=calc1RM(data);
@@ -6077,7 +6656,7 @@ function renderVolChart(){
   document.getElementById('progVolLabel').textContent='Z'+(C+1)+' Wochenvergleich';
 
   // Nicht-Deload-Wochen sammeln
-  const workWeeks=PLAN[C].weeks.map((week,w)=>({week,w})).filter(({week})=>!week.isDeload);
+  const workWeeks=getPlanCycles()[C].weeks.map((week,w)=>({week,w})).filter(({week})=>!week.isDeload);
   if(!workWeeks.length){wrap.innerHTML='<div class="prog-no-data">Noch keine Volumendaten für diesen Zyklus</div>';return;}
 
   // Pro Woche: Gesamt-Volumen + Volumen pro Muskelgruppe
@@ -6220,6 +6799,8 @@ function showTab(id,btn){
   document.getElementById('tab-'+id).classList.add('active');
   if(btn)btn.classList.add('active');
   document.getElementById('saveFooter').style.display=(id==='workout')?'block':'none';
+  if(id==='plan'){renderPlanSelector();renderCycleRow();renderWeekRow();renderPlanWeekView();}
+  if(id==='workout'){renderDayRow();renderWorkout();loadBW();}
   if(id==='progress'){initProgressTab();}
   if(id==='records'){renderRecords();}
   if(id==='setup'){renderSetupDiagnostics();renderDataQualityCard();}
@@ -6241,7 +6822,7 @@ async function savePRToSheet(exName,orm,rawWeight,rawReps){
 // SUMMARY MODAL
 // ============================================================
 function showSummary(){
-  const day=PLAN[C].weeks[W].days[D];
+  const day=getPlanDay(C,W,D);
   const exercises=day.exercises.map((ex,i)=>{
     const d=getD(C,W,D,i);
     return{name:ex,...d,tot:calcTotal(d),orm:calc1RM(d)};
@@ -6300,13 +6881,17 @@ async function saveToSheet(){
   showCoachSummary('');
   if(!API_URL){showStatus('err','⚠ API nicht verbunden — URL in Setup eintragen');return;}
   const snapC=C,snapW=W,snapD=D;
+  if(!canUseSheetSyncForActivePlan()){
+    showStatus('err',getSheetSyncBlockedMessage());
+    return;
+  }
   const isSameSaveDay=()=>C===snapC&&W===snapW&&D===snapD;
-  const week=PLAN[snapC].weeks[snapW], day=week.days[snapD];
+  const week=getPlanWeek(snapC,snapW), day=week.days[snapD];
   const sheetName='ZYKLUS '+(snapC+1);
-  const stats=store['stats_'+snapC+'_'+snapW+'_'+snapD]||{};
+  const stats=store[statsKey(snapC,snapW,snapD)]||{};
 
   // Dirty-Check: nur Übungen senden die Daten haben
-  const prevKey='pb_prev_'+snapC+'_'+snapW+'_'+snapD;
+  const prevKey=dirtyKey(snapC,snapW,snapD);
   const prev=JSON.parse(localStorage.getItem(prevKey)||'{}');
   const getDayValues=()=>({
     kg:       document.getElementById('bwInput')?.value||'',
@@ -6494,7 +7079,7 @@ function getOrmHistory(exIdx) {
   const results = [];
   outer:
   for (let ci = C; ci >= 0; ci--) {
-    const cyc = PLAN[ci];
+    const cyc = getPlanCycles()[ci];
     const wStart = (ci === C) ? W : cyc.weeks.length - 1;
     for (let wi = wStart; wi >= 0; wi--) {
       const week = cyc.weeks[wi];
@@ -6513,7 +7098,7 @@ function getOrmHistory(exIdx) {
 }
 
 function getSparklineOpenKey(exIdx){
-  return 'spark_open_'+C+'_'+W+'_'+D+'_'+exIdx;
+  return scopedKey('spark_open_'+C+'_'+W+'_'+D+'_'+exIdx);
 }
 
 function isSparklineOpen(exIdx){
@@ -6645,9 +7230,9 @@ function getExerciseHistoryByName(exName,limit=8){
   const wanted=normExLookupName(exName);
   const results=[];
   if(!wanted)return results;
-  for(let ci=0;ci<PLAN.length;ci++){
-    for(let wi=0;wi<PLAN[ci].weeks.length;wi++){
-      const week=PLAN[ci].weeks[wi];
+  for(let ci=0;ci<getPlanCycles().length;ci++){
+    for(let wi=0;wi<getPlanCycles()[ci].weeks.length;wi++){
+      const week=getPlanWeek(ci,wi);
       if(week.isDeload)continue;
       for(let di=0;di<week.days.length;di++){
         const day=week.days[di];
@@ -6713,7 +7298,7 @@ function buildTopProgressStats(){
 }
 
 function buildRecentLoadInsight(){
-  const week=PLAN[C]?.weeks?.[W];
+  const week=getPlanWeek(C,W);
   if(!week||!Array.isArray(week.days))return null;
   const muscleVol={};
   let total=0;
@@ -6958,7 +7543,7 @@ function shouldShowPRRecordName(name){
 
 function buildPrInsightSummary(){
   const allPRs=Object.keys(store).filter(k=>k.startsWith('rec_')).filter(k=>shouldShowPRRecordName(k.replace('rec_','')));
-  const currentWeekDates=new Set((PLAN[C]?.weeks[W]?.days||[]).map(d=>d.date));
+  const currentWeekDates=new Set((getPlanWeek(C,W)?.days||[]).map(d=>d.date));
   const records=allPRs.map(k=>({name:k.replace('rec_',''),...store[k]})).filter(r=>r.orm>0);
   const newThisWeek=records.filter(r=>currentWeekDates.has(String(r.date||''))).length;
   const strongest=records.slice().sort((a,b)=>(b.orm||0)-(a.orm||0))[0];
@@ -7000,7 +7585,8 @@ function renderRecords() {
   if (!list) return;
 
   let bwVal=0;
-  Object.keys(store).forEach(k=>{if(k.startsWith('bw_')&&!k.startsWith('bw_date_')){const v=parseFloat(store[k]);if(v>0)bwVal=v;}});
+  const bwPrefix=isLegacyMainPlan()?'bw_':'plan_'+safePlanId(getActivePlanId())+'__bw_';
+  Object.keys(store).forEach(k=>{if(k.startsWith(bwPrefix)&&!k.startsWith('bw_date_')){const v=parseFloat(store[k]);if(v>0)bwVal=v;}});
 
   function getRelLevel(ratio){
     if(ratio>=2.0) return {label:'PLATIN',cls:'platin'};
@@ -7012,7 +7598,7 @@ function renderRecords() {
 
   const allPRs = Object.keys(store).filter(k => k.startsWith('rec_')).filter(k=>shouldShowPRRecordName(k.replace('rec_','')));
   const prCount = allPRs.length;
-  const currentWeekDates=new Set((PLAN[C]?.weeks[W]?.days||[]).map(d=>d.date));
+  const currentWeekDates=new Set((getPlanWeek(C,W)?.days||[]).map(d=>d.date));
   const newThisWeek=allPRs.filter(k=>currentWeekDates.has(String((store[k]||{}).date||''))).length;
   if (summary) summary.textContent = prCount
     ? prCount + ' PR' + (prCount !== 1 ? 's' : '') + ' · '+newThisWeek+' neu diese Woche'
@@ -7055,9 +7641,9 @@ function renderRecords() {
   function getOrmHistoryByName(exName) {
     const results = [];
     outer:
-    for (let ci = PLAN.length - 1; ci >= 0; ci--) {
-      for (let wi = PLAN[ci].weeks.length - 1; wi >= 0; wi--) {
-        const week = PLAN[ci].weeks[wi];
+    for (let ci = getPlanCycles().length - 1; ci >= 0; ci--) {
+      for (let wi = getPlanCycles()[ci].weeks.length - 1; wi >= 0; wi--) {
+        const week = getPlanWeek(ci,wi);
         if (week.isDeload) continue;
         for (let di = 0; di < week.days.length; di++) {
           const exIdx = week.days[di].exercises.indexOf(exName);
@@ -7220,13 +7806,13 @@ function deletePR(exName) {
 }
 
 function showHistory(exIdx){
-  const day=PLAN[C].weeks[W].days[D];
+  const day=getPlanDay(C,W,D);
   const name=getExName(exIdx);
   const wanted=normExLookupName(name);
   const machineValue=getMachineValue(getD(C,W,D,exIdx));
   const rows=[];
   for(let ci=C;ci>=0&&rows.length<6;ci--){
-    const cyc=PLAN[ci];
+    const cyc=getPlanCycles()[ci];
     const wStart=(ci===C)?W:cyc.weeks.length-1;
     for(let wi=wStart;wi>=0&&rows.length<6;wi--){
       const week=cyc.weeks[wi];
@@ -7267,6 +7853,10 @@ const SYNC_COOLDOWN = 30000; // 30 Sekunden Mindestabstand
 
 async function syncFromSheet(){
   if(!API_URL)return;
+  if(!canUseSheetSyncForActivePlan()){
+    showStatus('err',getSheetSyncBlockedMessage());
+    return;
+  }
   const now=Date.now();
   if(now-lastSyncTime<SYNC_COOLDOWN)return;
   lastSyncTime=now;
@@ -7274,7 +7864,7 @@ async function syncFromSheet(){
   const sync=beginSync(snapC,snapW,snapD);
   try{
     const sheetName='ZYKLUS '+(snapC+1);
-    const day=PLAN[snapC].weeks[snapW].days[snapD];
+    const day=getPlanDay(snapC,snapW,snapD);
     const bestleistungenImported=await importBestleistungenFromSheet();
     if(!isCurrentSync(sync,snapC,snapW,snapD))return;
     const resp=await fetchSheetGetWithRetry(API_URL+'?action=getPlan&sheet='+encodeURIComponent(sheetName)+'&date='+encodeURIComponent(day.date),{scope:'syncFromSheet',cycle:snapC+1,week:snapW+1,day:snapD+1,date:day.date});
@@ -7376,13 +7966,13 @@ function renderKiChat() {
 
 // Baut Trainingskontext aus aktuellem Stand für KI-System-Prompt
 function buildAnalysisSnapshot(){
-  const day=PLAN[C].weeks[W].days[D];
-  const week=PLAN[C].weeks[W];
+  const day=getPlanDay(C,W,D);
+  const week=getPlanWeek(C,W);
   const m=computeLocalMetrics();
   const ds=calcDeloadSignal();
   const rc=buildReadinessContext();
   const findings=buildPbAnalysisEngine().slice(0,4);
-  const bodyWeight=store['bw_'+C+'_'+W+'_'+D]||'';
+  const bodyWeight=store[bwKey(C,W,D)]||'';
   const exercises=day.exercises.map((ex,i)=>{
     const d=getD(C,W,D,i);
     const name=getExName(i);
@@ -7608,7 +8198,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const dx=e.changedTouches[0].clientX-tx;
     const dy=e.changedTouches[0].clientY-ty;
     if(Math.abs(dx)<50||Math.abs(dy)>Math.abs(dx)*0.8)return; // zu kurz oder diagonal
-    const day=PLAN[C].weeks[W];
+    const day=getPlanWeek(C,W);
     if(dx<0){// Swipe links → nächster Tag
       if(D<day.days.length-1){D++;invalidateActiveSync();persist();haptic();renderDayRow();renderWorkout();loadBW();}
     }else{// Swipe rechts → vorheriger Tag
@@ -7620,8 +8210,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // ── Haptic Feedback ───────────────────────────────────────────
 function haptic(ms=10){try{navigator.vibrate&&navigator.vibrate(ms);}catch(e){}}
 
-document.addEventListener('visibilitychange', () => { if (!document.hidden) syncFromSheet(); });
-window.addEventListener('focus', () => syncFromSheet());
+document.addEventListener('visibilitychange', () => { if (!document.hidden&&canUseSheetSyncForActivePlan()) syncFromSheet(); });
+window.addEventListener('focus', () => { if(canUseSheetSyncForActivePlan()) syncFromSheet(); });
 window.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
