@@ -46,3 +46,7 @@ node_modules/
 
 # Deployment drafts until reviewed
 06_DEPLOYMENT/
+
+# Plateau-Brecher Schutz-Marker (lokal, nicht committen)
+/.protected
+/.approval-signoff
