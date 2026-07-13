@@ -1766,8 +1766,8 @@ const PLAN = [{"weeks":[{"weekLabel":"Woche 1","isDeload":false,"isSchool":false
 // STORAGE
 // ============================================================
 const SK='pb_v12_0_test';
-const APP_VERSION='V13.2.4-test';
-const BUILD_DATE='12.07.2026';
+const APP_VERSION='V13.2.5-test';
+const BUILD_DATE='13.07.2026';
 /*
 CHANGELOG V13.2.0-test
 - Lokale Daten-Keys fuer Plan-Kopien planId-basiert gekapselt: Satzdaten, Stats,
@@ -4964,6 +4964,18 @@ function getHistoricalExName(c,w,d,idx){
     || '';
 }
 
+// Instanz-Overrides aus "Nur hier" sind reine Anzeigenamen. Die Sheet-Zuordnung
+// bleibt beim globalen/tagweiten Namen bzw. beim eingebetteten Plan-Namen.
+function getSheetExerciseName(c,w,d,idx){
+  const day=getPlanDay(c,w,d);
+  if(!day)return '';
+  return store[exnameTagKey(c,w,d,idx)]
+    || store[exnameCycleKey(c,idx)]
+    || store[exnameDayKey(c,w,d,idx)]
+    || day.exercises[idx]
+    || '';
+}
+
 function findPreviousExerciseEntry(exName,opts={}){
   const wanted=normExLookupName(exName);
   const sameCycleOnly=!!opts.sameCycleOnly;
@@ -5144,7 +5156,7 @@ function applySheetNamesToDay(c,w,d,rows){
     const normalizedExtra=names.map(canonicalSheetName);
     if(normalizedExtra.some(n=>!n))return{ok:false,changed:false,message:'Leere Uebungsnamen im Sheet'};
     if(new Set(normalizedExtra).size!==normalizedExtra.length)return{ok:false,changed:false,message:'Doppelte Uebungsnamen im Sheet'};
-    const appNames=day.exercises.map((_,i)=>getHistoricalExName(c,w,d,i)).map(canonicalSheetName);
+    const appNames=day.exercises.map((_,i)=>getSheetExerciseName(c,w,d,i)).map(canonicalSheetName);
     if(new Set(appNames).size!==appNames.length)return{ok:false,changed:false,message:'Doppelte Uebungsnamen in der App'};
     const missing=appNames.filter(appName=>normalizedExtra.filter(sheetName=>sheetName===appName).length!==1);
     if(missing.length)return{ok:false,changed:false,message:sheetPlanRowCountMessage(day.exercises.length,names.length)};
@@ -5156,7 +5168,7 @@ function applySheetNamesToDay(c,w,d,rows){
   if(new Set(normalized).size!==normalized.length)return{ok:false,changed:false,message:'Doppelte Übungsnamen im Sheet'};
   let changed=false;
   names.forEach((name,i)=>{
-    if(!sheetNameMatches(getHistoricalExName(c,w,d,i),name)){
+    if(!sheetNameMatches(getSheetExerciseName(c,w,d,i),name)){
       if(setExerciseDisplayName(c,w,d,i,name))changed=true;
     }
   });
@@ -5172,7 +5184,7 @@ async function preflightSheetNamesForSave(sheetName,day,c=C,w=W,d=D){
   const applied=applySheetNamesToDay(c,w,d,rows);
   if(!applied.ok)return{ok:false,message:applied.message};
   const missing=day.exercises
-    .map((_,i)=>getHistoricalExName(c,w,d,i))
+    .map((_,i)=>getSheetExerciseName(c,w,d,i))
     .filter(name=>!rows.some(r=>sheetNameMatches(r.name,name)));
   if(missing.length){
     return{ok:false,message:'Nicht im Sheet gefunden: '+missing.join(', ')};
@@ -6903,6 +6915,7 @@ async function saveToSheet(){
   const buildToSend=()=>day.exercises.map((ex,i)=>{
       const d=getD(snapC,snapW,snapD,i);
       const displayName=getHistoricalExName(snapC,snapW,snapD,i)||ex;
+      const sheetExerciseName=getSheetExerciseName(snapC,snapW,snapD,i)||ex;
       if(!d.g1&&!d.r1)return null; // keine Daten
       const p=prev[i]||{};
       const dayValues=getDayValues();
@@ -6912,8 +6925,9 @@ async function saveToSheet(){
       return{
         sheet:    sheetName,
         date:     day.date,
-        uebung:   displayName||ex,
-        originalName: ex,
+        uebung:   sheetExerciseName,
+        originalName: sheetExerciseName,
+        displayName,
         kg:       dayValues.kg,
         g1:d.g1||'', r1:d.r1||'',
         g2:d.g2||'', r2:d.r2||'',
@@ -6958,13 +6972,13 @@ async function saveToSheet(){
 
   // Bulk-Payload: ein einziger POST mit allen Übungen
   const exercises = toSend.map(e => {
-    const {_exIdx,...rest} = e;
+    const {_exIdx,displayName,...rest} = e;
     return rest;
   });
   const payload = JSON.stringify(withAuth({sheet:sheetName, date:day.date, exercises}));
   const localPrUpdates=toSend.reduce((count,e)=>{
     const data={g1:e.g1,r1:e.r1,g2:e.g2,r2:e.r2,g3:e.g3,r3:e.r3};
-    return count+(updateLocalPRFromTrainingData(e.uebung,data,day.date,'save')?1:0);
+    return count+(updateLocalPRFromTrainingData(e.displayName||e.uebung,data,day.date,'save')?1:0);
   },0);
   if(localPrUpdates&&document.getElementById('tab-records')?.classList.contains('active'))renderRecords();
 
