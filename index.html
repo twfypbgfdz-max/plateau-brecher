@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#080808">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PB V13.2.4-test">
-<title>Plateau-Brecher V13.2.4-test</title>
+<meta name="apple-mobile-web-app-title" content="PB V13.2.6-test">
+<title>Plateau-Brecher V13.2.6-test</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -1199,14 +1199,14 @@ main{padding:14px;max-width:860px;}
 <body>
 <div class="consent-overlay" id="consentOverlay">
   <div class="consent-box">
-    <h2 class="splash-h2">SYSTEM-START V13.2.4-test</h2>
+    <h2 class="splash-h2">SYSTEM-START V13.2.6-test</h2>
     <p class="splash-p">Daten werden lokal gespeichert und via API synchronisiert. Fehler-Logging ist aktiv.</p>
     <button class="save-btn" onclick="acceptConsent()">Akzeptieren &amp; Starten</button>
   </div>
 </div>
 <header>
   <div>
-    <div class="logo">PB<span class="splash-logo-ver"> V13.2.4-test</span></div>
+    <div class="logo">PB<span class="splash-logo-ver"> V13.2.6-test</span></div>
     <span class="hbadge" id="todayBadge">Lädt…</span>
     <div class="splash-build">Build: <span id="buildDateTxt"></span></div>
   </div>
@@ -1236,6 +1236,7 @@ main{padding:14px;max-width:860px;}
 <div class="sec active" id="tab-workout">
   <div id="selfCheckBanner" class="sc-banner"></div>
   <div class="sel-row sel-row-cycle"><span class="sel-label">Zyklus</span><div id="cycleSelRowWorkout" class="flex-row-wrap"></div></div>
+  <div class="sel-row"><span class="sel-label">Woche</span><div id="weekSelRowWorkout" class="flex-row-wrap"></div></div>
   <div class="sel-row sel-row-day" id="daySelRow"></div>
   <div class="info-row">
     <div class="bw-box">
@@ -1277,7 +1278,7 @@ main{padding:14px;max-width:860px;}
     <div class="step-desc">Nur ändern, wenn <b>SCRIPT_CODE</b> aktualisiert wurde. App-Testversionen brauchen nicht automatisch ein neues Apps-Script-Deployment.</div>
     <div class="setup-mini-grid">
       <div class="setup-mini-card"><b>Aktuelle Script-Basis:</b><br>V11.9.1</div>
-      <div class="setup-mini-card"><b>App-Version:</b><br>V13.2.4-test</div>
+      <div class="setup-mini-card"><b>App-Version:</b><br>V13.2.6-test</div>
     </div>
     <div class="setup-note"><strong>Hinweis:</strong> Wenn die Sheet-Verbindung bereits funktioniert, muss dieser Code für diese Testversion normalerweise nicht neu deployed werden.</div>
     <div class="code-box" id="scriptCodeBox">Lädt…</div>
@@ -1766,8 +1767,8 @@ const PLAN = [{"weeks":[{"weekLabel":"Woche 1","isDeload":false,"isSchool":false
 // STORAGE
 // ============================================================
 const SK='pb_v12_0_test';
-const APP_VERSION='V13.2.5-test';
-const BUILD_DATE='13.07.2026';
+const APP_VERSION='V13.2.6-test';
+const BUILD_DATE='17.07.2026';
 /*
 CHANGELOG V13.2.0-test
 - Lokale Daten-Keys fuer Plan-Kopien planId-basiert gekapselt: Satzdaten, Stats,
@@ -3736,11 +3737,15 @@ function renderCycleRow(){
 function setC(i,btn){clearPlanDiagnosis();C=i;W=0;D=0;invalidateActiveSync();renderCycleRow();renderWeekRow();renderPlanWeekView();renderDayRow();renderWorkout();loadBW();}
 function renderWeekRow(){
   const weeks=getPlanCycles()?.[C]?.weeks||[];
-  document.getElementById('weekSelRow').innerHTML=weeks.map((w,i)=>
+  const html=weeks.map((w,i)=>
     '<button class="dbtn '+(i===W?'active':'')+'" onclick="setW('+i+',this)">'+(w.isDeload?'W'+(i+1)+' 🔻':'W'+(i+1))+'</button>'
   ).join('');
+  ['weekSelRow','weekSelRowWorkout'].forEach(id=>{
+    const row=document.getElementById(id);
+    if(row)row.innerHTML=html;
+  });
 }
-function setW(i,btn){clearPlanDiagnosis();W=i;D=0;invalidateActiveSync();btn.parentElement.querySelectorAll('.dbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderPlanWeekView();renderDayRow();renderWorkout();loadBW();}
+function setW(i,btn){clearPlanDiagnosis();W=i;D=0;invalidateActiveSync();renderWeekRow();renderPlanWeekView();renderDayRow();renderWorkout();loadBW();}
 function renderDayRow(){
   if(ACTIVE_PLAN_DIAG){
     document.getElementById('daySelRow').innerHTML='<div class="weekly-sub">Keine Tagesauswahl fuer '+ACTIVE_PLAN_DIAG.range+' im PLAN gefunden.</div>';
