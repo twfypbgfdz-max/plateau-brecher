@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#080808">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PB V13.2.6-test">
-<title>Plateau-Brecher V13.2.6-test</title>
+<meta name="apple-mobile-web-app-title" content="PB V13.2.7-test">
+<title>Plateau-Brecher V13.2.7-test</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -1199,14 +1199,14 @@ main{padding:14px;max-width:860px;}
 <body>
 <div class="consent-overlay" id="consentOverlay">
   <div class="consent-box">
-    <h2 class="splash-h2">SYSTEM-START V13.2.6-test</h2>
+    <h2 class="splash-h2">SYSTEM-START V13.2.7-test</h2>
     <p class="splash-p">Daten werden lokal gespeichert und via API synchronisiert. Fehler-Logging ist aktiv.</p>
     <button class="save-btn" onclick="acceptConsent()">Akzeptieren &amp; Starten</button>
   </div>
 </div>
 <header>
   <div>
-    <div class="logo">PB<span class="splash-logo-ver"> V13.2.6-test</span></div>
+    <div class="logo">PB<span class="splash-logo-ver"> V13.2.7-test</span></div>
     <span class="hbadge" id="todayBadge">Lädt…</span>
     <div class="splash-build">Build: <span id="buildDateTxt"></span></div>
   </div>
@@ -1278,7 +1278,7 @@ main{padding:14px;max-width:860px;}
     <div class="step-desc">Nur ändern, wenn <b>SCRIPT_CODE</b> aktualisiert wurde. App-Testversionen brauchen nicht automatisch ein neues Apps-Script-Deployment.</div>
     <div class="setup-mini-grid">
       <div class="setup-mini-card"><b>Aktuelle Script-Basis:</b><br>V11.9.1</div>
-      <div class="setup-mini-card"><b>App-Version:</b><br>V13.2.6-test</div>
+      <div class="setup-mini-card"><b>App-Version:</b><br>V13.2.7-test</div>
     </div>
     <div class="setup-note"><strong>Hinweis:</strong> Wenn die Sheet-Verbindung bereits funktioniert, muss dieser Code für diese Testversion normalerweise nicht neu deployed werden.</div>
     <div class="code-box" id="scriptCodeBox">Lädt…</div>
@@ -1331,10 +1331,20 @@ main{padding:14px;max-width:860px;}
         </div>
         <div class="setup-action-group">
           <div class="setup-action-label">Cockpit</div>
+          <div class="url-input-wrap">
+            <input class="url-input" id="cockpitApiBaseUrl" type="url" inputmode="url" autocomplete="off" placeholder="Vercel API-Basis-URL">
+            <input class="url-input" id="cockpitWriteToken" type="password" autocomplete="off" placeholder="Training-Write-Token (nur lokal)">
+          </div>
           <div class="setup-action-row">
+            <button class="test-btn" onclick="saveCockpitPublishConfigFromForm()">Konfiguration speichern</button>
+            <button class="test-btn" onclick="testCockpitPublishConnection()">Verbindung testen</button>
+            <button class="test-btn" onclick="clearCockpitPublishToken()">Token löschen</button>
+            <button class="test-btn" onclick="publishCockpitTrainingSummary()">Training veröffentlichen</button>
             <button class="test-btn" onclick="exportCockpitTrainingSummary()">🩺 Cockpit-Daten exportieren</button>
           </div>
-          <div class="step-desc">Read-only Zusammenfassung fuer das Felix Cockpit (training-summary.json). Keine Secrets, kein vollstaendiges Backup.</div>
+          <div class="step-desc">API-Basis und Write-Token bleiben ausschließlich in diesem Browser. Der Verbindungstest prüft den öffentlichen Health-Endpunkt; der Token wird erst beim bewussten Publish verwendet.</div>
+          <div id="cockpitPublishStatus" class="update-status"></div>
+          <div id="cockpitPublishMeta" class="setup-diag-grid"></div>
         </div>
         <div class="danger-zone">
           <div class="setup-action-label">Gefahrenzone</div>
@@ -1767,8 +1777,8 @@ const PLAN = [{"weeks":[{"weekLabel":"Woche 1","isDeload":false,"isSchool":false
 // STORAGE
 // ============================================================
 const SK='pb_v12_0_test';
-const APP_VERSION='V13.2.6-test';
-const BUILD_DATE='17.07.2026';
+const APP_VERSION='V13.2.7-test';
+const BUILD_DATE='19.07.2026';
 /*
 CHANGELOG V13.2.0-test
 - Lokale Daten-Keys fuer Plan-Kopien planId-basiert gekapselt: Satzdaten, Stats,
@@ -2761,6 +2771,103 @@ function exportBackup(){
 }
 
 // ============================================================
+// COCKPIT API PUBLISH — local configuration, secret-free payload
+// ============================================================
+const COCKPIT_PUBLISH_CONFIG_KEY='pb_cockpit_publish_config_v1';
+const COCKPIT_PUBLISH_STATE_KEY='pb_cockpit_publish_state_v1';
+
+function readCockpitLocalJson(key,fallback){
+  try{const value=JSON.parse(localStorage.getItem(key)||'null');return value&&typeof value==='object'&&!Array.isArray(value)?value:fallback;}catch(e){return fallback;}
+}
+function normalizeCockpitApiBaseUrl(value){
+  const url=new URL(String(value||'').trim());
+  if(!/^https?:$/.test(url.protocol)||url.username||url.password||url.search||url.hash)throw new Error('INVALID_URL');
+  url.pathname=url.pathname.replace(/\/+$/,'');
+  return url.toString().replace(/\/$/,'');
+}
+function getCockpitPublishConfig(){
+  const value=readCockpitLocalJson(COCKPIT_PUBLISH_CONFIG_KEY,{});
+  return {apiBaseUrl:String(value.apiBaseUrl||'').trim(),trainingWriteToken:String(value.trainingWriteToken||'').trim()};
+}
+function saveCockpitPublishConfig(config){
+  const value={apiBaseUrl:normalizeCockpitApiBaseUrl(config.apiBaseUrl),trainingWriteToken:String(config.trainingWriteToken||'').trim()};
+  localStorage.setItem(COCKPIT_PUBLISH_CONFIG_KEY,JSON.stringify(value));
+  return value;
+}
+function getCockpitPublishState(){
+  const value=readCockpitLocalJson(COCKPIT_PUBLISH_STATE_KEY,{});
+  return {lastPublishedAt:String(value.lastPublishedAt||''),lastRevision:String(value.lastRevision||''),lastApiResponse:String(value.lastApiResponse||'Noch kein Publish')};
+}
+function saveCockpitPublishState(state){
+  const value={lastPublishedAt:String(state.lastPublishedAt||''),lastRevision:String(state.lastRevision||''),lastApiResponse:String(state.lastApiResponse||'')};
+  localStorage.setItem(COCKPIT_PUBLISH_STATE_KEY,JSON.stringify(value));
+  renderCockpitPublishConfig();
+  return value;
+}
+function cockpitApiUrl(config,path){return normalizeCockpitApiBaseUrl(config.apiBaseUrl)+path;}
+function currentCockpitTrainingUrl(){
+  try{const url=new URL(location.href);if(!/^https?:$/.test(url.protocol))return '';url.search='';url.hash='';return url.toString();}catch(e){return '';}
+}
+function dayHasAnyTrainingData(c,w,d,day){
+  const exercises=Array.isArray(day?.exercises)?day.exercises:[];
+  return exercises.some((_,index)=>{const data=store[dataKey(c,w,d,index)];return !!(data&&calcTotal(data));});
+}
+function buildCockpitApiSummary(now=new Date()){
+  const day=getPlanDay(C,W,D);const week=getPlanWeek(C,W);
+  const muscles=String(day?.muscle||'').split('/').map(value=>value.trim()).filter(Boolean);
+  const dayName=String(day?.tag||'').trim()||('Trainingstag '+(D+1));
+  return {schemaVersion:1,day:dayName,week:String(week?.weekLabel||('Woche '+(W+1))),focus:muscles.join(', ')||dayName,status:dayHasAnyTrainingData(C,W,D,day)?'completed':'planned',url:currentCockpitTrainingUrl(),updatedAt:now.toISOString()};
+}
+function isValidCockpitApiSummary(summary){
+  if(!summary||summary.schemaVersion!==1)return false;
+  if(!['day','week','focus','status','url','updatedAt'].every(key=>typeof summary[key]==='string'&&summary[key].length<=300))return false;
+  if(!summary.day.trim()||Number.isNaN(new Date(summary.updatedAt).getTime()))return false;
+  try{return /^https?:$/.test(new URL(summary.url).protocol);}catch(e){return false;}
+}
+function isValidCockpitPublishResponse(data){
+  return !!data&&data.ok===true&&['created','updated','unchanged'].includes(data.result)&&/^sha256-[a-f0-9]{64}$/.test(String(data.revision||''))&&isValidCockpitApiSummary(data.summary);
+}
+async function requestCockpitHealth(config,fetchImpl=fetch){
+  let response;try{response=await fetchImpl(cockpitApiUrl(config,'/api/health'),{method:'GET',cache:'no-store'});}catch(e){throw new Error('NETWORK');}
+  if(!response.ok)throw new Error('HTTP');
+  let data;try{data=await response.json();}catch(e){throw new Error('INVALID');}
+  if(!data||data.ok!==true||data.service!=='felix-cockpit-api')throw new Error('INVALID');return data;
+}
+async function requestCockpitPublish(config,summary,fetchImpl=fetch){
+  if(!config.trainingWriteToken)throw new Error('CONFIG');if(!isValidCockpitApiSummary(summary))throw new Error('INVALID_SUMMARY');
+  let response;try{response=await fetchImpl(cockpitApiUrl(config,'/api/training-summary'),{method:'POST',headers:{Authorization:'Bearer '+config.trainingWriteToken,'Content-Type':'application/json'},body:JSON.stringify(summary)});}catch(e){throw new Error('NETWORK');}
+  let data={};try{data=await response.json();}catch(e){}
+  if(response.status===401)throw new Error('AUTH');
+  if(response.status===409&&data&&data.error==='stale_summary'){const error=new Error('STALE');error.revision=String(data.revision||'');throw error;}
+  if(!response.ok||!isValidCockpitPublishResponse(data))throw new Error('INVALID_RESPONSE');return data;
+}
+function formatCockpitPublishTime(value){if(!value)return 'nie';const date=new Date(value);return Number.isNaN(date.getTime())?'unbekannt':date.toLocaleString('de-DE',{dateStyle:'short',timeStyle:'short'});}
+function setCockpitPublishStatus(type,message){const node=document.getElementById('cockpitPublishStatus');if(!node)return;node.className='update-status vis '+type;node.textContent=message;}
+function renderCockpitPublishConfig(){
+  const config=getCockpitPublishConfig();const state=getCockpitPublishState();const urlInput=document.getElementById('cockpitApiBaseUrl');const tokenInput=document.getElementById('cockpitWriteToken');const meta=document.getElementById('cockpitPublishMeta');
+  if(urlInput)urlInput.value=config.apiBaseUrl;if(tokenInput)tokenInput.value='';
+  if(meta)meta.innerHTML=[['Konfiguration',config.apiBaseUrl?(config.trainingWriteToken?'bereit':'Token fehlt'):'nicht gesetzt'],['Letzter Publish',formatCockpitPublishTime(state.lastPublishedAt)],['Letzte Revision',state.lastRevision||'—'],['Letzte API-Antwort',state.lastApiResponse||'—']].map(item=>'<div class="setup-diag-item"><div class="setup-diag-k">'+sanitize(item[0])+'</div><div class="setup-diag-v">'+sanitize(item[1])+'</div></div>').join('');
+}
+function saveCockpitPublishConfigFromForm(){
+  const existing=getCockpitPublishConfig();const apiBaseUrl=String(document.getElementById('cockpitApiBaseUrl')?.value||'').trim();const entered=String(document.getElementById('cockpitWriteToken')?.value||'').trim();
+  try{saveCockpitPublishConfig({apiBaseUrl,trainingWriteToken:entered||existing.trainingWriteToken});setCockpitPublishStatus('ok',entered||existing.trainingWriteToken?'Cockpit-Konfiguration lokal gespeichert. Token wird nicht angezeigt.':'API-Basis gespeichert; Write-Token fehlt.');renderCockpitPublishConfig();}catch(e){setCockpitPublishStatus('err','Bitte eine gültige http(s)-API-Basis ohne Query oder Fragment eintragen.');}
+}
+function clearCockpitPublishToken(){
+  if(!confirm('Training-Write-Token aus diesem Browser löschen? Publish-Status und API-Basis bleiben erhalten.'))return;
+  const config=getCockpitPublishConfig();localStorage.setItem(COCKPIT_PUBLISH_CONFIG_KEY,JSON.stringify({apiBaseUrl:config.apiBaseUrl,trainingWriteToken:''}));setCockpitPublishStatus('ok','Training-Write-Token gelöscht.');renderCockpitPublishConfig();
+}
+async function testCockpitPublishConnection(){
+  const config=getCockpitPublishConfig();if(!config.apiBaseUrl){setCockpitPublishStatus('err','Bitte zuerst die API-Basis speichern.');return;}
+  setCockpitPublishStatus('loading','Cockpit-API wird geprüft …');try{await requestCockpitHealth(config);setCockpitPublishStatus('ok','Cockpit-API ist erreichbar. Der Write-Token wird beim Publish geprüft.');}catch(e){setCockpitPublishStatus('err','Cockpit-API ist nicht erreichbar oder antwortet ungültig.');}
+}
+async function publishCockpitTrainingSummary(){
+  const config=getCockpitPublishConfig();if(!config.apiBaseUrl||!config.trainingWriteToken){setCockpitPublishStatus('err','API-Basis und Training-Write-Token fehlen.');return;}
+  const summary=buildCockpitApiSummary();if(!isValidCockpitApiSummary(summary)){setCockpitPublishStatus('err','Summary ungültig. Die App muss über eine http(s)-Adresse geöffnet sein.');return;}
+  setCockpitPublishStatus('loading','Training-Summary wird veröffentlicht …');
+  try{const data=await requestCockpitPublish(config,summary);const label=data.result==='created'?'erstellt':data.result==='updated'?'aktualisiert':'unverändert';saveCockpitPublishState({lastPublishedAt:new Date().toISOString(),lastRevision:data.revision,lastApiResponse:data.result});setCockpitPublishStatus('ok','Training-Summary '+label+'.');}
+  catch(error){const state=getCockpitPublishState();const code=error.message==='AUTH'?'unauthorized':error.message==='STALE'?'stale_summary':error.message==='NETWORK'?'network_error':'invalid_response';saveCockpitPublishState({...state,lastRevision:error.revision||state.lastRevision,lastApiResponse:code});setCockpitPublishStatus('err',code==='unauthorized'?'Write-Token nicht autorisiert (401).':code==='stale_summary'?'Serverstand ist neuer; Publish wurde sicher abgelehnt (409).':code==='network_error'?'Cockpit-API nicht erreichbar.':'Cockpit-API antwortete ungültig.');}
+}
+
 // COCKPIT EXPORT — read-only, secret-free training summary
 // ============================================================
 function buildCockpitTrainingSummary(){
@@ -3213,6 +3320,7 @@ function init(){
   if(!store._consent){document.getElementById('consentOverlay').style.display='flex';}
   updateApiStatus();
   renderSetupDiagnostics();
+  renderCockpitPublishConfig();
   renderDataQualityCard();
   document.getElementById('scriptCodeBox').textContent=SCRIPT_CODE;
   const bdt=document.getElementById('buildDateTxt');if(bdt)bdt.textContent=BUILD_DATE;
@@ -6820,7 +6928,7 @@ function showTab(id,btn){
   if(id==='workout'){renderDayRow();renderWorkout();loadBW();}
   if(id==='progress'){initProgressTab();}
   if(id==='records'){renderRecords();}
-  if(id==='setup'){renderSetupDiagnostics();renderDataQualityCard();}
+  if(id==='setup'){renderSetupDiagnostics();renderDataQualityCard();renderCockpitPublishConfig();}
   if(id==='ki'){initKiTab();}
 }
 
