@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#080808">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PB V13.2.7-test">
-<title>Plateau-Brecher V13.2.7-test</title>
+<meta name="apple-mobile-web-app-title" content="PB V13.2.8-test">
+<title>Plateau-Brecher V13.2.8-test</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -731,7 +731,7 @@ main{padding:14px;max-width:860px;}
   padding:11px 14px;border-radius:var(--r);cursor:pointer;
   font-family:'DM Mono',monospace;font-size:10px;
   transition:all .15s;display:flex;justify-content:space-between;align-items:center;
-  -webkit-tap-highlight-color:transparent;
+  width:100%;color:var(--tx2);text-align:left;-webkit-tap-highlight-color:transparent;
 }
 .swap-item:hover{border-color:var(--acc);color:var(--acc);}
 .swap-item:active{transform:scale(0.98);}
@@ -938,9 +938,14 @@ main{padding:14px;max-width:860px;}
 .plan-day-detail-muscle{font-size:9px;color:var(--tx2);line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .plan-day-detail-count{font-size:9px;color:var(--mu);text-align:right;white-space:nowrap;}
 .plan-day-ex-list{display:grid;gap:4px;margin:0;padding:0;list-style:none;min-width:0;}
-.plan-day-ex-item{display:grid;grid-template-columns:20px minmax(0,1fr);gap:6px;align-items:center;min-width:0;min-height:25px;padding:5px 7px;background:rgba(0,0,0,.1);border:1px solid rgba(255,255,255,.055);border-radius:var(--r);font-family:'DM Mono',monospace;font-size:9px;color:var(--tx2);}
+.plan-day-ex-row{min-width:0;}
+.plan-day-ex-item{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:7px;align-items:center;width:100%;min-width:0;min-height:44px;padding:8px 9px;background:rgba(0,0,0,.1);border:1px solid rgba(255,255,255,.055);border-radius:var(--r);font-family:'DM Mono',monospace;font-size:9px;color:var(--tx2);text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent;appearance:none;}
+.plan-day-ex-item:hover,.plan-day-ex-item:focus-visible{border-color:rgba(200,255,0,.34);color:var(--tx);outline:none;}
+.plan-day-ex-item:active{transform:scale(.995);}
+.plan-day-ex-item-static{cursor:default;grid-template-columns:20px minmax(0,1fr);}
 .plan-day-ex-num{color:var(--mu);font-size:8px;text-align:right;}
 .plan-day-ex-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.plan-day-ex-action{color:var(--acc);font-size:8px;letter-spacing:.5px;white-space:nowrap;}
 .sel-row-cycle{margin-bottom:7px;}
 .sel-row-day{margin-bottom:12px;}
 .bw-row{display:flex;align-items:baseline;}
@@ -991,6 +996,9 @@ main{padding:14px;max-width:860px;}
 .save-spin-wrap{display:none;}
 .last-sync-txt{margin-left:8px;font-size:8.5px;color:var(--mu);}
 .swap-subtitle{font-family:'DM Mono',monospace;font-size:9.5px;color:var(--mu);margin-bottom:12px;}
+.swap-scope-note{font-family:'DM Mono',monospace;font-size:9px;line-height:1.45;color:var(--tx2);background:rgba(200,255,0,.045);border:1px solid rgba(200,255,0,.16);border-radius:var(--r);padding:8px 9px;margin:-4px 0 10px;}
+.swap-restore-btn{width:100%;margin-top:10px;}
+.swap-restore-btn[hidden]{display:none;}
 .swap-custom-lbl{font-family:'DM Mono',monospace;font-size:8.5px;color:var(--mu);margin-top:14px;margin-bottom:4px;}
 .swap-footer-note{font-family:'DM Mono',monospace;font-size:8.5px;color:var(--mu);margin-top:12px;opacity:.8;}
 .vol-label-sm{font-size:8.5px;color:var(--mu);}
@@ -1199,14 +1207,14 @@ main{padding:14px;max-width:860px;}
 <body>
 <div class="consent-overlay" id="consentOverlay">
   <div class="consent-box">
-    <h2 class="splash-h2">SYSTEM-START V13.2.7-test</h2>
+    <h2 class="splash-h2">SYSTEM-START V13.2.8-test</h2>
     <p class="splash-p">Daten werden lokal gespeichert und via API synchronisiert. Fehler-Logging ist aktiv.</p>
     <button class="save-btn" onclick="acceptConsent()">Akzeptieren &amp; Starten</button>
   </div>
 </div>
 <header>
   <div>
-    <div class="logo">PB<span class="splash-logo-ver"> V13.2.7-test</span></div>
+    <div class="logo">PB<span class="splash-logo-ver"> V13.2.8-test</span></div>
     <span class="hbadge" id="todayBadge">Lädt…</span>
     <div class="splash-build">Build: <span id="buildDateTxt"></span></div>
   </div>
@@ -1278,7 +1286,7 @@ main{padding:14px;max-width:860px;}
     <div class="step-desc">Nur ändern, wenn <b>SCRIPT_CODE</b> aktualisiert wurde. App-Testversionen brauchen nicht automatisch ein neues Apps-Script-Deployment.</div>
     <div class="setup-mini-grid">
       <div class="setup-mini-card"><b>Aktuelle Script-Basis:</b><br>V11.9.1</div>
-      <div class="setup-mini-card"><b>App-Version:</b><br>V13.2.7-test</div>
+      <div class="setup-mini-card"><b>App-Version:</b><br>V13.2.8-test</div>
     </div>
     <div class="setup-note"><strong>Hinweis:</strong> Wenn die Sheet-Verbindung bereits funktioniert, muss dieser Code für diese Testversion normalerweise nicht neu deployed werden.</div>
     <div class="code-box" id="scriptCodeBox">Lädt…</div>
@@ -1529,17 +1537,19 @@ main{padding:14px;max-width:860px;}
 </div>
 
 <!-- SWAP MODAL -->
-<div class="modal-bg" id="swapModal">
+<div class="modal-bg" id="swapModal" onclick="if(event.target===this)closeSwap()">
   <div class="modal">
     <div class="modal-title">Übung tauschen<button class="modal-close" onclick="closeSwap()">✕</button></div>
     <div class="swap-subtitle" id="swapSubtitle"></div>
+    <div class="swap-scope-note" id="swapScopeNote"></div>
     <div class="swap-list" id="swapList"></div>
     <div class="swap-custom-lbl">EIGENE ÜBUNG:</div>
     <div class="swap-custom-wrap">
       <input class="swap-custom-inp" id="swapCustomInp" type="text" placeholder="Übungsname eingeben…">
       <button class="swap-confirm-btn" onclick="confirmSwapCustom()">OK</button>
     </div>
-    <div class="swap-footer-note">
+    <button class="test-btn swap-restore-btn" id="swapRestoreBtn" type="button" onclick="restoreOriginalSwap()" hidden>Original wiederherstellen</button>
+    <div class="swap-footer-note" id="swapFooterNote">
       Tausch gilt für diese Session · Original im Plan bleibt erhalten
     </div>
   </div>
@@ -1777,8 +1787,8 @@ const PLAN = [{"weeks":[{"weekLabel":"Woche 1","isDeload":false,"isSchool":false
 // STORAGE
 // ============================================================
 const SK='pb_v12_0_test';
-const APP_VERSION='V13.2.7-test';
-const BUILD_DATE='19.07.2026';
+const APP_VERSION='V13.2.8-test';
+const BUILD_DATE='25.07.2026';
 /*
 CHANGELOG V13.2.0-test
 - Lokale Daten-Keys fuer Plan-Kopien planId-basiert gekapselt: Satzdaten, Stats,
@@ -2199,8 +2209,12 @@ function renderPlanDayDetail(day,dayIndex){
   if(!day)return '<div class="plan-day-detail"><div class="weekly-sub">Kein Trainingstag ausgewaehlt.</div></div>';
   const exercises=Array.isArray(day.exercises)?day.exercises:[];
   const list=exercises.length
-    ? exercises.map((_,i)=>'<li class="plan-day-ex-item"><span class="plan-day-ex-num">'+(i+1)+'.</span><span class="plan-day-ex-name">'+escHtml(getHistoricalExName(C,W,dayIndex,i)||'Unbenannte Uebung')+'</span></li>').join('')
-    : '<li class="plan-day-ex-item"><span class="plan-day-ex-num">-</span><span class="plan-day-ex-name">Keine Uebungen hinterlegt</span></li>';
+    ? exercises.map((_,i)=>{
+      const name=getHistoricalExName(C,W,dayIndex,i)||'Unbenannte Uebung';
+      return '<li class="plan-day-ex-row"><button class="plan-day-ex-item" type="button" onclick="openPlanSwap('+C+','+W+','+dayIndex+','+i+')" aria-label="'+escHtml(name)+' für diesen Tag ändern">'
+        +'<span class="plan-day-ex-num">'+(i+1)+'.</span><span class="plan-day-ex-name">'+escHtml(name)+'</span><span class="plan-day-ex-action">Ändern</span></button></li>';
+    }).join('')
+    : '<li class="plan-day-ex-row"><div class="plan-day-ex-item plan-day-ex-item-static"><span class="plan-day-ex-num">-</span><span class="plan-day-ex-name">Keine Uebungen hinterlegt</span></div></li>';
   return '<div class="plan-day-detail">'
     +'<div class="plan-day-detail-head">'
     +'<div class="plan-day-detail-date">'+escHtml(day.date||'-')+'</div>'
@@ -5056,11 +5070,11 @@ function setExerciseDisplayName(c,w,d,idx,name){
   return changed;
 }
 
-function setExerciseInstanceName(c,w,d,idx,name){
+function setExerciseInstanceName(c,w,d,idx,name,planId){
   const clean=String(name||'').trim();
   const day=getPlanDay(c,w,d);
   if(!clean||!day||!day.exercises[idx])return false;
-  const key=exnameInstanceKey(c,w,d,idx);
+  const key=exnameInstanceKey(c,w,d,idx,planId);
   const changed=store[key]!==clean;
   store[key]=clean;
   return changed;
@@ -6023,6 +6037,8 @@ function buildPbAnalysisEngine() {
 
 // ============================================================
 let _swapIdx=null;
+let _swapTarget=null;
+let _swapBusy=false;
 
 // Alternativen pro Muskelgruppe — passt zum PULL/PUSH/LEGS/TORSO/LIMBS Split
 const SWAP_POOL={
@@ -6033,13 +6049,54 @@ const SWAP_POOL={
   'Arme / Unterarme':['Bizep Curls','Hammer Curls','Konzentrationscurls','Trizeps Dips','Trizeps Kickbacks','Wrist Curls','Reverse Curls','Cable Curls','Preacher Curl','Trizeps Extension']
 };
 
-function openSwap(idx){
+function createSwapTarget(source,c,w,d,idx){
+  const day=getPlanDay(c,w,d);
+  if(!day||!Array.isArray(day.exercises)||!Number.isInteger(idx)||idx<0||idx>=day.exercises.length)return null;
+  const planId=getActivePlanId();
+  return {
+    source,
+    planId,
+    c,w,d,idx,
+    dayId:String(day.id||('position_'+c+'_'+w+'_'+d)),
+    date:String(day.date||'')
+  };
+}
+
+function getValidatedSwapTarget(){
+  const target=_swapTarget;
+  if(!target||target.planId!==getActivePlanId())return null;
+  if(!['TRAINING','PLAN'].includes(target.source))return null;
+  if(![target.c,target.w,target.d,target.idx].every(Number.isInteger))return null;
+  const day=getPlanDay(target.c,target.w,target.d);
+  if(!day||!Array.isArray(day.exercises)||target.idx<0||target.idx>=day.exercises.length)return null;
+  const dayId=String(day.id||('position_'+target.c+'_'+target.w+'_'+target.d));
+  if(dayId!==target.dayId||String(day.date||'')!==target.date)return null;
+  return {...target,day};
+}
+
+function openSwapForTarget(source,c,w,d,idx){
+  closeSwap();
+  const target=createSwapTarget(source,c,w,d,idx);
+  if(!target)return;
+  _swapTarget=target;
   _swapIdx=idx;
-  const day=getPlanDay(C,W,D);
+  const validated=getValidatedSwapTarget();
+  if(!validated){closeSwap();return;}
+  const day=validated.day;
   const muscle=day.muscle||'';
-  const currentName=getExName(idx);
-  document.getElementById('swapSubtitle').textContent='Aktuelle Übung: '+currentName;
+  const currentName=getHistoricalExName(c,w,d,idx)||day.exercises[idx];
+  const dayLabel=[day.date,day.tag].filter(Boolean).join(' · ');
+  document.getElementById('swapSubtitle').textContent='Aktuelle Übung: '+currentName+' · '+dayLabel;
+  document.getElementById('swapScopeNote').textContent=source==='PLAN'
+    ?'Nur diese Stelle im Plan wird geändert.'
+    :'Tausch gilt für diese Session.';
+  document.getElementById('swapFooterNote').textContent=source==='PLAN'
+    ?'Planstruktur, Trainingsdaten, PRs und Sheet-Zuordnung bleiben unverändert.'
+    :'Tausch gilt für diese Session · Original im Plan bleibt erhalten';
   document.getElementById('swapCustomInp').value='';
+  const restoreBtn=document.getElementById('swapRestoreBtn');
+  const instanceKey=exnameInstanceKey(c,w,d,idx,target.planId);
+  restoreBtn.hidden=source!=='PLAN'||!Object.prototype.hasOwnProperty.call(store,instanceKey);
 
   // Pool basierend auf Muskelgruppe, fallback alle
   let pool=[];
@@ -6057,32 +6114,73 @@ function openSwap(idx){
   const list=document.getElementById('swapList');
   list.innerHTML=pool.map(name=>{
     const isCurrent=name===currentName;
-    return '<div class="swap-item'+(isCurrent?' current':'')+'" onclick="confirmSwap(\''+name.replace(/'/g,"\\'")+'\')">'
-      +'<span>'+name+'</span>'
+    const jsName=name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return '<button type="button" class="swap-item'+(isCurrent?' current':'')+'" onclick="confirmSwap(\''+jsName+'\')">'
+      +'<span>'+escHtml(name)+'</span>'
       +(isCurrent?'<span class="swap-tag">AKTUELL</span>':'<span class="swap-tag">→ Wählen</span>')
-      +'</div>';
+      +'</button>';
   }).join('');
 
   document.getElementById('swapModal').classList.add('open');
 }
 
+function openSwap(idx){
+  openSwapForTarget('TRAINING',C,W,D,idx);
+}
+
+function openPlanSwap(c,w,d,idx){
+  openSwapForTarget('PLAN',c,w,d,idx);
+}
+
 function closeSwap(){
   document.getElementById('swapModal').classList.remove('open');
   _swapIdx=null;
+  _swapTarget=null;
+  _swapBusy=false;
+  const list=document.getElementById('swapList');
+  const input=document.getElementById('swapCustomInp');
+  const restoreBtn=document.getElementById('swapRestoreBtn');
+  if(list)list.innerHTML='';
+  if(input)input.value='';
+  if(restoreBtn)restoreBtn.hidden=true;
 }
 
 function confirmSwap(name){
-  if(_swapIdx===null)return;
-  setExerciseInstanceName(C,W,D,_swapIdx,name);
+  if(_swapBusy)return;
+  const clean=String(name||'').trim();
+  const target=getValidatedSwapTarget();
+  if(!clean||!target){closeSwap();return;}
+  _swapBusy=true;
+  const scrollY=window.scrollY;
+  setExerciseInstanceName(target.c,target.w,target.d,target.idx,clean,target.planId);
   persist();
+  const source=target.source;
   closeSwap();
+  if(source==='PLAN')renderPlanWeekView();
   renderWorkout();
+  if(source==='PLAN')requestAnimationFrame(()=>window.scrollTo({top:scrollY,behavior:'auto'}));
 }
 
 function confirmSwapCustom(){
   const val=document.getElementById('swapCustomInp').value.trim();
   if(!val)return;
   confirmSwap(val);
+}
+
+function restoreOriginalSwap(){
+  if(_swapBusy)return;
+  const target=getValidatedSwapTarget();
+  if(!target||target.source!=='PLAN'){closeSwap();return;}
+  const key=exnameInstanceKey(target.c,target.w,target.d,target.idx,target.planId);
+  if(!Object.prototype.hasOwnProperty.call(store,key)){closeSwap();return;}
+  _swapBusy=true;
+  const scrollY=window.scrollY;
+  delete store[key];
+  persist();
+  closeSwap();
+  renderPlanWeekView();
+  renderWorkout();
+  requestAnimationFrame(()=>window.scrollTo({top:scrollY,behavior:'auto'}));
 }
 
 // ============================================================
