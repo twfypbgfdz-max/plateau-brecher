@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#080808">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PB V13.3.0-test">
-<title>Plateau-Brecher V13.3.0-test</title>
+<meta name="apple-mobile-web-app-title" content="PB V13.3.1-test">
+<title>Plateau-Brecher V13.3.1-test</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -1022,7 +1022,11 @@ main{padding:14px;max-width:860px;}
 .swap-history-note{font-family:'DM Mono',monospace;font-size:9px;line-height:1.45;color:var(--tx2);padding:9px;background:rgba(255,180,0,.06);border:1px solid rgba(255,180,0,.22);border-radius:var(--r);margin:0 0 10px;}
 .vol-label-sm{font-size:8.5px;color:var(--mu);}
 .prog-section-meta{font-family:'DM Mono',monospace;font-size:9px;color:var(--mu);letter-spacing:.8px;}
-.exname-editable{cursor:text;border-bottom:1px dashed var(--bor);}
+.plan-edit-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;min-height:30px;height:30px;box-sizing:border-box;margin:0 0 0 5px;padding:5px 9px;border:1px solid rgba(255,255,255,.1);border-radius:9px;background:rgba(255,255,255,.018);color:var(--mu);font-family:'DM Mono',monospace;font-size:9px;line-height:1;letter-spacing:.15px;cursor:pointer;vertical-align:middle;-webkit-tap-highlight-color:transparent;}
+.plan-edit-btn::before{content:'';position:absolute;inset:-7px -3px;}
+.plan-edit-btn:hover{border-color:rgba(200,255,0,.3);color:var(--acc);background:rgba(200,255,0,.04);}
+.plan-edit-btn:focus-visible{outline:2px solid rgba(200,255,0,.55);outline-offset:2px;}
+.plan-edit-btn:active{transform:scale(.98);}
 .dbtn-nav{padding:6px 10px;font-size:14px;}
 .dbtn-day{font-size:9px;}
 .day-date-lbl{color:var(--mu);display:block;font-size:8.5px;margin-top:1px;}
@@ -1226,14 +1230,14 @@ main{padding:14px;max-width:860px;}
 <body>
 <div class="consent-overlay" id="consentOverlay">
   <div class="consent-box">
-    <h2 class="splash-h2">SYSTEM-START V13.3.0-test</h2>
+    <h2 class="splash-h2">SYSTEM-START V13.3.1-test</h2>
     <p class="splash-p">Daten werden lokal gespeichert und via API synchronisiert. Fehler-Logging ist aktiv.</p>
     <button class="save-btn" onclick="acceptConsent()">Akzeptieren &amp; Starten</button>
   </div>
 </div>
 <header>
   <div>
-    <div class="logo">PB<span class="splash-logo-ver"> V13.3.0-test</span></div>
+    <div class="logo">PB<span class="splash-logo-ver"> V13.3.1-test</span></div>
     <span class="hbadge" id="todayBadge">Lädt…</span>
     <div class="splash-build">Build: <span id="buildDateTxt"></span></div>
   </div>
@@ -1250,7 +1254,7 @@ main{padding:14px;max-width:860px;}
 
 <div class="tabs">
   <button class="tab active" onclick="showTab('workout',this)"><svg viewBox="0 0 24 24"><path d="M6 4v16M18 4v16M6 12h12M2 7h4M18 7h4M2 17h4M18 17h4"/></svg>Training</button>
-  <button class="tab" onclick="showTab('plan',this)"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="9" x2="21" y2="9"/></svg>Plan</button>
+  <button class="tab" id="tabBtnPlan" onclick="showTab('plan',this)"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="9" x2="21" y2="9"/></svg>Plan</button>
   <button class="tab" onclick="showTab('setup',this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Setup</button>
   <button class="tab" onclick="showTab('records',this)"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>PRs</button>
   <button class="tab" onclick="showTab('progress',this)"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Stats</button>
@@ -1305,7 +1309,7 @@ main{padding:14px;max-width:860px;}
     <div class="step-desc">Nur ändern, wenn <b>SCRIPT_CODE</b> aktualisiert wurde. App-Testversionen brauchen nicht automatisch ein neues Apps-Script-Deployment.</div>
     <div class="setup-mini-grid">
       <div class="setup-mini-card"><b>Aktuelle Script-Basis:</b><br>V11.9.1</div>
-      <div class="setup-mini-card"><b>App-Version:</b><br>V13.3.0-test</div>
+      <div class="setup-mini-card"><b>App-Version:</b><br>V13.3.1-test</div>
     </div>
     <div class="setup-note"><strong>Hinweis:</strong> Wenn die Sheet-Verbindung bereits funktioniert, muss dieser Code für diese Testversion normalerweise nicht neu deployed werden.</div>
     <div class="code-box" id="scriptCodeBox">Lädt…</div>
@@ -1587,7 +1591,7 @@ main{padding:14px;max-width:860px;}
     <div id="swapApplyField" class="swap-custom-wrap"><button class="swap-confirm-btn" type="button" onclick="confirmSwap()">Änderung übernehmen</button></div>
     <button class="test-btn swap-restore-btn" id="swapRestoreBtn" type="button" onclick="restoreOriginalSwap()" hidden>Original wiederherstellen</button>
     <div class="swap-footer-note" id="swapFooterNote">
-      Tausch gilt für diese Session · Original im Plan bleibt erhalten
+      Änderungen werden nur im PLAN-Reiter für ungeloggte Planstellen gespeichert.
     </div>
   </div>
 </div>
@@ -1824,7 +1828,7 @@ const PLAN = [{"weeks":[{"weekLabel":"Woche 1","isDeload":false,"isSchool":false
 // STORAGE
 // ============================================================
 const SK='pb_v12_0_test';
-const APP_VERSION='V13.3.0-test';
+const APP_VERSION='V13.3.1-test';
 const BUILD_DATE='31.07.2026';
 /*
 CHANGELOG V13.3.0-test
@@ -4905,9 +4909,9 @@ function renderWorkout(){
 
     html+='<div class="excard '+(d.done?'done ':'')+( isOpen?'open-ex ':'')+(isActiveExercise?'active-ex ':'')+( isPR?'pr-card':'')+( isStag?'stagnation-card':'')+'" id="ec'+i+'">'
       +'<div class="exhead" onclick="toggleEx('+i+')">'
-      +'<div class="exname">'+(i+1)+'. <span id="exlabel'+i+'" onclick="event.stopPropagation();editExName('+i+')" class="exname-editable" title="Tippen zum Umbenennen">'+exName+'</span>'
+      +'<div class="exname">'+(i+1)+'. <span id="exlabel'+i+'">'+exName+'</span>'
+      +'<button class="plan-edit-btn" type="button" onclick="event.stopPropagation();editExerciseInPlan('+i+')" title="Strukturelle Übungsänderungen im PLAN-Reiter">Im PLAN ändern</button>'
       +'<button class="hist-btn" onclick="event.stopPropagation();showHistory('+i+')" title="Verlauf">📊</button>'
-      +'<button class="hist-btn" onclick="event.stopPropagation();openSwap('+i+')" title="Übung tauschen">⇄</button>'
       +'</div>'
       +'<div class="exmeta">'
       +(isActiveExercise?'<span class="active-badge">NÄCHSTE ÜBUNG</span>':'')
@@ -5537,64 +5541,6 @@ function upd(idx,field,val){
   if(card2){
     card2.classList.toggle('stagnation-card', stag==='stagnation'||stag==='decline');
   }
-}
-
-function editExName(idx){
-  const el=document.getElementById('exlabel'+idx);
-  if(!el)return;
-  const oldName=getExName(idx);
-  el.contentEditable='true';el.focus();
-  const range=document.createRange();range.selectNodeContents(el);
-  const sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);
-  el.style.borderBottom='1px solid var(--acc)';
-  el.onblur=()=>{
-    const newName=el.textContent.trim();
-    if(newName&&newName!==oldName){
-      if(hasRecordedPlanSlot(C,W,D,idx,getActivePlanId())){
-        showStatus('err','Geloggte Übung bleibt historisch unverändert. Für eine neue Planstelle bitte den PLAN-Tausch nutzen.');
-      }else{
-        setExerciseInstanceName(C,W,D,idx,newName);
-        persist();
-        showStatus('ok','Anzeigename nur für diese ungeloggte Planstelle geändert. PRs und Sheet bleiben unverändert.');
-      }
-      el.contentEditable='false';el.style.borderBottom='1px dashed var(--bor)';
-      el.onblur=null;el.onkeydown=null;
-      renderWorkout();
-      return;
-      // Andere Slots suchen — tag-spezifischer Key
-      let otherSlots=[];
-      for(let c=0;c<getPlanCycles().length;c++){
-        for(let w=0;w<getPlanCycles()[c].weeks.length;w++){
-          for(let d=0;d<getPlanWeek(c,w).days.length;d++){
-            getPlanDay(c,w,d).exercises.forEach((ex,i)=>{
-              const n=getHistoricalExName(c,w,d,i)||ex;
-              if(n===oldName&&!(c===C&&w===W&&d===D&&i===idx)) otherSlots.push({c,w,d,i});
-            });
-          }
-        }
-      }
-      setExerciseInstanceName(C,W,D,idx,newName);migratePrRecordOnRename(oldName,newName);persist();
-      const sheetSet=new Set(["ZYKLUS "+(C+1)]);
-      otherSlots.forEach(({c})=>sheetSet.add("ZYKLUS "+(c+1)));
-      if(otherSlots.length>0){
-        const originalName=getPlanDay(C,W,D).exercises[idx];
-        showRenameDialog(oldName,newName,otherSlots,[...sheetSet],originalName,{c:C,w:W,d:D,i:idx});
-      } else {
-        if(API_URL){
-          const originalName=getPlanDay(C,W,D).exercises[idx];
-          const payload=JSON.stringify(withAuth({type:"rename",oldName,newName,originalName,sheets:[...sheetSet]}));
-          showStatus("loading","⏳ Name im Sheet wird aktualisiert…");
-          fetch(API_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:payload})
-            .then(()=>{showStatus("ok","✓ Übungsname aktualisiert");addToErrorLog("RENAME",""+oldName+" → "+newName);})
-            .catch(e=>logToSystem(e,"RENAME_SYNC_ERROR"));
-        }
-      }
-    }
-    el.contentEditable='false';el.style.borderBottom='1px dashed var(--bor)';
-    el.onblur=null;el.onkeydown=null;
-    renderWorkout();
-  };
-  el.onkeydown=(e)=>{if(e.key==='Enter'){e.preventDefault();el.blur();}};
 }
 
 function showRenameDialog(oldName,newName,slots,sheets,originalName,currentSlot){
@@ -6239,7 +6185,7 @@ function createSwapTarget(source,c,w,d,idx){
 function getValidatedSwapTarget(){
   const target=_swapTarget;
   if(!target||target.planId!==getActivePlanId())return null;
-  if(!['TRAINING','PLAN'].includes(target.source))return null;
+  if(target.source!=='PLAN')return null;
   if(![target.c,target.w,target.d,target.idx].every(Number.isInteger))return null;
   const day=getPlanDay(target.c,target.w,target.d);
   if(!day||!Array.isArray(day.exercises)||target.idx<0||target.idx>=day.exercises.length)return null;
@@ -6313,18 +6259,16 @@ function updateSwapScopePreview(){
   const impact=document.getElementById('swapImpact');
   const restoreBtn=document.getElementById('swapRestoreBtn');
   if(!target){if(impact)impact.textContent='Planansicht hat sich geändert – bitte Übung erneut auswählen.';return;}
-  const scope=target.source==='PLAN'?getSwapScope():'instance';
+  const scope=getSwapScope();
   const result=getSwapScopeOverrideSlots(target,scope);
   const mode=getSwapMode();
-  const scopeText=target.source==='PLAN'
-    ? (mode==='replace'?'Neue Übung mit eigener Historie. ':'')+'Änderung nur in '+getSwapScopeLabel(scope)+'. Abgeschlossene Satzdaten, PRs, Verlauf und Sheet-Zuordnung bleiben unverändert.'
-    : 'Tausch gilt für diese Session.';
+  const scopeText=(mode==='replace'?'Neue Übung mit eigener Historie. ':'')+'Änderung nur in '+getSwapScopeLabel(scope)+'. Abgeschlossene Satzdaten, PRs, Verlauf und Sheet-Zuordnung bleiben unverändert.';
   if(note)note.textContent=scopeText;
   if(impact)impact.textContent=result.slots.length+' ungeloggte Stelle(n) betroffen'
     +(result.overrideSlots.length?' · '+result.overrideSlots.length+' Override(s) beim Wiederherstellen löschbar':'')
     +(result.skippedRecorded?' · '+result.skippedRecorded+' geloggte Stelle(n) geschützt':'')+'.';
   if(restoreBtn){
-    restoreBtn.hidden=target.source!=='PLAN'||!result.overrideSlots.length;
+    restoreBtn.hidden=!result.overrideSlots.length;
   }
 }
 
@@ -6393,6 +6337,7 @@ function invalidateSwapForChangedPlan(){
 }
 
 function openSwapForTarget(source,c,w,d,idx){
+  if(source!=='PLAN')return;
   closeSwap();
   const target=createSwapTarget(source,c,w,d,idx);
   if(!target)return;
@@ -6405,12 +6350,10 @@ function openSwapForTarget(source,c,w,d,idx){
   const currentName=getHistoricalExName(c,w,d,idx)||day.exercises[idx];
   const dayLabel=[day.date,day.tag].filter(Boolean).join(' · ');
   document.getElementById('swapSubtitle').textContent='Aktuelle Übung: '+currentName+' · '+dayLabel;
-  document.getElementById('swapFooterNote').textContent=source==='PLAN'
-    ?'Lokale Identitäts- und Anzeigenamen-Overrides nur für ungeloggte Planstellen. „Überall allgemein“ bleibt bewusst deaktiviert.'
-    :'Tausch gilt für diese Session · Original im Plan bleibt erhalten';
+  document.getElementById('swapFooterNote').textContent='Lokale Identitäts- und Anzeigenamen-Overrides nur für ungeloggte Planstellen. „Überall allgemein“ bleibt bewusst deaktiviert.';
   document.getElementById('swapCustomInp').value='';
   const scopeOptions=document.getElementById('swapScopeOptions');
-  if(scopeOptions)scopeOptions.hidden=source!=='PLAN';
+  if(scopeOptions)scopeOptions.hidden=false;
   const currentIdentity=getSwapTargetIdentity(validated);
   const currentMovement=exerciseIdentity.catalog().movements[currentIdentity.movementId]||{};
   document.getElementById('swapMovementInp').value=currentMovement.name||currentName;
@@ -6421,12 +6364,22 @@ function openSwapForTarget(source,c,w,d,idx){
   document.getElementById('swapModal').classList.add('open');
 }
 
-function openSwap(idx){
-  openSwapForTarget('TRAINING',C,W,D,idx);
-}
-
 function openPlanSwap(c,w,d,idx){
   openSwapForTarget('PLAN',c,w,d,idx);
+}
+
+function editExerciseInPlan(idx){
+  const target=createSwapTarget('PLAN',C,W,D,idx);
+  if(!target){showStatus('err','Planansicht hat sich geändert – bitte Übung im PLAN erneut auswählen.');return;}
+  showTab('plan',document.getElementById('tabBtnPlan'));
+  requestAnimationFrame(()=>{
+    const currentDay=getPlanDay(C,W,D);
+    if(target.planId!==getActivePlanId()||!currentDay||currentDay.exercises?.[idx]!==target.baseName){
+      showStatus('err','Planansicht hat sich geändert – bitte Übung im PLAN erneut auswählen.');
+      return;
+    }
+    openPlanSwap(C,W,D,idx);
+  });
 }
 
 function closeSwap(){
@@ -6454,7 +6407,7 @@ function confirmSwap(name){
   const variantName=String(document.getElementById('swapVariantInp')?.value||'').trim()||'Standard';
   const displayName=String(document.getElementById('swapDisplayInp')?.value||name||'').trim();
   if(!displayName||((mode==='variant'||mode==='replace')&&!movementName)){showStatus('err','Bitte Basisübung und Anzeigename angeben.');return;}
-  const scope=target.source==='PLAN'?getSwapScope():'instance';
+  const scope=getSwapScope();
   const result=getSwapScopeSlots(target,scope);
   if(!result.slots.length){showStatus('err','Keine ungeloggte Planstelle für diese Änderung verfügbar.');return;}
   if(scope!=='instance'&&!confirm('Die Änderung wird an '+result.slots.length+' ungeloggten Stelle(n) in '+getSwapScopeLabel(scope)+' angewendet. Fortfahren?'))return;
@@ -6475,11 +6428,10 @@ function confirmSwap(name){
     setExerciseInstanceName(slot.c,slot.w,slot.d,slot.idx,next.displayName,target.planId);
   });
   persist();
-  const source=target.source;
   closeSwap();
-  if(source==='PLAN')renderPlanWeekView();
+  renderPlanWeekView();
   renderWorkout();
-  if(source==='PLAN')requestAnimationFrame(()=>window.scrollTo({top:scrollY,behavior:'auto'}));
+  requestAnimationFrame(()=>window.scrollTo({top:scrollY,behavior:'auto'}));
 }
 
 function confirmSwapCustom(){
@@ -6493,7 +6445,6 @@ function restoreOriginalSwap(){
   if(_swapBusy)return;
   const target=getValidatedSwapTarget();
   if(!target){invalidateSwapForChangedPlan();return;}
-  if(target.source!=='PLAN'){closeSwap();return;}
   const scope=getSwapScope();
   const result=getSwapScopeOverrideSlots(target,scope);
   const slots=result.overrideSlots;
