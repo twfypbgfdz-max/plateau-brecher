@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#080808">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PB V13.2.9-test">
-<title>Plateau-Brecher V13.2.9-test</title>
+<meta name="apple-mobile-web-app-title" content="PB V13.3.0-test">
+<title>Plateau-Brecher V13.3.0-test</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -750,6 +750,7 @@ main{padding:14px;max-width:860px;}
   padding:9px 16px;border-radius:var(--r);cursor:pointer;white-space:nowrap;
 }
 .swap-confirm-btn:active{opacity:.8;}
+#swapApplyField .swap-confirm-btn{width:100%;min-height:44px;}
 /* PROGRESS TAB */
 .prog-tab-section{margin-bottom:24px;}
 .prog-section-hd{
@@ -1008,6 +1009,17 @@ main{padding:14px;max-width:860px;}
 .swap-restore-btn[hidden]{display:none;}
 .swap-custom-lbl{font-family:'DM Mono',monospace;font-size:8.5px;color:var(--mu);margin-top:14px;margin-bottom:4px;}
 .swap-footer-note{font-family:'DM Mono',monospace;font-size:8.5px;color:var(--mu);margin-top:12px;opacity:.8;}
+.swap-mode-options{display:grid;gap:7px;margin:0 0 10px;}
+.swap-mode-option{display:flex;align-items:flex-start;gap:10px;min-height:44px;padding:9px 10px;background:var(--sur2);border:1px solid var(--bor);border-radius:var(--r);cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.swap-mode-option:has(input:checked){border-color:var(--acc);background:rgba(200,255,0,.06);}
+.swap-mode-option input{width:18px;height:18px;margin:1px 0 0;accent-color:var(--acc);flex:0 0 auto;}
+.swap-mode-option strong{display:block;font-family:'DM Mono',monospace;font-size:10px;color:var(--tx);line-height:1.35;}
+.swap-mode-option span{display:block;font-family:'DM Mono',monospace;font-size:8.5px;line-height:1.35;color:var(--mu);margin-top:2px;}
+.swap-identity-fields{display:grid;gap:7px;margin:0 0 10px;}
+.swap-identity-fields[hidden]{display:none;}
+.swap-field-label{font-family:'DM Mono',monospace;font-size:8.5px;color:var(--mu);margin:3px 0 -2px;}
+.swap-field-input{box-sizing:border-box;width:100%;min-height:44px;background:var(--sur2);border:1px solid var(--bor);border-radius:var(--r);color:var(--tx);font:10px 'DM Mono',monospace;padding:10px;}
+.swap-history-note{font-family:'DM Mono',monospace;font-size:9px;line-height:1.45;color:var(--tx2);padding:9px;background:rgba(255,180,0,.06);border:1px solid rgba(255,180,0,.22);border-radius:var(--r);margin:0 0 10px;}
 .vol-label-sm{font-size:8.5px;color:var(--mu);}
 .prog-section-meta{font-family:'DM Mono',monospace;font-size:9px;color:var(--mu);letter-spacing:.8px;}
 .exname-editable{cursor:text;border-bottom:1px dashed var(--bor);}
@@ -1214,14 +1226,14 @@ main{padding:14px;max-width:860px;}
 <body>
 <div class="consent-overlay" id="consentOverlay">
   <div class="consent-box">
-    <h2 class="splash-h2">SYSTEM-START V13.2.9-test</h2>
+    <h2 class="splash-h2">SYSTEM-START V13.3.0-test</h2>
     <p class="splash-p">Daten werden lokal gespeichert und via API synchronisiert. Fehler-Logging ist aktiv.</p>
     <button class="save-btn" onclick="acceptConsent()">Akzeptieren &amp; Starten</button>
   </div>
 </div>
 <header>
   <div>
-    <div class="logo">PB<span class="splash-logo-ver"> V13.2.9-test</span></div>
+    <div class="logo">PB<span class="splash-logo-ver"> V13.3.0-test</span></div>
     <span class="hbadge" id="todayBadge">Lädt…</span>
     <div class="splash-build">Build: <span id="buildDateTxt"></span></div>
   </div>
@@ -1293,7 +1305,7 @@ main{padding:14px;max-width:860px;}
     <div class="step-desc">Nur ändern, wenn <b>SCRIPT_CODE</b> aktualisiert wurde. App-Testversionen brauchen nicht automatisch ein neues Apps-Script-Deployment.</div>
     <div class="setup-mini-grid">
       <div class="setup-mini-card"><b>Aktuelle Script-Basis:</b><br>V11.9.1</div>
-      <div class="setup-mini-card"><b>App-Version:</b><br>V13.2.9-test</div>
+      <div class="setup-mini-card"><b>App-Version:</b><br>V13.3.0-test</div>
     </div>
     <div class="setup-note"><strong>Hinweis:</strong> Wenn die Sheet-Verbindung bereits funktioniert, muss dieser Code für diese Testversion normalerweise nicht neu deployed werden.</div>
     <div class="code-box" id="scriptCodeBox">Lädt…</div>
@@ -1546,8 +1558,20 @@ main{padding:14px;max-width:860px;}
 <!-- SWAP MODAL -->
 <div class="modal-bg" id="swapModal" onclick="if(event.target===this)closeSwap()">
   <div class="modal">
-    <div class="modal-title">Übung tauschen<button class="modal-close" onclick="closeSwap()">✕</button></div>
+    <div class="modal-title">Übung ändern<button class="modal-close" onclick="closeSwap()">✕</button></div>
     <div class="swap-subtitle" id="swapSubtitle"></div>
+    <div class="swap-mode-options" role="radiogroup" aria-label="Art der Änderung">
+      <label class="swap-mode-option"><input type="radio" name="swapMode" value="rename" checked onchange="updateSwapModeUI()"><span><strong>Anzeigename ändern</strong><span>Gleiche Variante, Verlauf und PR.</span></span></label>
+      <label class="swap-mode-option"><input type="radio" name="swapMode" value="variant" onchange="updateSwapModeUI()"><span><strong>Gerätevariante wechseln/anlegen</strong><span>Gleiche Basisübung, getrennte Historie und PRs.</span></span></label>
+      <label class="swap-mode-option"><input type="radio" name="swapMode" value="replace" onchange="updateSwapModeUI()"><span><strong>Übung ersetzen durch</strong><span>Neue Übung mit eigener Historie.</span></span></label>
+    </div>
+    <div class="swap-identity-fields" id="swapIdentityFields">
+      <div id="swapMovementField"><label class="swap-field-label" for="swapMovementInp">Basisübung</label><input class="swap-field-input" id="swapMovementInp" type="text" autocomplete="off" placeholder="z. B. Brustpresse"></div>
+      <div id="swapExistingVariantField"><label class="swap-field-label" for="swapExistingVariantSel">Vorhandene Variante</label><select class="swap-field-input" id="swapExistingVariantSel" onchange="selectExistingSwapVariant(this.value)"></select></div>
+      <div id="swapVariantNameField"><label class="swap-field-label" for="swapVariantInp">Geräte-/Variantenname</label><input class="swap-field-input" id="swapVariantInp" type="text" autocomplete="off" placeholder="z. B. Prime oder Standard"></div>
+      <div id="swapDisplayNameField"><label class="swap-field-label" for="swapDisplayInp">Anzeigename</label><input class="swap-field-input" id="swapDisplayInp" type="text" autocomplete="off" placeholder="Sichtbarer Übungsname"></div>
+    </div>
+    <div class="swap-history-note" id="swapHistoryNote"></div>
     <div class="swap-scope-note" id="swapScopeNote"></div>
     <div class="swap-scope-options" id="swapScopeOptions" role="radiogroup" aria-label="Reichweite der Änderung">
       <label class="swap-scope-option"><input type="radio" name="swapScope" value="instance" checked onchange="updateSwapScopePreview()"><span><strong>Nur diese eine Stelle</strong><span>Nur die ausgewählte Planinstanz ändern.</span></span></label>
@@ -1555,12 +1579,12 @@ main{padding:14px;max-width:860px;}
       <label class="swap-scope-option"><input type="radio" name="swapScope" value="plan" onchange="updateSwapScopePreview()"><span><strong>Alle gleichen Übungen in diesem Plan</strong><span>Nur der aktive Plan; Plan-Kopien, Logs, PRs und Sheets bleiben unverändert.</span></span></label>
     </div>
     <div class="swap-impact" id="swapImpact"></div>
-    <div class="swap-list" id="swapList"></div>
-    <div class="swap-custom-lbl">EIGENE ÜBUNG:</div>
-    <div class="swap-custom-wrap">
+    <div id="swapReplacementList"><div class="swap-list" id="swapList"></div></div>
+    <div id="swapLegacyCustomField"><div class="swap-custom-lbl">EIGENE ÜBUNG:</div><div class="swap-custom-wrap">
       <input class="swap-custom-inp" id="swapCustomInp" type="text" placeholder="Übungsname eingeben…">
-      <button class="swap-confirm-btn" onclick="confirmSwapCustom()">OK</button>
-    </div>
+      <button class="swap-confirm-btn" onclick="confirmSwapCustom()">Übernehmen</button>
+    </div></div>
+    <div id="swapApplyField" class="swap-custom-wrap"><button class="swap-confirm-btn" type="button" onclick="confirmSwap()">Änderung übernehmen</button></div>
     <button class="test-btn swap-restore-btn" id="swapRestoreBtn" type="button" onclick="restoreOriginalSwap()" hidden>Original wiederherstellen</button>
     <div class="swap-footer-note" id="swapFooterNote">
       Tausch gilt für diese Session · Original im Plan bleibt erhalten
@@ -1800,9 +1824,16 @@ const PLAN = [{"weeks":[{"weekLabel":"Woche 1","isDeload":false,"isSchool":false
 // STORAGE
 // ============================================================
 const SK='pb_v12_0_test';
-const APP_VERSION='V13.2.9-test';
+const APP_VERSION='V13.3.0-test';
 const BUILD_DATE='31.07.2026';
 /*
+CHANGELOG V13.3.0-test
+- Lokale, persistente exercise identity: movementId, variantId, Anzeigename und Variantenname.
+  IDs werden zufällig erzeugt, nie aus dem sichtbaren Namen abgeleitet; Alt-Logs bleiben unverändert.
+- Der PLAN-Dialog unterscheidet Anzeigename, Gerätevariante und echte Ersatzübung. Alle Modi
+  verwenden die bestehenden Scopes und schützen geloggte Slots; Restore ist scope-genau.
+- Neue PRs nutzen rec_v2_<variantId>; Legacy rec_<name>, Sheet-Payload und Cockpit-Vertrag bleiben kompatibel.
+
 CHANGELOG V13.2.9-test
 - PLAN-Uebungstausch bietet jetzt die validierten Reichweiten "Nur diese Stelle",
   "dieser Trainingstag" und "dieser Plan". Es werden ausschliesslich ungeloggte
@@ -2386,8 +2417,114 @@ function buildMachineWarning(current,prevData){
   if(curr===prev)return '';
   return '<div class="machine-warning">Anderes Ger&auml;t als beim letzten Training &ndash; Vergleich eingeschr&auml;nkt.</div>';
 }
+/* EXERCISE_IDENTITY_MODEL_START */
+// V13.3 keeps identity local. Names are lookup labels only; IDs are persisted random values.
+function createExerciseIdentityModel(root,options={}){
+  const notify=typeof options.onChange==='function'?options.onChange:()=>{};
+  const nameKey=value=>String(value||'').trim().toLocaleLowerCase('de-DE').replace(/\s+/g,' ');
+  const newId=()=>{
+    if(typeof crypto!=='undefined'&&typeof crypto.randomUUID==='function')return crypto.randomUUID();
+    return 'id_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,12);
+  };
+  const catalog=()=>{
+    if(!root._exerciseIdentityV13||typeof root._exerciseIdentityV13!=='object'){
+      root._exerciseIdentityV13={schemaVersion:1,movements:{},variants:{},legacyNameToVariant:{}};notify();
+    }
+    const value=root._exerciseIdentityV13;
+    value.movements=value.movements&&typeof value.movements==='object'?value.movements:{};
+    value.variants=value.variants&&typeof value.variants==='object'?value.variants:{};
+    value.legacyNameToVariant=value.legacyNameToVariant&&typeof value.legacyNameToVariant==='object'?value.legacyNameToVariant:{};
+    return value;
+  };
+  const copy=variant=>variant?{movementId:variant.movementId,variantId:variant.id,displayName:variant.displayName,variantName:variant.variantName||'Standard',legacy:!!variant.legacy}:null;
+  const byVariantId=id=>{const variant=catalog().variants[String(id||'')];return variant&&variant.id&&variant.movementId?copy(variant):null;};
+  const legacyForName=name=>{
+    const displayName=String(name||'').trim()||'Unbenannte Übung';
+    const c=catalog(),key=nameKey(displayName),mapped=c.legacyNameToVariant[key];
+    const existing=byVariantId(mapped);
+    if(existing)return existing;
+    const movementId=newId(),variantId=newId();
+    c.movements[movementId]={id:movementId,name:displayName,createdAt:new Date().toISOString(),legacy:true};
+    c.variants[variantId]={id:variantId,movementId,variantName:'Standard',displayName,legacy:true,legacyNames:[displayName],createdAt:new Date().toISOString()};
+    c.legacyNameToVariant[key]=variantId;notify();
+    return copy(c.variants[variantId]);
+  };
+  const findMovementByName=name=>{
+    const wanted=nameKey(name);if(!wanted)return null;
+    return Object.values(catalog().movements).find(m=>nameKey(m?.name)===wanted)||null;
+  };
+  const findVariant=(movementId,variantName)=>{
+    const wanted=nameKey(variantName||'Standard');
+    return Object.values(catalog().variants).find(v=>v?.movementId===movementId&&nameKey(v.variantName||'Standard')===wanted)||null;
+  };
+  const resolveDisplayName=name=>{
+    const wanted=nameKey(name);
+    const known=Object.values(catalog().variants).find(v=>nameKey(v?.displayName)===wanted);
+    return known?copy(known):legacyForName(name);
+  };
+  const renameDisplay=(variantId,displayName)=>{
+    const variant=catalog().variants[String(variantId||'')];
+    const clean=String(displayName||'').trim();
+    if(!variant||!clean)return byVariantId(variantId);
+    if(variant.displayName!==clean){
+      variant.displayName=clean;variant.updatedAt=new Date().toISOString();
+      Object.values(root).forEach(record=>{if(record&&record.variantId===variantId)record.displayName=clean;});
+      notify();
+    }
+    return copy(variant);
+  };
+  const createOrSelect=(movementName,variantName,displayName,selection)=>{
+    const c=catalog();
+    const cleanMovement=String(movementName||'').trim();
+    const cleanVariant=String(variantName||'Standard').trim()||'Standard';
+    const cleanDisplay=String(displayName||'').trim()||cleanMovement;
+    if(selection?.variantId){const known=byVariantId(selection.variantId);if(known)return {...known,displayName:cleanDisplay||known.displayName};}
+    let movement=findMovementByName(cleanMovement);
+    if(!movement){const id=newId();movement={id,name:cleanMovement||cleanDisplay,createdAt:new Date().toISOString(),legacy:false};c.movements[id]=movement;notify();}
+    let variant=findVariant(movement.id,cleanVariant);
+    if(!variant){const id=newId();variant={id,movementId:movement.id,variantName:cleanVariant,displayName:cleanDisplay||movement.name,legacy:false,createdAt:new Date().toISOString()};c.variants[id]=variant;notify();}
+    return {...copy(variant),displayName:cleanDisplay||variant.displayName};
+  };
+  const variantsForMovement=movementId=>Object.values(catalog().variants).filter(v=>v?.movementId===movementId).map(copy);
+  return {catalog,legacyForName,byVariantId,resolveDisplayName,renameDisplay,createOrSelect,variantsForMovement,nameKey};
+}
+const exerciseIdentity=createExerciseIdentityModel(store,{onChange:()=>persist()});
+function exerciseIdentitySlotKey(c,w,d,idx,planId){return 'exidentity_instance_'+safePlanId(planId||getActivePlanId())+'_'+safePlanId(getPlanInstanceDayId(getPlanDay(c,w,d),c,w,d))+'_'+safePlanId(getPlanDay(c,w,d)?.date||'no_date')+'_'+c+'_'+w+'_'+d+'_'+idx;}
+function getLegacyExerciseIdentity(name){return exerciseIdentity.legacyForName(name);}
+function getExerciseIdentityAt(c,w,d,idx){
+  const override=store[exerciseIdentitySlotKey(c,w,d,idx)];
+  if(override?.current?.movementId&&override.current?.variantId)return {...override.current};
+  const name=store[exnameInstanceKey(c,w,d,idx)]||store[exnameTagKey(c,w,d,idx)]||store[exnameCycleKey(c,idx)]||store[exnameDayKey(c,w,d,idx)]||getPlanDay(c,w,d)?.exercises?.[idx]||'';
+  return getLegacyExerciseIdentity(name);
+}
+function getExerciseDisplayNameAt(c,w,d,idx){return getExerciseIdentityAt(c,w,d,idx)?.displayName||getPlanDay(c,w,d)?.exercises?.[idx]||'';}
+function getDataExerciseIdentity(data,c,w,d,idx){
+  if(data?.movementId&&data?.variantId)return {movementId:data.movementId,variantId:data.variantId,displayName:data.exerciseDisplayName||data.displayName||'',variantName:data.variantName||data.exerciseVariantName||'',legacy:false};
+  return getLegacyExerciseIdentity(getHistoricalExName(c,w,d,idx));
+}
+function attachExerciseIdentityToData(data,c,w,d,idx){
+  if(!data||data.variantId)return data;
+  const identity=getExerciseIdentityAt(c,w,d,idx);
+  data.movementId=identity.movementId;data.variantId=identity.variantId;data.exerciseDisplayName=identity.displayName;data.exerciseVariantName=identity.variantName;data.machine=String(data.machine||identity.variantName||'Standard');
+  return data;
+}
+function exerciseIdentityMatches(data,c,w,d,idx,wanted){
+  if(!wanted?.variantId)return false;
+  if(data?.variantId)return data.variantId===wanted.variantId;
+  const legacy=getLegacyExerciseIdentity(getHistoricalExName(c,w,d,idx));
+  return !!wanted.legacy&&legacy.variantId===wanted.variantId;
+}
+function getV2RecordKey(identity){return identity?.variantId?'rec_v2_'+safePlanId(identity.variantId):'';}
+function isPRStorageKey(key){return String(key||'').startsWith('rec_');}
+function getPRStorageDisplayName(key){const record=store[key]||{};return String(key||'').startsWith('rec_v2_')?String(record.displayName||record.variantName||'Unbenannte Variante'):String(key||'').slice(4);}
+/* EXERCISE_IDENTITY_MODEL_END */
 function getD(c,w,d,e){const k=dataKey(c,w,d,e);if(!store[k])store[k]={g1:'',r1:'',g2:'',r2:'',g3:'',r3:'',notes:'',done:false,machine:'Standard'};return store[k];}
-function getRecord(n){return store['rec_'+n]||null;}
+function getRecord(n,identity){
+  if(!identity)return store['rec_'+n]||null;
+  const v2Key=getV2RecordKey(identity);
+  if(v2Key&&store[v2Key])return store[v2Key];
+  return identity.legacy?store['rec_'+n]||null:null;
+}
 function getBestSetFromTrainingData(d){
   let best=null;
   const p=(v)=>parseFloat(String(v||0).replace(',','.'));
@@ -2399,9 +2536,9 @@ function getBestSetFromTrainingData(d){
   });
   return best;
 }
-function getMachinePRFromLocalHistory(exName,machine){
-  const wanted=normExLookupName(exName);
-  if(!wanted)return null;
+function getMachinePRFromLocalHistory(exName,machine,identity){
+  const wantedIdentity=identity||exerciseIdentity.resolveDisplayName(exName);
+  if(!wantedIdentity?.variantId)return null;
   let best=null;
   for(let c=0;c<getPlanCycles().length;c++){
     const weeks=getPlanCycles()[c]?.weeks||[];
@@ -2412,9 +2549,8 @@ function getMachinePRFromLocalHistory(exName,machine){
       for(let d=0;d<days.length;d++){
         const day=days[d];
         for(let i=0;i<(day?.exercises||[]).length;i++){
-          const histName=getHistoricalExName(c,w,d,i);
-          if(normExLookupName(histName)!==wanted)continue;
           const data=getD(c,w,d,i);
+          if(!exerciseIdentityMatches(data,c,w,d,i,wantedIdentity))continue;
           if(!machineMatchesEntry(data,machine))continue;
           const set=getBestSetFromTrainingData(data);
           const orm=calc1RM(data);
@@ -2428,31 +2564,34 @@ function getMachinePRFromLocalHistory(exName,machine){
   }
   return best;
 }
-function setRecord(n,o,d,w,reps,source){
-  const prev=getRecord(n)||{};
-  store['rec_'+n]={...prev,orm:Math.round(o*10)/10,date:d,weight:w||null,reps:reps||null,source:source||prev.source||'local'};
+function setRecord(n,o,d,w,reps,source,identity){
+  const resolved=identity||null;
+  const key=resolved?getV2RecordKey(resolved):'rec_'+n;
+  if(!key)return;
+  const prev=store[key]||{};
+  store[key]={...prev,orm:Math.round(o*10)/10,date:d,weight:w||null,reps:reps||null,source:source||prev.source||'local',...(resolved?.variantId?{movementId:resolved.movementId,variantId:resolved.variantId,displayName:resolved.displayName,variantName:resolved.variantName}: {})};
   persist();
 }
 function migratePrRecordOnRename(oldName,newName){
   // Sichtbarer Planname ist keine ausreichende Identitaet fuer eine PR-Migration.
   return false;
 }
-function maybeUpdateRecord(n,o,d,w,reps,source){
-  const r=getRecord(n);
-  if(!r||o>(parseFloat(r.orm)||0)){setRecord(n,o,d,w,reps,source);return true;}
+function maybeUpdateRecord(n,o,d,w,reps,source,identity){
+  const r=getRecord(n,identity);
+  if(!r||o>(parseFloat(r.orm)||0)){setRecord(n,o,d,w,reps,source,identity);return true;}
   // Bestes Rohgewicht auch ohne 1RM-PR aktualisieren
   if(w&&(!r.weight||w>r.weight)){r.weight=w;if(reps)r.reps=reps;persist();}
   return false;
 }
-function checkPR(n,o,rawWeight,reps){
-  if(maybeUpdateRecord(n,o,getCurrentDateStr(),rawWeight||null,reps||null,'local'))return true;
+function checkPR(n,o,rawWeight,reps,identity){
+  if(maybeUpdateRecord(n,o,getCurrentDateStr(),rawWeight||null,reps||null,'local',identity))return true;
   return false;
 }
 
-function updateLocalPRFromTrainingData(exName,data,date,source){
+function updateLocalPRFromTrainingData(exName,data,date,source,identity){
   const best=getBestSetFromTrainingData(data);
   if(!best||!best.orm)return false;
-  return maybeUpdateRecord(exName,best.orm,date||getCurrentDateStr(),best.weight,best.reps,source||'local');
+  return maybeUpdateRecord(exName,best.orm,date||getCurrentDateStr(),best.weight,best.reps,source||'local',identity||getDataExerciseIdentity(data,C,W,D,0));
 }
 
 function parsePRNum(v){
@@ -2547,16 +2686,17 @@ function rebuildPRsFromHistory(silent=true) {
     if(!m) continue;
     const [c,w,d,e] = (isLegacyMainPlan(planId)?key.split('_'):m.slice(1)).map(Number);
     if(!getPlanDay(c,w,d)?.exercises[e]) continue;
-    const exName = getPlanDay(c,w,d).exercises[e];
+    const exName = getHistoricalExName(c,w,d,e)||getPlanDay(c,w,d).exercises[e];
     const data = store[key];
     if(!data?.g1) continue;
     const orm = calc1RM(data);
     if(!orm || orm <= 0) continue;
-    const rec = getRecord(exName);
+    const identity=data?.variantId?getDataExerciseIdentity(data,c,w,d,e):null;
+    const rec = getRecord(exName,identity);
     if(!rec || orm > rec.orm){
       const date = getPlanDay(c,w,d).date || getCurrentDateStr();
       const rawWeight = parseFloat(data.g1)||null;
-      setRecord(exName, Math.round(orm*10)/10, date, rawWeight);
+      setRecord(exName, Math.round(orm*10)/10, date, rawWeight,null,'rebuild',identity);
       updated++;
     }
   }
@@ -2753,8 +2893,8 @@ function addQualityIssue(issues,text,count=1){
 function buildDataQualityReport(){
   const issues=[];
   const bestNames=Array.isArray(store.prBestleistungenNames)?new Set(store.prBestleistungenNames.filter(Boolean)):null;
-  Object.keys(store).filter(k=>k.startsWith('rec_')).forEach(k=>{
-    const name=k.replace('rec_','');
+  Object.keys(store).filter(isPRStorageKey).forEach(k=>{
+    const name=getPRStorageDisplayName(k);
     const rec=store[k]||{};
     const orm=parseFloat(String(rec.orm||'').replace(',','.'));
     if(!Number.isFinite(orm)||orm<=0)addQualityIssue(issues,name+': PR ohne gültiges 1RM');
@@ -3023,7 +3163,7 @@ function buildCockpitTrainingSummary(){
   try{
     recentPRs=Object.keys(store).filter(key=>key.indexOf('rec_')===0).map(key=>{
       const record=store[key]||{};
-      return {exercise:key.slice(4),value:record.weight!=null?String(record.weight)+' kg':record.orm!=null?String(record.orm)+' kg (e1RM)':'',reps:record.reps!=null?Number(record.reps):null,date:record.date!=null?String(record.date):null};
+      return {exercise:getPRStorageDisplayName(key),value:record.weight!=null?String(record.weight)+' kg':record.orm!=null?String(record.orm)+' kg (e1RM)':'',reps:record.reps!=null?Number(record.reps):null,date:record.date!=null?String(record.date):null};
     }).filter(record=>record.value).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).slice(0,5);
   }catch(e){recentPRs=[];}
   const recentMuscleGroups=[];
@@ -4156,10 +4296,10 @@ function updateMachinePRUI(idx){
 }
 
 function getRecommendationDataBasis(exName,machine){
-  const wanted=normExLookupName(exName);
+  const wantedIdentity=exerciseIdentity.resolveDisplayName(exName);
   const currentPos=getPlanDayPosition(C,W,D);
   const entries=[];
-  if(!wanted||!currentPos)return{level:'thin',count:0};
+  if(!wantedIdentity?.variantId||!currentPos)return{level:'thin',count:0};
 
   for(let w=W;w>=0&&entries.length<3;w--){
     const week=getPlanWeek(C,w);
@@ -4172,9 +4312,8 @@ function getRecommendationDataBasis(exName,machine){
       if(!pos||pos.order>=currentPos.order)continue;
       const day=days[d];
       for(let i=0;i<(day?.exercises?.length||0);i++){
-        const histName=getHistoricalExName(C,w,d,i);
-        if(normExLookupName(histName)!==wanted)continue;
         const data=getD(C,w,d,i);
+        if(!exerciseIdentityMatches(data,C,w,d,i,wantedIdentity))continue;
         if(machine!==undefined&&!machineMatchesEntry(data,machine))continue;
         const orm=calc1RM(data);
         const volume=calcTotal(data);
@@ -4278,7 +4417,7 @@ function buildTrainingSummary(toSend){
       if(orm>prev.orm+0.5)improved++;
       if(orm<prev.orm*0.95)declines++;
     }
-    const record=getRecord(x.name);
+    const record=getRecord(x.name,getExerciseIdentityAt(C,W,D,x.idx));
     if(record&&orm&&orm>record.orm&&quality.confidence==='high')prs++;
   });
   const parts=[
@@ -4311,7 +4450,7 @@ const AI = {
     const exercises=day.exercises.map((ex,i)=>{
       const d=getD(C,W,D,i);
       const name=getExName(i);
-      const rec=getRecord(name);
+      const rec=getRecord(name,getExerciseIdentityAt(C,W,D,i));
       const pos=calcPOS(d);
       // Trend berechnen: letzte 4 Wochen POS
       const history=[];
@@ -4506,10 +4645,10 @@ function renderLastTrainingBox(prevEntry,machine,idx){
     +(data.g1&&data.r1?'<button class="quick-apply-btn" onclick="applyPreviousSet('+idx+')">Vorwerte &uuml;bernehmen</button>':'')
     +'</div>';
 }
-function collectExerciseSetHistory(exName,limit=4,machine){
-  const wanted=normExLookupName(exName);
+function collectExerciseSetHistory(exName,limit=4,machine,identity){
+  const wantedIdentity=identity||exerciseIdentity.resolveDisplayName(exName);
   const rows=[];
-  if(!wanted)return rows;
+  if(!wantedIdentity)return rows;
   for(let c=C;c>=0&&rows.length<limit;c--){
     const weeks=getPlanCycles()[c]?.weeks||[];
     const wStart=(c===C)?W:weeks.length-1;
@@ -4523,9 +4662,8 @@ function collectExerciseSetHistory(exName,limit=4,machine){
         const day=days[d];
         if(!day)continue;
         for(let i=0;i<(day.exercises||[]).length;i++){
-          const histName=getHistoricalExName(c,w,d,i);
-          if(normExLookupName(histName)!==wanted)continue;
           const data=getD(c,w,d,i);
+          if(!exerciseIdentityMatches(data,c,w,d,i,wantedIdentity))continue;
           if(machine!==undefined&&!machineMatchesEntry(data,machine))continue;
           if(!data||(!data.g1&&!data.r1))continue;
           rows.push({date:day.date||'?',data});
@@ -4679,7 +4817,7 @@ function renderWorkout(){
     const isOpen=(i===0&&!d.done);
     const isActiveExercise=(i===nextExerciseIndex&&!d.done);
     const exName=getExName(i);
-    const rec=getRecord(exName);
+    const rec=getRecord(exName,getExerciseIdentityAt(C,W,D,i));
     const isPR=orm&&rec&&orm>rec.orm;
     const machineValue=getMachineValue(d);
 
@@ -4965,7 +5103,7 @@ function toggleDone(idx){
   haptic(d.done?20:10);
   if(d.done){
     const orm=calc1RM(d);
-    if(orm){const exName=getExName(idx);const best=getBestSetFromTrainingData(d)||{};const rawWeight=best.weight||parseFloat(d.g1)||null;const rawReps=best.reps||null;const isPR=checkPR(exName,orm,rawWeight,rawReps);if(isPR&&API_URL)savePRToSheet(exName,orm,rawWeight,rawReps);}
+    if(orm){const identity=getExerciseIdentityAt(C,W,D,idx);attachExerciseIdentityToData(d,C,W,D,idx);const exName=identity.displayName;const best=getBestSetFromTrainingData(d)||{};const rawWeight=best.weight||parseFloat(d.g1)||null;const rawReps=best.reps||null;const isPR=checkPR(exName,orm,rawWeight,rawReps,identity);if(isPR&&API_URL)savePRToSheet(exName,orm,rawWeight,rawReps);}
   }
   renderWorkout();
   if(d.done){
@@ -4981,11 +5119,7 @@ function toggleDone(idx){
 }
 
 function getExName(idx){
-  return store[exnameInstanceKey(C,W,D,idx)]
-    || store[exnameTagKey(C,W,D,idx)]
-    || store[exnameCycleKey(C,idx)]
-    || store[exnameDayKey(C,W,D,idx)]
-    || getPlanDay(C,W,D).exercises[idx];
+  return getExerciseDisplayNameAt(C,W,D,idx);
 }
 
 function normExLookupName(name){
@@ -5108,6 +5242,8 @@ function setExerciseInstanceName(c,w,d,idx,name,planId){
 function getHistoricalExName(c,w,d,idx){
   const day=getPlanDay(c,w,d);
   if(!day)return '';
+  const identityOverride=store[exerciseIdentitySlotKey(c,w,d,idx)];
+  if(identityOverride?.current?.displayName)return identityOverride.current.displayName;
   return store[exnameInstanceKey(c,w,d,idx)]
     || store[exnameTagKey(c,w,d,idx)]
     || store[exnameCycleKey(c,idx)]
@@ -5129,10 +5265,10 @@ function getSheetExerciseName(c,w,d,idx){
 }
 
 function findPreviousExerciseEntry(exName,opts={}){
-  const wanted=normExLookupName(exName);
+  const wantedIdentity=opts.identity||exerciseIdentity.resolveDisplayName(exName);
   const sameCycleOnly=!!opts.sameCycleOnly;
   const machine=opts.machine;
-  if(!wanted)return null;
+  if(!wantedIdentity?.variantId)return null;
   for(let c=C;c>=0;c--){
     if(sameCycleOnly&&c!==C)continue;
     const weeks=getPlanCycles()?.[c]?.weeks||[];
@@ -5148,8 +5284,8 @@ function findPreviousExerciseEntry(exName,opts={}){
         if(!day)continue;
         for(let i=0;i<day.exercises.length;i++){
           const histName=getHistoricalExName(c,w,d,i);
-          if(normExLookupName(histName)!==wanted)continue;
           const data=getD(c,w,d,i);
+          if(!exerciseIdentityMatches(data,c,w,d,i,wantedIdentity))continue;
           if(machine!==undefined&&!machineMatchesEntry(data,machine))continue;
           if(!data||(!data.g1&&!data.r1))continue;
           const orm=calc1RM(data);
@@ -5382,7 +5518,7 @@ function upd(idx,field,val){
 
   // PR check + Flash
   if(orm){
-    const rec=getRecord(getExName(idx));
+    const rec=getRecord(getExName(idx),getExerciseIdentityAt(C,W,D,idx));
     const card=document.getElementById('ec'+idx);
     if(!rec||orm>rec.orm){
       if(card)card.classList.add('pr-card');
@@ -6163,7 +6299,7 @@ function getSwapScopeSlots(target,scope){
 
 function getSwapScopeOverrideSlots(target,scope){
   const result=getSwapScopeSlots(target,scope);
-  const overrideSlots=result.slots.filter(slot=>Object.prototype.hasOwnProperty.call(store,exnameInstanceKey(slot.c,slot.w,slot.d,slot.idx,target.planId)));
+  const overrideSlots=result.slots.filter(slot=>Object.prototype.hasOwnProperty.call(store,exnameInstanceKey(slot.c,slot.w,slot.d,slot.idx,target.planId))||Object.prototype.hasOwnProperty.call(store,exerciseIdentitySlotKey(slot.c,slot.w,slot.d,slot.idx,target.planId)));
   return {...result,overrideSlots};
 }
 
@@ -6179,8 +6315,9 @@ function updateSwapScopePreview(){
   if(!target){if(impact)impact.textContent='Planansicht hat sich geändert – bitte Übung erneut auswählen.';return;}
   const scope=target.source==='PLAN'?getSwapScope():'instance';
   const result=getSwapScopeOverrideSlots(target,scope);
+  const mode=getSwapMode();
   const scopeText=target.source==='PLAN'
-    ? 'Änderung nur in '+getSwapScopeLabel(scope)+'. Abgeschlossene Satzdaten, PRs, Verlauf und Sheet-Zuordnung bleiben unverändert.'
+    ? (mode==='replace'?'Neue Übung mit eigener Historie. ':'')+'Änderung nur in '+getSwapScopeLabel(scope)+'. Abgeschlossene Satzdaten, PRs, Verlauf und Sheet-Zuordnung bleiben unverändert.'
     : 'Tausch gilt für diese Session.';
   if(note)note.textContent=scopeText;
   if(impact)impact.textContent=result.slots.length+' ungeloggte Stelle(n) betroffen'
@@ -6189,6 +6326,65 @@ function updateSwapScopePreview(){
   if(restoreBtn){
     restoreBtn.hidden=target.source!=='PLAN'||!result.overrideSlots.length;
   }
+}
+
+function getSwapMode(){return document.querySelector('input[name="swapMode"]:checked')?.value||'rename';}
+function getSwapTargetIdentity(target){return getExerciseIdentityAt(target.c,target.w,target.d,target.idx);}
+function setSwapFieldVisibility(id,visible){const field=document.getElementById(id);if(field)field.hidden=!visible;}
+function populateExistingSwapVariants(identity){
+  const sel=document.getElementById('swapExistingVariantSel');if(!sel)return;
+  const variants=exerciseIdentity.variantsForMovement(identity?.movementId||'');
+  sel.innerHTML='<option value="">Neue Variante anlegen …</option>'+variants.map(v=>'<option value="'+escHtml(v.variantId)+'">'+escHtml(v.variantName)+' · '+escHtml(v.displayName)+'</option>').join('');
+}
+function selectExistingSwapVariant(variantId){
+  const variantInp=document.getElementById('swapVariantInp'),displayInp=document.getElementById('swapDisplayInp');
+  if(!variantId){if(variantInp){variantInp.disabled=false;variantInp.value='';}if(displayInp)displayInp.value='';return;}
+  const identity=exerciseIdentity.byVariantId(variantId);if(!identity)return;
+  const movement=exerciseIdentity.catalog().movements[identity.movementId];
+  document.getElementById('swapMovementInp').value=movement?.name||'';
+  if(variantInp){variantInp.value=identity.variantName||'';variantInp.disabled=true;}
+  if(displayInp)displayInp.value=identity.displayName||'';
+}
+function updateSwapModeUI(){
+  const target=getValidatedSwapTarget();if(!target)return;
+  const mode=getSwapMode(),identity=getSwapTargetIdentity(target),movement=exerciseIdentity.catalog().movements[identity.movementId]||{};
+  const movementInp=document.getElementById('swapMovementInp'),variantInp=document.getElementById('swapVariantInp'),displayInp=document.getElementById('swapDisplayInp'),existingSel=document.getElementById('swapExistingVariantSel'),fields=document.getElementById('swapIdentityFields'),history=document.getElementById('swapHistoryNote'),list=document.getElementById('swapList'),custom=document.getElementById('swapCustomInp');
+  if(fields)fields.hidden=false;
+  setSwapFieldVisibility('swapMovementField',mode==='variant'||mode==='replace');
+  setSwapFieldVisibility('swapExistingVariantField',mode==='variant');
+  setSwapFieldVisibility('swapVariantNameField',mode==='variant'||mode==='replace');
+  setSwapFieldVisibility('swapDisplayNameField',true);
+  setSwapFieldVisibility('swapReplacementList',mode==='replace');
+  setSwapFieldVisibility('swapLegacyCustomField',false);
+  setSwapFieldVisibility('swapApplyField',true);
+  if(movementInp){movementInp.value=mode==='replace'?'':(movement.name||identity.displayName);movementInp.disabled=mode!=='replace';}
+  if(displayInp){displayInp.value=mode==='replace'?'':(identity.displayName||getHistoricalExName(target.c,target.w,target.d,target.idx));displayInp.disabled=false;}
+  if(variantInp){variantInp.value=mode==='replace'?'Standard':(identity.variantName||'Standard');variantInp.disabled=mode==='rename';}
+  if(custom)custom.value='';
+  if(mode==='variant'){
+    populateExistingSwapVariants(identity);
+    if(existingSel){existingSel.value=identity.variantId||'';selectExistingSwapVariant(existingSel.value);}
+  }else if(existingSel)existingSel.innerHTML='';
+  if(history)history.textContent=mode==='rename'
+    ?'Nur der Anzeigename ändert sich. Varianten-ID, Verlauf und PR-Zuordnung bleiben identisch.'
+    :mode==='variant'
+      ?'Gerätevarianten teilen die Basisbewegung, führen aber getrennte Verläufe und PRs. Alte Daten bleiben unverändert.'
+      :'Die neue Übung erhält eine eigene Historie. Alte Trainingsdaten und PRs bleiben bei der bisherigen Übung.';
+  if(list){
+    if(mode!=='replace')list.innerHTML='';
+    else{
+    const day=target.day,muscle=day.muscle||'';let pool=[];
+    for(const key of Object.keys(SWAP_POOL)){if(muscle.toLowerCase().includes(key.split(' / ')[0].toLowerCase())||key.toLowerCase().includes(muscle.split('/')[0].trim().toLowerCase())){pool=SWAP_POOL[key];break;}}
+    if(!pool.length)pool=day.exercises.filter((_,i)=>i!==target.idx);
+    list.innerHTML=pool.map(name=>'<button type="button" class="swap-item" onclick="useSwapReplacementName(\''+name.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+"')\"><span>"+escHtml(name)+'</span><span class="swap-tag">→ Auswählen</span></button>').join('');
+    }
+  }
+  updateSwapScopePreview();
+}
+function useSwapReplacementName(name){
+  document.getElementById('swapMovementInp').value=String(name||'').trim();
+  document.getElementById('swapVariantInp').value='Standard';
+  document.getElementById('swapDisplayInp').value=String(name||'').trim();
 }
 
 function invalidateSwapForChangedPlan(){
@@ -6210,38 +6406,18 @@ function openSwapForTarget(source,c,w,d,idx){
   const dayLabel=[day.date,day.tag].filter(Boolean).join(' · ');
   document.getElementById('swapSubtitle').textContent='Aktuelle Übung: '+currentName+' · '+dayLabel;
   document.getElementById('swapFooterNote').textContent=source==='PLAN'
-    ?'Anzeige-/Ersatz-Override nur für ungeloggte Planstellen. „Überall allgemein“ bleibt bewusst deaktiviert.'
+    ?'Lokale Identitäts- und Anzeigenamen-Overrides nur für ungeloggte Planstellen. „Überall allgemein“ bleibt bewusst deaktiviert.'
     :'Tausch gilt für diese Session · Original im Plan bleibt erhalten';
   document.getElementById('swapCustomInp').value='';
   const scopeOptions=document.getElementById('swapScopeOptions');
   if(scopeOptions)scopeOptions.hidden=source!=='PLAN';
-  // Die im Dialog gewählte Reichweite bleibt über Schließen und erneutes Öffnen
-  // erhalten, damit Wiederherstellen denselben Scope wie der Tausch verwendet.
-
-  // Pool basierend auf Muskelgruppe, fallback alle
-  let pool=[];
-  for(const key of Object.keys(SWAP_POOL)){
-    if(muscle.toLowerCase().includes(key.split(' / ')[0].toLowerCase())||
-       key.toLowerCase().includes(muscle.split('/')[0].trim().toLowerCase())){
-      pool=SWAP_POOL[key];break;
-    }
-  }
-  if(!pool.length){
-    // fallback: alle anderen Übungen aus dem gleichen Plan-Tag + generic
-    pool=day.exercises.filter((_,i)=>i!==idx);
-  }
-
-  const list=document.getElementById('swapList');
-  list.innerHTML=pool.map(name=>{
-    const isCurrent=name===currentName;
-    const jsName=name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-    return '<button type="button" class="swap-item'+(isCurrent?' current':'')+'" onclick="confirmSwap(\''+jsName+'\')">'
-      +'<span>'+escHtml(name)+'</span>'
-      +(isCurrent?'<span class="swap-tag">AKTUELL</span>':'<span class="swap-tag">→ Wählen</span>')
-      +'</button>';
-  }).join('');
-
-  updateSwapScopePreview();
+  const currentIdentity=getSwapTargetIdentity(validated);
+  const currentMovement=exerciseIdentity.catalog().movements[currentIdentity.movementId]||{};
+  document.getElementById('swapMovementInp').value=currentMovement.name||currentName;
+  document.getElementById('swapVariantInp').value=currentIdentity.variantName||'Standard';
+  document.getElementById('swapDisplayInp').value=currentIdentity.displayName||currentName;
+  document.querySelector('input[name="swapMode"][value="rename"]').checked=true;
+  updateSwapModeUI();
   document.getElementById('swapModal').classList.add('open');
 }
 
@@ -6270,17 +6446,34 @@ function closeSwap(){
 
 function confirmSwap(name){
   if(_swapBusy)return;
-  const clean=String(name||'').trim();
   const target=getValidatedSwapTarget();
-  if(!clean)return;
   if(!target){invalidateSwapForChangedPlan();return;}
+  const mode=getSwapMode();
+  const current=getSwapTargetIdentity(target);
+  const movementName=String(document.getElementById('swapMovementInp')?.value||'').trim();
+  const variantName=String(document.getElementById('swapVariantInp')?.value||'').trim()||'Standard';
+  const displayName=String(document.getElementById('swapDisplayInp')?.value||name||'').trim();
+  if(!displayName||((mode==='variant'||mode==='replace')&&!movementName)){showStatus('err','Bitte Basisübung und Anzeigename angeben.');return;}
   const scope=target.source==='PLAN'?getSwapScope():'instance';
   const result=getSwapScopeSlots(target,scope);
   if(!result.slots.length){showStatus('err','Keine ungeloggte Planstelle für diese Änderung verfügbar.');return;}
-  if(scope!=='instance'&&!confirm('„'+target.baseName+'“ wird an '+result.slots.length+' ungeloggten Stelle(n) in '+getSwapScopeLabel(scope)+' durch „'+clean+'“ ersetzt. Fortfahren?'))return;
+  if(scope!=='instance'&&!confirm('Die Änderung wird an '+result.slots.length+' ungeloggten Stelle(n) in '+getSwapScopeLabel(scope)+' angewendet. Fortfahren?'))return;
+  let next;
+  if(mode==='rename')next=exerciseIdentity.renameDisplay(current.variantId,displayName)||{...current,displayName};
+  else if(mode==='variant'){
+    const selected=document.getElementById('swapExistingVariantSel')?.value||'';
+    next=exerciseIdentity.createOrSelect(movementName,variantName,displayName,selected?{variantId:selected}:null);
+    if(next.movementId!==current.movementId){showStatus('err','Gerätevarianten müssen dieselbe Basisübung behalten.');return;}
+  }else next=exerciseIdentity.createOrSelect(movementName,variantName,displayName);
   _swapBusy=true;
   const scrollY=window.scrollY;
-  result.slots.forEach(slot=>setExerciseInstanceName(slot.c,slot.w,slot.d,slot.idx,clean,target.planId));
+  result.slots.forEach(slot=>{
+    const identityKey=exerciseIdentitySlotKey(slot.c,slot.w,slot.d,slot.idx,target.planId);
+    const existing=store[identityKey];
+    const original=existing?.original||getLegacyExerciseIdentity(getPlanDay(slot.c,slot.w,slot.d)?.exercises?.[slot.idx]||target.baseName);
+    store[identityKey]={original,current:{...next}};
+    setExerciseInstanceName(slot.c,slot.w,slot.d,slot.idx,next.displayName,target.planId);
+  });
   persist();
   const source=target.source;
   closeSwap();
@@ -6291,7 +6484,8 @@ function confirmSwap(name){
 
 function confirmSwapCustom(){
   const val=document.getElementById('swapCustomInp').value.trim();
-  if(!val)return;
+  if(val&&!document.getElementById('swapDisplayInp').value.trim())document.getElementById('swapDisplayInp').value=val;
+  if(val&&getSwapMode()==='replace'&&!document.getElementById('swapMovementInp').value.trim())document.getElementById('swapMovementInp').value=val;
   confirmSwap(val);
 }
 
@@ -6307,7 +6501,7 @@ function restoreOriginalSwap(){
   if(scope!=='instance'&&!confirm(slots.length+' Override(s) in '+getSwapScopeLabel(scope)+' wiederherstellen?'))return;
   _swapBusy=true;
   const scrollY=window.scrollY;
-  slots.forEach(slot=>delete store[exnameInstanceKey(slot.c,slot.w,slot.d,slot.idx,target.planId)]);
+  slots.forEach(slot=>{delete store[exnameInstanceKey(slot.c,slot.w,slot.d,slot.idx,target.planId)];delete store[exerciseIdentitySlotKey(slot.c,slot.w,slot.d,slot.idx,target.planId)];});
   persist();
   closeSwap();
   renderPlanWeekView();
@@ -6998,7 +7192,7 @@ function renderProgressChart(){
     +svg;
 
   // Stats
-  const rec=getRecord(exName);
+  const rec=getRecord(exName,exerciseIdentity.resolveDisplayName(exName));
   statGrid.innerHTML=
     '<div class="prog-stat-card primary"><div class="prog-stat-key">Aktuell</div><div class="prog-stat-val">'+latest+'</div><div class="prog-stat-diff prog-stat-diff-mu">kg 1RM</div></div>'
     +'<div class="prog-stat-card"><div class="prog-stat-key">Bestleistung</div><div class="prog-stat-val prog-stat-val-warn">'+(rec?rec.orm:'Noch keine Daten')+'</div><div class="prog-stat-diff prog-stat-diff-mu">'+(rec?'kg 1RM':'manueller PR fehlt')+'</div></div>'
@@ -7180,12 +7374,12 @@ function showSummary(){
   const day=getPlanDay(C,W,D);
   const exercises=day.exercises.map((ex,i)=>{
     const d=getD(C,W,D,i);
-    return{name:ex,...d,tot:calcTotal(d),orm:calc1RM(d)};
+    return{name:getExName(i),identity:getExerciseIdentityAt(C,W,D,i),...d,tot:calcTotal(d),orm:calc1RM(d)};
   }).filter(e=>e.g1||e.r1);
   if(!exercises.length){alert('Noch keine Satzdaten für diesen Tag. Trage zuerst Gewicht oder Wiederholungen ein.');return;}
   const totalVol=exercises.reduce((a,e)=>a+(e.tot||0),0);
   const maxVol=Math.max(...exercises.map(e=>e.tot||0));
-  const prs=exercises.filter(e=>{if(!e.orm)return false;const r=getRecord(e.name);return !r||e.orm>r.orm;});
+  const prs=exercises.filter(e=>{if(!e.orm)return false;const r=getRecord(e.name,e.identity);return !r||e.orm>r.orm;});
 
   let html='<div class="vol-total-wrap">'
     +'<div class="vol-total-lbl">Gesamtvolumen</div>'
@@ -7260,6 +7454,7 @@ async function saveToSheet(){
       const displayName=getHistoricalExName(snapC,snapW,snapD,i)||ex;
       const sheetExerciseName=getSheetExerciseName(snapC,snapW,snapD,i)||ex;
       if(!d.g1&&!d.r1)return null; // keine Daten
+      attachExerciseIdentityToData(d,snapC,snapW,snapD,i);
       const p=prev[i]||{};
       const dayValues=getDayValues();
       const dirty=['g1','r1','g2','r2','g3','r3','rpe','notes'].some(f=>String(d[f])!==String(p[f]||''));
@@ -7320,8 +7515,9 @@ async function saveToSheet(){
   });
   const payload = JSON.stringify(withAuth({sheet:sheetName, date:day.date, exercises}));
   const localPrUpdates=toSend.reduce((count,e)=>{
-    const data={g1:e.g1,r1:e.r1,g2:e.g2,r2:e.r2,g3:e.g3,r3:e.r3};
-    return count+(updateLocalPRFromTrainingData(e.displayName||e.uebung,data,day.date,'save')?1:0);
+    const data=getD(snapC,snapW,snapD,e._exIdx);
+    const identity=getExerciseIdentityAt(snapC,snapW,snapD,e._exIdx);
+    return count+(updateLocalPRFromTrainingData(e.displayName||e.uebung,data,day.date,'save',identity)?1:0);
   },0);
   if(localPrUpdates&&document.getElementById('tab-records')?.classList.contains('active'))renderRecords();
 
@@ -7794,8 +7990,8 @@ function parsePRDateOrder(rawDate){
 
 function buildBestleistungenTimelineEntries(){
   return Object.keys(store)
-    .filter(k=>k.startsWith('rec_'))
-    .map(k=>({name:k.replace('rec_',''),rec:store[k]||{}}))
+    .filter(isPRStorageKey)
+    .map(k=>({name:getPRStorageDisplayName(k),rec:store[k]||{}}))
     .filter(item=>item.rec.source==='Bestleistungen'&&shouldShowPRRecordName(item.name)&&parseFloat(item.rec.orm)>0)
     .map(item=>({
       name:item.name,
@@ -7899,9 +8095,9 @@ function shouldShowPRRecordName(name){
 }
 
 function buildPrInsightSummary(){
-  const allPRs=Object.keys(store).filter(k=>k.startsWith('rec_')).filter(k=>shouldShowPRRecordName(k.replace('rec_','')));
+  const allPRs=Object.keys(store).filter(isPRStorageKey).filter(k=>shouldShowPRRecordName(getPRStorageDisplayName(k)));
   const currentWeekDates=new Set((getPlanWeek(C,W)?.days||[]).map(d=>d.date));
-  const records=allPRs.map(k=>({name:k.replace('rec_',''),...store[k]})).filter(r=>r.orm>0);
+  const records=allPRs.map(k=>({name:getPRStorageDisplayName(k),...store[k]})).filter(r=>r.orm>0);
   const newThisWeek=records.filter(r=>currentWeekDates.has(String(r.date||''))).length;
   const strongest=records.slice().sort((a,b)=>(b.orm||0)-(a.orm||0))[0];
   let bestProgress=null;
@@ -7953,7 +8149,8 @@ function renderRecords() {
     return null;
   }
 
-  const allPRs = Object.keys(store).filter(k => k.startsWith('rec_')).filter(k=>shouldShowPRRecordName(k.replace('rec_','')));
+  const getVisibleRecord=name=>{const identity=exerciseIdentity.resolveDisplayName(name);return getRecord(name,identity);};
+  const allPRs = Object.keys(store).filter(isPRStorageKey).filter(k=>shouldShowPRRecordName(getPRStorageDisplayName(k)));
   const prCount = allPRs.length;
   const currentWeekDates=new Set((getPlanWeek(C,W)?.days||[]).map(d=>d.date));
   const newThisWeek=allPRs.filter(k=>currentWeekDates.has(String((store[k]||{}).date||''))).length;
@@ -7965,8 +8162,8 @@ function renderRecords() {
   let hofHtml='';
   if(bwVal>0&&prCount>0){
     const ranked=allPRs.map(k=>{
-      const name=k.replace('rec_','');
-      const rec=getRecord(name);
+      const name=getPRStorageDisplayName(k);
+      const rec=store[k]||null;
       const ratio=rec?Math.round(rec.orm/bwVal*100)/100:0;
       return{name,orm:rec?rec.orm:0,ratio,weight:rec?rec.weight:null,reps:rec?rec.reps:null};
     }).filter(r=>r.orm>0).sort((a,b)=>b.ratio-a.ratio).slice(0,3);
@@ -7996,6 +8193,7 @@ function renderRecords() {
   }
 
   function getOrmHistoryByName(exName) {
+    const wantedIdentity=exerciseIdentity.resolveDisplayName(exName);
     const results = [];
     outer:
     for (let ci = getPlanCycles().length - 1; ci >= 0; ci--) {
@@ -8003,13 +8201,13 @@ function renderRecords() {
         const week = getPlanWeek(ci,wi);
         if (week.isDeload) continue;
         for (let di = 0; di < week.days.length; di++) {
-          const exIdx = week.days[di].exercises.indexOf(exName);
-          if (exIdx < 0) continue;
-          const d2 = getD(ci, wi, di, exIdx);
-          const orm = calc1RM(d2);
-          if (!orm) continue;
-          results.unshift({ orm, date: week.days[di].date });
-          if (results.length >= 8) break outer;
+          for(let exIdx=0;exIdx<week.days[di].exercises.length;exIdx++){
+            const d2=getD(ci,wi,di,exIdx);
+            if(!exerciseIdentityMatches(d2,ci,wi,di,exIdx,wantedIdentity))continue;
+            const orm=calc1RM(d2);if(!orm)continue;
+            results.unshift({orm,date:week.days[di].date});
+            if(results.length>=8)break outer;
+          }
         }
       }
     }
@@ -8038,13 +8236,20 @@ function renderRecords() {
       +'</svg>';
   }
 
-  let html = buildPrInsightSummary()+hofHtml;
+  const legacyPRs=Object.keys(store).filter(k=>k.startsWith('rec_')&&!k.startsWith('rec_v2_')).map(key=>({name:key.slice(4),rec:store[key]||{}})).filter(item=>item.rec.orm);
+  const legacyPrHtml=legacyPRs.length
+    ?'<div class="pr-insight"><div class="pr-insight-line">Legacy-PRs (namensbasiert, nicht migriert)</div><div class="pr-insight-grid">'+legacyPRs.map(item=>'<div class="pr-insight-kv"><div class="pr-insight-k">'+escHtml(item.name)+'</div><div class="pr-insight-v">'+escHtml(item.rec.orm)+' kg</div></div>').join('')+'</div></div>'
+    :'';
+  let html = buildPrInsightSummary()+hofHtml+legacyPrHtml;
 
-  PR_GROUPS.forEach((group, gi) => {
+  const existingGroupNames=new Set(PR_GROUPS.flatMap(group=>group.exercises));
+  const variantGroupNames=allPRs.map(getPRStorageDisplayName).filter(name=>!existingGroupNames.has(name));
+  const displayGroups=PR_GROUPS.concat(variantGroupNames.length?[{label:'Weitere Varianten',exercises:[...new Set(variantGroupNames)],tier:3}]:[]);
+  displayGroups.forEach((group, gi) => {
     // Filter anwenden
     const filteredEx = group.exercises.filter(e => {
       if(!shouldShowPRRecordName(e))return false;
-      const has = !!getRecord(e);
+      const has = !!getVisibleRecord(e);
       if(prFilter==='has_pr') return has;
       if(prFilter==='no_pr') return !has;
       return true;
@@ -8053,7 +8258,7 @@ function renderRecords() {
 
     const tier = group.tier || 3;
     const tierCls = 'tier-'+tier;
-    const groupPRCount = group.exercises.filter(e => shouldShowPRRecordName(e)&&!!getRecord(e)).length;
+    const groupPRCount = group.exercises.filter(e => shouldShowPRRecordName(e)&&!!getVisibleRecord(e)).length;
     const visibleGroupTotal = group.exercises.filter(e=>shouldShowPRRecordName(e)).length;
     const gid = 'prg_' + gi;
     const badge = groupPRCount > 0
@@ -8069,7 +8274,7 @@ function renderRecords() {
     html += '<div class="pr-group-body'+(tier===1?' open':'')+'" id="'+gid+'_body">';
 
     filteredEx.forEach(exName => {
-      const rec  = getRecord(exName);
+      const rec  = getVisibleRecord(exName);
       const hist = getOrmHistoryByName(exName);
       const hasPR = !!rec;
       const safeId = exName.replace(/[^a-z0-9]/gi, '_');
@@ -8149,7 +8354,8 @@ function savePRManual(exName) {
   const val = parseFloat(String(inp.value).replace(',','.'));
   if (!val || val <= 0) { inp.style.borderColor='var(--acc2)'; return; }
   inp.style.borderColor='var(--acc)';
-  setRecord(exName, val, getCurrentDateStr());
+  const identity=exerciseIdentity.resolveDisplayName(exName);
+  setRecord(exName, val, getCurrentDateStr(),null,null,'manual',identity.legacy?null:identity);
   if (API_URL) savePRToSheet(exName, val);
   // Card sofort neu rendern
   renderRecords();
@@ -8157,7 +8363,8 @@ function savePRManual(exName) {
 
 function deletePR(exName) {
   if(!confirm('Diesen PR wirklich löschen?')) return;
-  delete store['rec_'+exName];
+  const identity=exerciseIdentity.resolveDisplayName(exName);
+  delete store[identity.legacy?'rec_'+exName:getV2RecordKey(identity)];
   persist();
   renderRecords();
 }
@@ -8165,7 +8372,7 @@ function deletePR(exName) {
 function showHistory(exIdx){
   const day=getPlanDay(C,W,D);
   const name=getExName(exIdx);
-  const wanted=normExLookupName(name);
+  const wantedIdentity=getExerciseIdentityAt(C,W,D,exIdx);
   const machineValue=getMachineValue(getD(C,W,D,exIdx));
   const rows=[];
   for(let ci=C;ci>=0&&rows.length<6;ci--){
@@ -8178,9 +8385,8 @@ function showHistory(exIdx){
         if(ci===C&&wi===W&&di===D)continue;
         const histDay=week.days[di];
         for(let hi=0;hi<(histDay?.exercises||[]).length&&rows.length<6;hi++){
-          const histName=getHistoricalExName(ci,wi,di,hi);
-          if(normExLookupName(histName)!==wanted)continue;
           const d2=getD(ci,wi,di,hi);
+          if(!exerciseIdentityMatches(d2,ci,wi,di,hi,wantedIdentity))continue;
           if(!machineMatchesEntry(d2,machineValue))continue;
           if(!d2.g1&&!d2.r1)continue;
           rows.push({date:histDay?.date||'?',g1:d2.g1,r1:d2.r1,g2:d2.g2,r2:d2.r2,g3:d2.g3,r3:d2.r3,pos:calcPOS(d2),orm:calc1RM(d2)});
