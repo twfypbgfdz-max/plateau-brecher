@@ -224,6 +224,7 @@ main{padding:14px;max-width:860px;}
 .pr-sub{font-size:9px;line-height:1.45;}
 .pr-insight-grid{gap:7px;margin-top:10px;}
 .pr-insight-kv{padding:8px 9px;background:rgba(255,255,255,.025);border-color:rgba(255,255,255,.075);}
+.pr-top3 .pr-insight-kv{min-height:0;}
 .pr-insight-k{font-size:8px;letter-spacing:1px;margin-bottom:3px;}
 .pr-insight-v{font-size:18px;color:var(--tx2);letter-spacing:.5px;overflow-wrap:anywhere;}
 .weekly-v.good,.pr-insight-v.good{color:var(--ok);}
@@ -1178,6 +1179,7 @@ main{padding:14px;max-width:860px;}
   .pr-insight{padding:11px 12px;margin-bottom:12px;}
   .weekly-grid{grid-template-columns:1fr;gap:9px;}
   .pr-insight-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;}
+  .pr-top3 .pr-insight-grid{grid-template-columns:1fr;gap:7px;}
   .weekly-primary,.pr-primary{font-size:28px;}
   .pr-primary{font-size:21px;}
   .weekly-v,.pr-insight-v{font-size:24px;}
@@ -1864,9 +1866,13 @@ const PLAN = [{"weeks":[{"weekLabel":"Woche 1","isDeload":false,"isSchool":false
 // STORAGE
 // ============================================================
 const SK='pb_v12_0_test';
-const APP_VERSION='V13.3.3-test';
+const APP_VERSION='V13.3.4-test';
 const BUILD_DATE='02.08.2026';
 /*
+CHANGELOG V13.3.4-test
+- Moderne V2-PRs werden einmalig einer festen Kategorie oder „Weitere Varianten“ zugeordnet.
+- Top 3 ist auf Mobil ein einspaltiger, gleichmäßiger Kartenstapel.
+
 CHANGELOG V13.3.3-test
 - Sichtbare Versionsfelder werden aus APP_VERSION gesetzt.
 - PR-Übersicht ist mobil kompakter: Suche, einklappbare Kategorien, Legacy-Abschnitt und Wartung.
@@ -8283,6 +8289,25 @@ function buildPRCardV133(options){
   return html+'</div>';
 }
 
+function getFixedPRGroupIndex(name){
+  const normalized=String(name||'').trim();
+  return PR_GROUPS.findIndex(group=>(group.exercises||[]).includes(normalized));
+}
+
+function categorizeModernV2PRRecords(allPRs){
+  const fixed=PR_GROUPS.map(()=>[]),additional=[];
+  (allPRs||[]).filter(key=>String(key||'').startsWith('rec_v2_')).forEach(storageKey=>{
+    const rec=store[storageKey]||{};
+    if(!rec.orm||!String(rec.variantId||'').trim())return;
+    const name=getPRStorageDisplayName(storageKey);
+    const item={storageKey,name,rec,editable:false,key:'v2_'+storageKey,source:'Varianten-PR'};
+    const groupIndex=getFixedPRGroupIndex(name);
+    if(groupIndex>=0)fixed[groupIndex].push(item);
+    else additional.push(item);
+  });
+  return {fixed,additional};
+}
+
 function renderRecordsV133(){
   const list=document.getElementById('recordsList');
   const overview=document.getElementById('recordsOverview');
@@ -8298,18 +8323,30 @@ function renderRecordsV133(){
   if(rebuildStatus){const rebuilt=store._lastPrRebuild;rebuildStatus.textContent=rebuilt?'Letzter Neuaufbau: '+(rebuilt.rebuilt||0)+' PRs · '+(rebuilt.preservedManual||0)+' manuell erhalten · '+(rebuilt.skippedLegacy||0)+' Legacy unverändert':'';}
 
   const ranked=allPRs.map(key=>({name:getPRStorageDisplayName(key),rec:store[key]||{}})).filter(item=>item.rec.orm).sort((a,b)=>b.rec.orm-a.rec.orm).slice(0,3);
-  const top3='<div class="pr-insight"><div class="pr-primary">TOP 3</div><div class="pr-sub">Stärkste lokale PRs nach 1RM.</div><div class="pr-insight-grid">'
+  const top3='<div class="pr-insight pr-top3"><div class="pr-primary">TOP 3</div><div class="pr-sub">Stärkste lokale PRs nach 1RM.</div><div class="pr-insight-grid">'
     +(ranked.length?ranked.map((item,index)=>'<div class="pr-insight-kv"><div class="pr-insight-k">#'+(index+1)+' · '+escHtml(item.name)+'</div><div class="pr-insight-v good">'+escHtml(item.rec.orm)+' kg</div></div>').join(''):'<div class="pr-insight-kv"><div class="pr-insight-k">Top 3</div><div class="pr-insight-v">—</div></div>')
     +'</div></div>';
   if(overview)overview.innerHTML=buildPrInsightSummary()+top3;
 
   const passesFilter=rec=>prFilter==='has_pr'?!!rec?.orm:prFilter==='no_pr'?!rec?.orm:true;
-  const existingNames=new Set(PR_GROUPS.flatMap(group=>group.exercises));
-  const groupModels=PR_GROUPS.map((group,index)=>({id:'prg_'+index,label:group.label,tier:group.tier,items:group.exercises.map(name=>({name,rec:getVisibleRecord(name),editable:true,key:'std_'+name}))}));
-  const modernRecords=allPRs.filter(key=>key.startsWith('rec_v2_')).map(key=>({storageKey:key,name:getPRStorageDisplayName(key),rec:store[key]||{}}));
-  const v2NameCount=modernRecords.reduce((counts,item)=>{counts[item.name]=(counts[item.name]||0)+1;return counts;},{});
-  const additional=modernRecords.filter(item=>!existingNames.has(item.name)||v2NameCount[item.name]>1).map(item=>({name:item.name,rec:item.rec,editable:false,key:'v2_'+item.storageKey,source:'Varianten-PR'}));
-  if(additional.length)groupModels.push({id:'prg_variants',label:'Weitere Varianten',tier:3,items:additional});
+  const getVisibleRecordItem=name=>{
+    const identity=exerciseIdentity.resolveDisplayName(name);
+    const v2Key=getV2RecordKey(identity);
+    if(v2Key&&store[v2Key])return {rec:store[v2Key],storageKey:v2Key};
+    const legacyKey='rec_'+name;
+    return {rec:identity.legacy&&store[legacyKey]?store[legacyKey]:null,storageKey:identity.legacy&&store[legacyKey]?legacyKey:''};
+  };
+  const categorizedModern=categorizeModernV2PRRecords(allPRs);
+  const groupModels=PR_GROUPS.map((group,index)=>{
+    const fixedItems=group.exercises.map(name=>{
+      const visible=getVisibleRecordItem(name);
+      return {name,rec:visible.rec,storageKey:visible.storageKey,editable:true,key:'std_'+name};
+    });
+    const shownModernKeys=new Set(fixedItems.map(item=>item.storageKey).filter(key=>String(key).startsWith('rec_v2_')));
+    const detachedModern=categorizedModern.fixed[index].filter(item=>!shownModernKeys.has(item.storageKey));
+    return {id:'prg_'+index,label:group.label,tier:group.tier,items:fixedItems.concat(detachedModern)};
+  });
+  if(categorizedModern.additional.length)groupModels.push({id:'prg_variants',label:'Weitere Varianten',tier:3,items:categorizedModern.additional});
   let searchHits=0,html='';
   groupModels.forEach(group=>{
     const selectable=group.items.filter(item=>shouldShowPRRecordName(item.name)&&passesFilter(item.rec));
