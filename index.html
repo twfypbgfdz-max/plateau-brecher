@@ -1421,8 +1421,9 @@ main{padding:14px;max-width:860px;}
     <button class="pr-filter-chip active" onclick="setPRFilter('all',this)">Alle</button>
     <button class="pr-filter-chip" onclick="setPRFilter('has_pr',this)">✓ Mit PR</button>
     <button class="pr-filter-chip" onclick="setPRFilter('no_pr',this)">✗ Ohne PR</button>
-    <button class="pr-filter-chip" onclick="rebuildPRsFromHistory(false);renderRecords();">⟳ Neu berechnen</button>
+    <button class="pr-filter-chip" onclick="rebuildPRsFromHistory(false);">⟳ Neu berechnen</button>
   </div>
+  <div class="pr-summary" id="prRebuildStatus" aria-live="polite"></div>
   <div id="recordsList"></div>
 </div>
 
@@ -1828,9 +1829,14 @@ const PLAN = [{"weeks":[{"weekLabel":"Woche 1","isDeload":false,"isSchool":false
 // STORAGE
 // ============================================================
 const SK='pb_v12_0_test';
-const APP_VERSION='V13.3.1-test';
-const BUILD_DATE='31.07.2026';
+const APP_VERSION='V13.3.2-test';
+const BUILD_DATE='02.08.2026';
 /*
+CHANGELOG V13.3.2-test
+- PRs werden atomar aus dem besten gueltigen Satz (S1-S3) gespeichert.
+- Moderne `rec_v2_*`-PRs bleiben unabhaengig von importierten Legacy-Namen sichtbar.
+- Der Neuaufbau ersetzt nur automatische V2-PRs; manuelle und Legacy-PRs bleiben erhalten.
+
 CHANGELOG V13.3.0-test
 - Lokale, persistente exercise identity: movementId, variantId, Anzeigename und Variantenname.
   IDs werden zufällig erzeugt, nie aus dem sichtbaren Namen abgeleitet; Alt-Logs bleiben unverändert.
@@ -2529,14 +2535,26 @@ function getRecord(n,identity){
   if(v2Key&&store[v2Key])return store[v2Key];
   return identity.legacy?store['rec_'+n]||null:null;
 }
+// PR-Regel V13.3.2: Nur ein vollstaendiger, positiver Satz ist gueltig. Bei
+// gleichem gerundetem 1RM gewinnt mehr Rohgewicht, dann ein belegbar neueres
+// Voll-Datum; ohne weiteren Beleg bleibt der bereits gespeicherte Satz erhalten.
+function parsePositivePRNumber(value){
+  const parsed=parseFloat(String(value??'').trim().replace(',','.'));
+  return Number.isFinite(parsed)&&parsed>0?parsed:null;
+}
+function getPRSetCandidate(weightValue,repsValue,setIndex=0){
+  const weight=parsePositivePRNumber(weightValue),reps=parsePositivePRNumber(repsValue);
+  if(weight===null||reps===null)return null;
+  const ormRaw=weight*(1+reps/30);
+  if(!Number.isFinite(ormRaw)||ormRaw<=0)return null;
+  return {orm:Math.round(ormRaw),ormRaw,weight,reps,setIndex};
+}
 function getBestSetFromTrainingData(d){
   let best=null;
-  const p=(v)=>parseFloat(String(v||0).replace(',','.'));
-  [['g1','r1'],['g2','r2'],['g3','r3']].forEach(([gKey,rKey])=>{
-    const g=p(d?.[gKey]),r=p(d?.[rKey]);
-    if(!g||!r)return;
-    const orm=g*(1+r/30);
-    if(!best||orm>best.orm)best={orm:Math.round(orm),weight:g,reps:r};
+  [['g1','r1'],['g2','r2'],['g3','r3']].forEach(([gKey,rKey],setIndex)=>{
+    const candidate=getPRSetCandidate(d?.[gKey],d?.[rKey],setIndex);
+    if(!candidate)return;
+    if(!best||candidate.orm>best.orm||(candidate.orm===best.orm&&(candidate.weight>best.weight||(candidate.weight===best.weight&&candidate.setIndex<best.setIndex))))best=candidate;
   });
   return best;
 }
@@ -2568,34 +2586,56 @@ function getMachinePRFromLocalHistory(exName,machine,identity){
   }
   return best;
 }
-function setRecord(n,o,d,w,reps,source,identity){
+function getCurrentPRIsoDate(){return new Date().toISOString().slice(0,10);}
+function getReliablePRDateOrder(value){
+  const raw=String(value||'').trim();
+  let m=raw.match(/^(\d{4})-(\d{2})-(\d{2})(?:T.*)?$/);
+  if(m)return parseInt(m[1]+m[2]+m[3],10);
+  m=raw.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  return m?parseInt(m[3]+String(m[2]).padStart(2,'0')+String(m[1]).padStart(2,'0'),10):0;
+}
+function comparePRCandidates(candidate,existing){
+  const nextOrm=parseFloat(candidate?.orm)||0,prevOrm=parseFloat(existing?.orm)||0;
+  if(nextOrm!==prevOrm)return nextOrm>prevOrm?1:-1;
+  const nextWeight=parseFloat(candidate?.weight)||0,prevWeight=parseFloat(existing?.weight)||0;
+  if(nextWeight!==prevWeight)return nextWeight>prevWeight?1:-1;
+  const nextDate=getReliablePRDateOrder(candidate?.date),prevDate=getReliablePRDateOrder(existing?.date);
+  if(nextDate&&prevDate&&nextDate!==prevDate)return nextDate>prevDate?1:-1;
+  return 0;
+}
+function buildPRCandidateFromData(data,context={}){
+  const set=getBestSetFromTrainingData(data);
+  if(!set)return null;
+  return {...set,date:context.date||'',planDate:context.planDate||'',source:context.source||'local',machine:getMachineValue(data),cycle:context.cycle??null,week:context.week??null,day:context.day??null};
+}
+function buildCurrentPRContext(source){
+  const day=getPlanDay(C,W,D);
+  return {date:getCurrentPRIsoDate(),planDate:day?.date||'',source:source||'local',cycle:C+1,week:W+1,day:D+1};
+}
+function setRecord(n,candidate,identity){
   const resolved=identity||null;
   const key=resolved?getV2RecordKey(resolved):'rec_'+n;
-  if(!key)return;
-  const prev=store[key]||{};
-  store[key]={...prev,orm:Math.round(o*10)/10,date:d,weight:w||null,reps:reps||null,source:source||prev.source||'local',...(resolved?.variantId?{movementId:resolved.movementId,variantId:resolved.variantId,displayName:resolved.displayName,variantName:resolved.variantName}: {})};
+  if(!key||!candidate)return;
+  store[key]={orm:candidate.orm,weight:candidate.weight??null,reps:candidate.reps??null,date:candidate.date||'',planDate:candidate.planDate||'',source:candidate.source||'local',machine:candidate.machine||'',cycle:candidate.cycle??null,week:candidate.week??null,day:candidate.day??null,manual:!!candidate.manual,...(resolved?.variantId?{movementId:resolved.movementId,variantId:resolved.variantId,displayName:resolved.displayName,variantName:resolved.variantName}: {})};
   persist();
 }
 function migratePrRecordOnRename(oldName,newName){
   // Sichtbarer Planname ist keine ausreichende Identitaet fuer eine PR-Migration.
   return false;
 }
-function maybeUpdateRecord(n,o,d,w,reps,source,identity){
-  const r=getRecord(n,identity);
-  if(!r||o>(parseFloat(r.orm)||0)){setRecord(n,o,d,w,reps,source,identity);return true;}
-  // Bestes Rohgewicht auch ohne 1RM-PR aktualisieren
-  if(w&&(!r.weight||w>r.weight)){r.weight=w;if(reps)r.reps=reps;persist();}
+function maybeUpdateRecord(n,candidate,identity){
+  if(!candidate)return false;
+  const record=getRecord(n,identity);
+  if(record?.manual)return false;
+  if(!record||comparePRCandidates(candidate,record)>0){setRecord(n,candidate,identity);return true;}
   return false;
 }
-function checkPR(n,o,rawWeight,reps,identity){
-  if(maybeUpdateRecord(n,o,getCurrentDateStr(),rawWeight||null,reps||null,'local',identity))return true;
-  return false;
+function checkPR(n,data,identity,context){
+  return maybeUpdateRecord(n,buildPRCandidateFromData(data,context||buildCurrentPRContext('local')),identity);
 }
-
-function updateLocalPRFromTrainingData(exName,data,date,source,identity){
-  const best=getBestSetFromTrainingData(data);
-  if(!best||!best.orm)return false;
-  return maybeUpdateRecord(exName,best.orm,date||getCurrentDateStr(),best.weight,best.reps,source||'local',identity||getDataExerciseIdentity(data,C,W,D,0));
+function updateLocalPRFromTrainingData(exName,data,context,identity){
+  const resolvedContext=typeof context==='string'?{...buildCurrentPRContext('save'),planDate:context,source:'save'}:(context||buildCurrentPRContext('save'));
+  return maybeUpdateRecord(exName,buildPRCandidateFromData(data,resolvedContext),identity||getDataExerciseIdentity(data,C,W,D,0));
 }
 
 function parsePRNum(v){
@@ -2669,7 +2709,9 @@ function importPRsFromSheetTrainingHistory(c,data){
   if(!candidates.length)return 0;
   let updated=0;
   candidates.forEach(pr=>{
-    if(maybeUpdateRecord(pr.name,pr.orm,pr.date,pr.weight,pr.reps,'sheet-import'))updated++;
+    const candidate={orm:pr.orm,weight:pr.weight,reps:pr.reps,date:pr.date||'',planDate:pr.date||'',source:'sheet-import'};
+    const existing=store['rec_'+pr.name]||null;
+    if(!existing||comparePRCandidates(candidate,existing)>0){setRecord(pr.name,candidate,null);updated++;}
   });
   store.prSheetImportDone=true;
   persist();
@@ -2678,34 +2720,59 @@ function importPRsFromSheetTrainingHistory(c,data){
 }
 
 // ── PR Auto-Rebuild aus gespeicherter Trainingshistorie ───────
+function getRebuildPlanDay(storageKey,c,w,d){
+  const prefix=String(storageKey||'').match(/^plan_(.+)__\d+_\d+_\d+_\d+$/);
+  const planId=prefix?prefix[1]:'plan_v12_import';
+  const plan=(getPlannerV13().plans||[]).find(item=>item?.id===planId);
+  return plan?.cycles?.[c]?.weeks?.[w]?.days?.[d]||null;
+}
 function rebuildPRsFromHistory(silent=true) {
-  if(silent&&Array.isArray(store.prBestleistungenNames)&&store.prBestleistungenNames.length>0)return 0;
-  let updated = 0;
-  const planId=getActivePlanId();
-  const prefix=isLegacyMainPlan(planId)?'':'plan_'+safePlanId(planId)+'__';
-  const re=isLegacyMainPlan(planId)?/^\d+_\d+_\d+_\d+$/:new RegExp('^'+prefix.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(\\d+)_(\\d+)_(\\d+)_(\\d+)$');
-  for(const key of Object.keys(store)){
-    // Keys haben Format: c_w_d_e (alles Zahlen)
-    const m=key.match(re);
-    if(!m) continue;
-    const [c,w,d,e] = (isLegacyMainPlan(planId)?key.split('_'):m.slice(1)).map(Number);
-    if(!getPlanDay(c,w,d)?.exercises[e]) continue;
-    const exName = getHistoricalExName(c,w,d,e)||getPlanDay(c,w,d).exercises[e];
-    const data = store[key];
-    if(!data?.g1) continue;
-    const orm = calc1RM(data);
-    if(!orm || orm <= 0) continue;
-    const identity=data?.variantId?getDataExerciseIdentity(data,c,w,d,e):null;
-    const rec = getRecord(exName,identity);
-    if(!rec || orm > rec.orm){
-      const date = getPlanDay(c,w,d).date || getCurrentDateStr();
-      const rawWeight = parseFloat(data.g1)||null;
-      setRecord(exName, Math.round(orm*10)/10, date, rawWeight,null,'rebuild',identity);
-      updated++;
+  const previousV2={};
+  const preservedManual=[];
+  Object.keys(store).filter(key=>key.startsWith('rec_v2_')).forEach(key=>{
+    const record=store[key]||{};
+    if(record.manual){preservedManual.push(key);return;}
+    previousV2[key]=record;
+    delete store[key];
+  });
+  const candidates=new Map();
+  Object.entries(store).forEach(([key,data])=>{
+    if(!data?.variantId||!data?.movementId)return;
+    const position=key.match(/(?:^|__)(\d+)_(\d+)_(\d+)_(\d+)$/);
+    if(!position)return;
+    const [c,w,d]=position.slice(1,4).map(Number);
+    const identity=getDataExerciseIdentity(data,c,w,d,Number(position[4]));
+    if(!identity?.variantId||identity.legacy)return;
+    const planDay=getRebuildPlanDay(key,c,w,d);
+    const candidate=buildPRCandidateFromData(data,{source:'rebuild',planDate:planDay?.date||'',cycle:c+1,week:w+1,day:d+1});
+    if(!candidate)return;
+    const existing=candidates.get(identity.variantId);
+    if(!existing||comparePRCandidates(candidate,existing.candidate)>0)candidates.set(identity.variantId,{identity,candidate});
+  });
+  let rebuilt=0,unchanged=0;
+  candidates.forEach(({identity,candidate})=>{
+    const key=getV2RecordKey(identity),previous=previousV2[key];
+    if(previous&&comparePRCandidates(candidate,previous)===0){
+      // Ein bereits belegbares Live-Datum darf beim Rebuild aus alten Satzdaten
+      // nicht durch ein unvollstaendiges Plan-Datum ersetzt werden.
+      candidate.date=previous.date||candidate.date;
+      candidate.planDate=previous.planDate||candidate.planDate;
+      candidate.source=previous.source||candidate.source;
+      unchanged++;
     }
+    setRecord(identity.displayName,candidate,identity);
+    rebuilt++;
+  });
+  const result={rebuilt,unchanged,preservedManual:preservedManual.length,skippedLegacy:Object.keys(store).filter(key=>key.startsWith('rec_')&&!key.startsWith('rec_v2_')).length};
+  store._lastPrRebuild=result;
+  persist();
+  if(!silent){
+    const message='PR-Neuaufbau: '+rebuilt+' aufgebaut, '+unchanged+' unverändert, '+preservedManual.length+' manuell erhalten, '+result.skippedLegacy+' Legacy übersprungen.';
+    const status=document.getElementById('prRebuildStatus');if(status)status.textContent=message;
+    if(typeof showStatus==='function')showStatus('ok',message);
+    if(typeof renderRecords==='function')renderRecords();
   }
-  if(!silent) showSetupStatus('ok','✓ '+updated+' PRs aus Historie berechnet');
-  return updated;
+  return result;
 }
 
 function getCurrentDateStr(){const n=new Date();return String(n.getDate()).padStart(2,'0')+'.'+String(n.getMonth()+1).padStart(2,'0');}
@@ -5107,7 +5174,7 @@ function toggleDone(idx){
   haptic(d.done?20:10);
   if(d.done){
     const orm=calc1RM(d);
-    if(orm){const identity=getExerciseIdentityAt(C,W,D,idx);attachExerciseIdentityToData(d,C,W,D,idx);const exName=identity.displayName;const best=getBestSetFromTrainingData(d)||{};const rawWeight=best.weight||parseFloat(d.g1)||null;const rawReps=best.reps||null;const isPR=checkPR(exName,orm,rawWeight,rawReps,identity);if(isPR&&API_URL)savePRToSheet(exName,orm,rawWeight,rawReps);}
+    if(orm){const identity=getExerciseIdentityAt(C,W,D,idx);attachExerciseIdentityToData(d,C,W,D,idx);const exName=identity.displayName;const best=getBestSetFromTrainingData(d)||{};const isPR=checkPR(exName,d,identity,buildCurrentPRContext('local'));if(isPR&&API_URL)savePRToSheet(exName,best.orm,best.weight,best.reps);}
   }
   renderWorkout();
   if(d.done){
@@ -7922,21 +7989,7 @@ function renderProgressTimelineCard(){
 }
 
 function parsePRDateOrder(rawDate){
-  const raw=String(rawDate||'').trim();
-  if(!raw)return 0;
-  let m=raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if(m)return parseInt(m[1]+m[2]+m[3],10);
-  m=raw.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2}|\d{4})$/);
-  if(m){
-    const yy=m[3].length===2?2000+parseInt(m[3],10):parseInt(m[3],10);
-    return yy*10000+parseInt(m[2],10)*100+parseInt(m[1],10);
-  }
-  m=raw.match(/^(\d{1,2})\.(\d{1,2})$/);
-  if(m){
-    const yy=new Date().getFullYear();
-    return yy*10000+parseInt(m[2],10)*100+parseInt(m[1],10);
-  }
-  return 0;
+  return getReliablePRDateOrder(rawDate);
 }
 
 function buildBestleistungenTimelineEntries(){
@@ -8040,23 +8093,23 @@ function getBestleistungenNameSet(){
 }
 
 function shouldShowPRRecordName(name){
-  if(shouldHidePRDisplayName(name))return false;
-  const bestleistungenNames=getBestleistungenNameSet();
-  return !bestleistungenNames||bestleistungenNames.has(name);
+  // Sheet-Namen begrenzen nur die explizite Bestleistungen-Timeline, nie die
+  // zentrale PR-Anzeige. Moderne Varianten duerfen nicht namensbasiert verschwinden.
+  return !!String(name||'').trim();
 }
 
 function buildPrInsightSummary(){
   const allPRs=Object.keys(store).filter(isPRStorageKey).filter(k=>shouldShowPRRecordName(getPRStorageDisplayName(k)));
   const currentWeekDates=new Set((getPlanWeek(C,W)?.days||[]).map(d=>d.date));
   const records=allPRs.map(k=>({name:getPRStorageDisplayName(k),...store[k]})).filter(r=>r.orm>0);
-  const newThisWeek=records.filter(r=>currentWeekDates.has(String(r.date||''))).length;
+  const newThisWeek=records.filter(r=>currentWeekDates.has(String(r.planDate||r.date||''))).length;
   const strongest=records.slice().sort((a,b)=>(b.orm||0)-(a.orm||0))[0];
   let bestProgress=null;
   records.forEach(r=>{
     const signal=getExerciseProgressSignal(r.name);
     if(signal&&(!bestProgress||signal.delta>bestProgress.signal.delta))bestProgress={name:r.name,signal};
   });
-  const latest=records.slice().sort((a,b)=>(currentWeekDates.has(String(b.date||''))?1:0)-(currentWeekDates.has(String(a.date||''))?1:0))[0];
+  const latest=records.filter(r=>getReliablePRDateOrder(r.date)>0).sort((a,b)=>getReliablePRDateOrder(b.date)-getReliablePRDateOrder(a.date))[0]||null;
   const headline=records.length ? 'PR Übersicht' : 'Leistungsübersicht';
   const subline=records.length
     ? (strongest?('Stärkster Lift: '+strongest.name.split('(')[0].trim()+' · '+strongest.orm+' kg'):'PRs vorhanden')
@@ -8104,10 +8157,12 @@ function renderRecords() {
   const allPRs = Object.keys(store).filter(isPRStorageKey).filter(k=>shouldShowPRRecordName(getPRStorageDisplayName(k)));
   const prCount = allPRs.length;
   const currentWeekDates=new Set((getPlanWeek(C,W)?.days||[]).map(d=>d.date));
-  const newThisWeek=allPRs.filter(k=>currentWeekDates.has(String((store[k]||{}).date||''))).length;
+  const newThisWeek=allPRs.filter(k=>currentWeekDates.has(String((store[k]||{}).planDate||(store[k]||{}).date||''))).length;
   if (summary) summary.textContent = prCount
     ? prCount + ' PR' + (prCount !== 1 ? 's' : '') + ' · '+newThisWeek+' neu diese Woche'
     : 'Noch keine PRs erfasst';
+  const rebuildStatus=document.getElementById('prRebuildStatus');
+  if(rebuildStatus&&store._lastPrRebuild){const r=store._lastPrRebuild;rebuildStatus.textContent='Letzter Neuaufbau: '+(r.rebuilt||0)+' PRs · '+(r.preservedManual||0)+' manuell erhalten · '+(r.skippedLegacy||0)+' Legacy unverändert';}
 
   // Hall of Fame Podium
   let hofHtml='';
@@ -8257,7 +8312,7 @@ function renderRecords() {
       html += '<div class="pr-card-top">';
       html += '<div class="pr-ex-name">'+exName+'</div>';
       if (hasPR) {
-        html += '<div class="pr-value-wrap"><div class="pr-badge">'+rec.orm+'<span class="pr-badge-unit">kg</span></div><div class="pr-value-label">Bester 1RM</div>'+setLine+'</div>';
+        html += '<div class="pr-value-wrap"><div class="pr-badge">'+rec.orm+'<span class="pr-badge-unit">kg</span></div><div class="pr-value-label">Bester 1RM</div>'+setLine+(rec.manual?'<div class="pr-set-line">Manueller 1RM</div>':'')+'</div>';
       } else {
         html += '<div class="pr-value-wrap"><div class="pr-badge no-pr">Noch kein PR</div><div class="pr-value-label">offen</div></div>';
       }
@@ -8284,6 +8339,23 @@ function renderRecords() {
     html += '</div>';
   });
 
+  // Varianten mit gleichem Anzeigenamen koennen nicht sicher ueber eine
+  // namensbasierte Standardkarte aufgeloest werden. Sie bleiben deshalb als
+  // eigene V2-Karten sichtbar statt mit einer anderen Variante zu verschmelzen.
+  const modernRecords=allPRs.filter(key=>key.startsWith('rec_v2_')).map(key=>({key,name:getPRStorageDisplayName(key),rec:store[key]||{}}));
+  const v2NameCount=modernRecords.reduce((map,item)=>{map[item.name]=(map[item.name]||0)+1;return map;},{});
+  const additionalVariants=modernRecords.filter(item=>!existingGroupNames.has(item.name)||v2NameCount[item.name]>1);
+  if(additionalVariants.length){
+    html+='<div class="pr-group-title tier-3 open"><span>Weitere Varianten</span><span class="pr-group-meta"><span class="pr-count-badge">'+additionalVariants.length+'</span></span></div><div class="pr-group-body open">';
+    additionalVariants.forEach(item=>{
+      const rec=item.rec,variant=rec.variantName&&rec.variantName!=='Standard'?' · '+rec.variantName:'';
+      const setLine=rec.weight&&rec.reps?'<div class="pr-set-line">'+escHtml(rec.weight)+' kg × '+escHtml(rec.reps)+'</div>':'';
+      const source=rec.manual?'Manuell':(rec.source==='Bestleistungen'?'Sheet-Legacy':'Varianten-PR');
+      html+='<div class="pr-card tier-3 has-pr"><div class="pr-card-top"><div class="pr-ex-name">'+escHtml(item.name)+escHtml(variant)+'</div><div class="pr-value-wrap"><div class="pr-badge">'+escHtml(rec.orm)+'<span class="pr-badge-unit">kg</span></div><div class="pr-value-label">Bester 1RM</div>'+setLine+'</div></div><div class="pr-card-meta-row"><span class="pr-meta">'+source+' · '+formatPRDateForDisplay(rec.date)+'</span></div></div>';
+    });
+    html+='</div>';
+  }
+
   list.innerHTML = html;
 }
 
@@ -8306,7 +8378,8 @@ function savePRManual(exName) {
   if (!val || val <= 0) { inp.style.borderColor='var(--acc2)'; return; }
   inp.style.borderColor='var(--acc)';
   const identity=exerciseIdentity.resolveDisplayName(exName);
-  setRecord(exName, val, getCurrentDateStr(),null,null,'manual',identity.legacy?null:identity);
+  const candidate={orm:val,weight:null,reps:null,date:getCurrentPRIsoDate(),planDate:'',source:'manual',manual:true};
+  setRecord(exName,candidate,identity.legacy?null:identity);
   if (API_URL) savePRToSheet(exName, val);
   // Card sofort neu rendern
   renderRecords();
