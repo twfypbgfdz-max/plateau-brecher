@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#080808">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PB V13.3.2-test">
-<title>Plateau-Brecher V13.3.2-test</title>
+<meta name="apple-mobile-web-app-title" content="PB">
+<title>Plateau-Brecher</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -651,6 +651,26 @@ main{padding:14px;max-width:860px;}
 .pr-filter-chip.active{background:var(--acc);border-color:var(--acc);color:#000;font-weight:700;}
 [data-theme="light"] .pr-filter-chip.active{background:#111;border-color:#111;color:#fff;}
 .pr-filter-chip:active{opacity:.7;}
+.pr-search-wrap{position:relative;margin:-2px 0 10px;}
+.pr-search-input{width:100%;box-sizing:border-box;background:rgba(255,255,255,.024);border:1px solid rgba(255,255,255,.09);border-radius:var(--r);color:var(--tx);font-family:'DM Mono',monospace;font-size:10px;padding:10px 12px;outline:none;}
+.pr-search-input:focus{border-color:rgba(200,255,0,.5);}
+.pr-search-result{font-family:'DM Mono',monospace;font-size:8.5px;line-height:1.4;color:var(--mu);margin:5px 2px 0;min-height:12px;}
+.pr-maintenance{border:1px solid rgba(255,255,255,.075);border-radius:var(--r);background:rgba(255,255,255,.012);margin:8px 0 14px;}
+.pr-maintenance summary{cursor:pointer;list-style:none;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.55px;color:var(--tx2);padding:10px 11px;display:flex;justify-content:space-between;gap:9px;align-items:center;}
+.pr-maintenance summary::-webkit-details-marker{display:none;}
+.pr-maintenance summary::after{content:'⌄';color:var(--mu);font-size:13px;}
+.pr-maintenance[open] summary::after{transform:rotate(180deg);}
+.pr-maintenance-body{padding:0 11px 11px;}
+.pr-maintenance-copy{font-family:'DM Mono',monospace;font-size:8.5px;line-height:1.5;color:var(--mu);margin:0 0 7px;}
+.pr-card-toggle{margin-top:9px;border:0;background:transparent;color:var(--acc);font-family:'DM Mono',monospace;font-size:8.5px;letter-spacing:.5px;padding:4px 0;text-align:left;cursor:pointer;}
+.pr-card-details{border-top:1px solid rgba(255,255,255,.06);margin-top:7px;padding-top:8px;}
+.pr-card-context{font-family:'DM Mono',monospace;font-size:8.5px;line-height:1.5;color:var(--mu);margin-bottom:8px;overflow-wrap:anywhere;}
+.pr-card-status{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.5px;text-transform:uppercase;color:var(--tx2);background:rgba(255,255,255,.05);border-radius:999px;padding:3px 6px;}
+.pr-legacy-note{font-family:'DM Mono',monospace;font-size:8.5px;line-height:1.5;color:var(--mu);margin:-2px 0 9px;}
+.pr-legacy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;margin-bottom:20px;}
+.pr-legacy-card{border:1px solid rgba(255,255,255,.065);border-radius:var(--r);background:rgba(255,255,255,.016);padding:10px;min-width:0;}
+.pr-legacy-name{font-family:'DM Mono',monospace;font-size:10px;color:var(--tx2);overflow-wrap:anywhere;}
+.pr-legacy-value{font-family:'Barlow Condensed',sans-serif;font-size:24px;color:var(--tx);margin-top:4px;}
 /* PR Tier-Labels */
 .pr-group-title{display:flex;align-items:center;justify-content:space-between;gap:10px;font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1.2px;color:var(--mu);padding:10px 0 7px;cursor:pointer;user-select:none;border-bottom:1px solid rgba(255,255,255,.075);margin-bottom:10px;line-height:1.25;overflow-wrap:anywhere;}
 .pr-group-title.tier-1{color:var(--acc);}
@@ -1156,13 +1176,16 @@ main{padding:14px;max-width:860px;}
   .done-btn{padding:10px 12px;margin-top:6px;}
   .weekly-overview{padding:14px;margin-bottom:12px;}
   .pr-insight{padding:11px 12px;margin-bottom:12px;}
-  .weekly-grid,.pr-insight-grid{grid-template-columns:1fr;gap:9px;}
+  .weekly-grid{grid-template-columns:1fr;gap:9px;}
+  .pr-insight-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;}
   .weekly-primary,.pr-primary{font-size:28px;}
   .pr-primary{font-size:21px;}
   .weekly-v,.pr-insight-v{font-size:24px;}
   .pr-insight-v{font-size:18px;}
   .pr-filter-row{gap:7px;margin-bottom:12px;}
   .pr-filter-chip{padding:8px 10px;}
+  .pr-search-input{font-size:9.5px;padding:10px;}
+  .pr-maintenance summary{font-size:8.5px;}
   .pr-group-title{font-size:15px;margin-bottom:8px;}
   .pr-group-body.open{grid-template-columns:1fr;gap:10px;margin-bottom:20px;}
   .pr-card{padding:14px;margin-bottom:9px;min-height:0;}
@@ -1177,6 +1200,7 @@ main{padding:14px;max-width:860px;}
   .pr-edit-row{flex-wrap:wrap;gap:6px;opacity:.62;}
   .pr-override-label{width:100%;margin-right:0;}
   .pr-edit-inp{width:68px;}
+  .pr-legacy-grid{grid-template-columns:1fr;}
   .prog-tab-section{margin-bottom:22px;}
   .prog-section-hd{flex-wrap:wrap;align-items:flex-start;line-height:1.35;font-size:9.5px;margin-bottom:9px;}
   .prog-ex-select{width:100%;max-width:none;}
@@ -1230,14 +1254,14 @@ main{padding:14px;max-width:860px;}
 <body>
 <div class="consent-overlay" id="consentOverlay">
   <div class="consent-box">
-    <h2 class="splash-h2">SYSTEM-START V13.3.2-test</h2>
+    <h2 class="splash-h2">SYSTEM-START <span data-app-version>…</span></h2>
     <p class="splash-p">Daten werden lokal gespeichert und via API synchronisiert. Fehler-Logging ist aktiv.</p>
     <button class="save-btn" onclick="acceptConsent()">Akzeptieren &amp; Starten</button>
   </div>
 </div>
 <header>
   <div>
-    <div class="logo">PB<span class="splash-logo-ver"> V13.3.2-test</span></div>
+    <div class="logo">PB<span class="splash-logo-ver"> <span data-app-version>…</span></span></div>
     <span class="hbadge" id="todayBadge">Lädt…</span>
     <div class="splash-build">Build: <span id="buildDateTxt"></span></div>
   </div>
@@ -1309,7 +1333,7 @@ main{padding:14px;max-width:860px;}
     <div class="step-desc">Nur ändern, wenn <b>SCRIPT_CODE</b> aktualisiert wurde. App-Testversionen brauchen nicht automatisch ein neues Apps-Script-Deployment.</div>
     <div class="setup-mini-grid">
       <div class="setup-mini-card"><b>Aktuelle Script-Basis:</b><br>V11.9.1</div>
-      <div class="setup-mini-card"><b>App-Version:</b><br>V13.3.2-test</div>
+      <div class="setup-mini-card"><b>App-Version:</b><br><span data-app-version>…</span></div>
     </div>
     <div class="setup-note"><strong>Hinweis:</strong> Wenn die Sheet-Verbindung bereits funktioniert, muss dieser Code für diese Testversion normalerweise nicht neu deployed werden.</div>
     <div class="code-box" id="scriptCodeBox">Lädt…</div>
@@ -1416,15 +1440,26 @@ main{padding:14px;max-width:860px;}
     <h2 class="tab-h2">Bestleistungen</h2>
     <span class="pr-summary" id="prSummary"></span>
   </div>
+  <div id="recordsOverview"></div>
   <!-- Filter-Chips -->
   <div class="pr-filter-row" id="prFilterRow">
     <button class="pr-filter-chip active" onclick="setPRFilter('all',this)">Alle</button>
     <button class="pr-filter-chip" onclick="setPRFilter('has_pr',this)">✓ Mit PR</button>
     <button class="pr-filter-chip" onclick="setPRFilter('no_pr',this)">✗ Ohne PR</button>
-    <button class="pr-filter-chip" onclick="rebuildPRsFromHistory(false);">⟳ Neu berechnen</button>
   </div>
-  <div class="pr-summary" id="prRebuildStatus" aria-live="polite"></div>
+  <div class="pr-search-wrap">
+    <input id="prSearchInput" class="pr-search-input" type="search" autocomplete="off" placeholder="PRs suchen: Übung, Variante, Legacy oder Gerät" oninput="setPRSearch(this.value)">
+    <div class="pr-search-result" id="prSearchResult" aria-live="polite"></div>
+  </div>
   <div id="recordsList"></div>
+  <details class="pr-maintenance">
+    <summary>PR-Daten verwalten</summary>
+    <div class="pr-maintenance-body">
+      <p class="pr-maintenance-copy">Neuaufbau betrifft nur automatische Varianten-PRs. Manuelle Varianten-PRs und Legacy-PRs bleiben erhalten.</p>
+      <button class="pr-filter-chip" type="button" onclick="rebuildPRsFromHistory(false);">⟳ Neu berechnen</button>
+      <div class="pr-summary" id="prRebuildStatus" aria-live="polite"></div>
+    </div>
+  </details>
 </div>
 
 
@@ -1829,9 +1864,14 @@ const PLAN = [{"weeks":[{"weekLabel":"Woche 1","isDeload":false,"isSchool":false
 // STORAGE
 // ============================================================
 const SK='pb_v12_0_test';
-const APP_VERSION='V13.3.2-test';
+const APP_VERSION='V13.3.3-test';
 const BUILD_DATE='02.08.2026';
 /*
+CHANGELOG V13.3.3-test
+- Sichtbare Versionsfelder werden aus APP_VERSION gesetzt.
+- PR-Übersicht ist mobil kompakter: Suche, einklappbare Kategorien, Legacy-Abschnitt und Wartung.
+- Bestleistungen-Import unterscheidet verarbeitete Sheet-Zeilen von eindeutigen Legacy-PR-Namen.
+
 CHANGELOG V13.3.2-test
 - PRs werden atomar aus dem besten gueltigen Satz (S1-S3) gespeichert.
 - Moderne `rec_v2_*`-PRs bleiben unabhaengig von importierten Legacy-Namen sichtbar.
@@ -2660,15 +2700,20 @@ function importPRsFromBestleistungenRows(rows){
   valid.forEach(pr=>{
     store['rec_'+pr.name]={orm:pr.orm,weight:pr.weight,reps:pr.reps,date:pr.date,source:pr.source};
   });
+  const uniqueNames=Array.from(new Set(valid.map(pr=>pr.name)));
+  const processedRows=valid.length;
   store.prBestleistungenImportDone=true;
-  store.prBestleistungenNames=Array.from(new Set(valid.map(pr=>pr.name)));
+  store.prBestleistungenNames=uniqueNames;
+  store.prBestleistungenImportedRows=processedRows;
+  store.prBestleistungenUniqueCount=uniqueNames.length;
   store.prBestleistungenLastImport=new Date().toISOString();
   saveStore();
   if(typeof renderRecords==='function'&&document.getElementById('tab-records')?.classList.contains('active'))renderRecords();
-  console.info('Bestleistungen importiert: '+valid.length+' PRs');
-  if(typeof showStatus==='function')showStatus('ok','Bestleistungen importiert: '+valid.length+' PRs');
-  addToErrorLog('INFO','Bestleistungen-Import: '+valid.length+' PRs übernommen');
-  return valid.length;
+  const importLabel=processedRows+' Sheet-Zeilen verarbeitet · '+uniqueNames.length+' eindeutige Legacy-PRs importiert';
+  console.info('Bestleistungen importiert: '+importLabel);
+  if(typeof showStatus==='function')showStatus('ok','Bestleistungen importiert: '+importLabel);
+  addToErrorLog('INFO','Bestleistungen-Import: '+importLabel);
+  return uniqueNames.length;
 }
 
 async function importBestleistungenFromSheet(){
@@ -2919,6 +2964,7 @@ function buildSetupDiagnostics(){
     storeSize=bytes>=1024*1024?(bytes/1024/1024).toFixed(2)+' MB':Math.max(1,Math.round(bytes/1024))+' KB';
   }catch(e){}
   const prNames=Array.isArray(store.prBestleistungenNames)?store.prBestleistungenNames:[];
+  const importedRows=Number.isFinite(Number(store.prBestleistungenImportedRows))?Number(store.prBestleistungenImportedRows):prNames.length;
   let snapLabel='—',snapSize='';
   try{
     const raw=localStorage.getItem(SK+'_snapshot_before_import');
@@ -2932,7 +2978,7 @@ function buildSetupDiagnostics(){
   return[
     {k:'API',v:API_URL?'verbunden':'nicht gesetzt',cls:API_URL?'good':'muted'},
     {k:'Letzter Sync',v:store._lastSync||'—',cls:store._lastSync?'good':'muted'},
-    {k:'Bestleistungen',v:(prNames.length||0)+' importiert · '+formatDiagTime(store.prBestleistungenLastImport),cls:prNames.length?'good':'muted'},
+    {k:'Bestleistungen',v:(prNames.length||0)+' eindeutige Legacy-PRs · '+importedRows+' Sheet-Zeilen · '+formatDiagTime(store.prBestleistungenLastImport),cls:prNames.length?'good':'muted'},
     {k:'Letzter Snapshot',v:snapLabel+snapSize,cls:snapLabel!=='—'?'good':'muted'},
     {k:'Offline-Buffer',v:String(offlineCount),cls:offlineCount?'':'muted'},
     {k:'Store-Größe',v:storeSize,cls:''},
@@ -3551,6 +3597,10 @@ function getTodayBadgeLabel(day,mode){
   return mode==='exact'?dayLabel+': '+main:'Woche: '+dayLabel+' '+main;
 }
 function init(){
+  document.querySelectorAll('[data-app-version]').forEach(el=>{el.textContent=APP_VERSION;});
+  document.title='Plateau-Brecher '+APP_VERSION;
+  const appTitleMeta=document.querySelector('meta[name="apple-mobile-web-app-title"]');
+  if(appTitleMeta)appTitleMeta.setAttribute('content','PB '+APP_VERSION);
   if(store._theme==='light')document.documentElement.setAttribute('data-theme','light');
   ensurePlannerV13();
   const now=new Date();
@@ -7790,11 +7840,28 @@ const PR_GROUPS = [
 ];
 
 let prFilter='all';
+let prSearchTerm='';
+let prOpenGroups=new Set();
+let prOpenCards=new Set();
+let prLegacyOpen=false;
 function setPRFilter(f,btn){
   prFilter=f;
   document.querySelectorAll('.pr-filter-chip').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');
   renderRecords();
+}
+
+function setPRSearch(value){
+  prSearchTerm=String(value||'').trim().toLocaleLowerCase('de-DE');
+  renderRecords();
+}
+
+function getPRSearchText(name,rec){
+  return [name,rec?.variantName,rec?.machine,rec?.source,rec?.planId,rec?.planDate].filter(Boolean).join(' ').toLocaleLowerCase('de-DE');
+}
+
+function matchesPRSearch(name,rec){
+  return !prSearchTerm||getPRSearchText(name,rec).includes(prSearchTerm);
 }
 
 function getExerciseHistoryByName(exName,limit=8){
@@ -8110,6 +8177,15 @@ function buildPrInsightSummary(){
     if(signal&&(!bestProgress||signal.delta>bestProgress.signal.delta))bestProgress={name:r.name,signal};
   });
   const latest=records.filter(r=>getReliablePRDateOrder(r.date)>0).sort((a,b)=>getReliablePRDateOrder(b.date)-getReliablePRDateOrder(a.date))[0]||null;
+  return '<div class="pr-insight">'
+    +'<div class="pr-primary">'+(records.length?'PR Übersicht':'Leistungsübersicht')+'</div>'
+    +'<div class="pr-sub">'+(records.length?'Kompakte Übersicht deiner lokalen Bestleistungen.':'Noch keine PR-Daten erfasst. Werte erscheinen nach echten Bestleistungen.')+'</div>'
+    +'<div class="pr-insight-grid">'
+    +'<div class="pr-insight-kv"><div class="pr-insight-k">Gesamt-PRs</div><div class="pr-insight-v good">'+records.length+'</div></div>'
+    +'<div class="pr-insight-kv"><div class="pr-insight-k">Neu diese Woche</div><div class="pr-insight-v">'+newThisWeek+'</div></div>'
+    +'<div class="pr-insight-kv"><div class="pr-insight-k">Letzter PR</div><div class="pr-insight-v">'+(latest?formatPRDateForDisplay(latest.date):'—')+'</div></div>'
+    +'<div class="pr-insight-kv"><div class="pr-insight-k">Stärkster Lift</div><div class="pr-insight-v">'+(strongest?strongest.name.split('(')[0].trim()+' · '+strongest.orm+' kg':'—')+'</div></div>'
+    +'</div></div>';
   const headline=records.length ? 'PR Übersicht' : 'Leistungsübersicht';
   const subline=records.length
     ? (strongest?('Stärkster Lift: '+strongest.name.split('(')[0].trim()+' · '+strongest.orm+' kg'):'PRs vorhanden')
@@ -8136,7 +8212,133 @@ function buildPrInsightSummary(){
     +'</div></div>';
 }
 
+function getPRCardHistoryV133(exName){
+  const wantedIdentity=exerciseIdentity.resolveDisplayName(exName);
+  const results=[];
+  outer:
+  for(let ci=getPlanCycles().length-1;ci>=0;ci--){
+    for(let wi=getPlanCycles()[ci].weeks.length-1;wi>=0;wi--){
+      const week=getPlanWeek(ci,wi);
+      if(week.isDeload)continue;
+      for(let di=0;di<week.days.length;di++){
+        for(let exIdx=0;exIdx<week.days[di].exercises.length;exIdx++){
+          const data=getD(ci,wi,di,exIdx);
+          if(!exerciseIdentityMatches(data,ci,wi,di,exIdx,wantedIdentity))continue;
+          const orm=calc1RM(data);if(!orm)continue;
+          results.unshift({orm,date:week.days[di].date});
+          if(results.length>=8)break outer;
+        }
+      }
+    }
+  }
+  return results;
+}
+
+function buildPRSparklineV133(hist){
+  if(hist.length<2)return '';
+  const width=200,height=36,pad=4,values=hist.map(item=>item.orm);
+  const min=Math.min(...values),range=Math.max(...values)-min||1;
+  const point=(value,index)=>{
+    const x=pad+(index/(hist.length-1))*(width-pad*2);
+    const y=pad+(1-(value-min)/range)*(height-pad*2);
+    return x.toFixed(1)+','+y.toFixed(1);
+  };
+  const last=hist[hist.length-1],previous=hist[hist.length-2];
+  const color=last.orm>=previous.orm?'var(--ok)':'var(--acc2)';
+  return '<svg viewBox="0 0 '+width+' '+height+'" style="width:100%;height:auto;display:block" aria-label="1RM Verlauf">'
+    +'<polyline points="'+hist.map((item,index)=>point(item.orm,index)).join(' ')+'" fill="none" stroke="'+color+'" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round"/>'
+    +'</svg>';
+}
+
+function buildPRCardV133(options){
+  const name=String(options.name||'');
+  const rec=options.rec||null;
+  const hasPR=!!rec?.orm;
+  const safeKey=String(options.key||name).replace(/[^a-z0-9]/gi,'_');
+  const inputId=options.editable?name.replace(/[^a-z0-9]/gi,'_'):safeKey;
+  const isOpen=prOpenCards.has(safeKey);
+  const tierCls='tier-'+(options.tier||3);
+  const source=rec?.manual?'Manuell':(rec?.source||options.source||'PR');
+  const setLine=hasPR&&rec.weight&&rec.reps?'<div class="pr-set-line">'+escHtml(rec.weight)+' kg × '+escHtml(rec.reps)+'</div>':'';
+  const machine=rec?.machine?'<span class="pr-meta">Gerät: '+escHtml(rec.machine)+'</span>':'';
+  let html='<div class="pr-card '+tierCls+' '+(hasPR?'has-pr':'no-pr')+'" id="prc_'+safeKey+'">'
+    +'<div class="pr-card-top"><div class="pr-ex-name">'+escHtml(name)+(rec?.variantName&&rec.variantName!=='Standard'?' · '+escHtml(rec.variantName):'')+'</div>';
+  html+=hasPR
+    ?'<div class="pr-value-wrap"><div class="pr-badge">'+escHtml(rec.orm)+'<span class="pr-badge-unit">kg</span></div><div class="pr-value-label">Bester 1RM</div>'+setLine+'</div>'
+    :'<div class="pr-value-wrap"><div class="pr-badge no-pr">Noch kein PR</div><div class="pr-value-label">offen</div></div>';
+  html+='</div><div class="pr-card-meta-row">'
+    +'<span class="pr-card-status">'+(hasPR?escHtml(source):'Offen')+'</span>'
+    +(hasPR?'<span class="pr-meta">'+formatPRDateForDisplay(rec.date)+'</span>':'')+machine+'</div>'
+    +'<button class="pr-card-toggle" type="button" aria-expanded="'+isOpen+'" onclick="togglePRCard(\''+safeKey+'\')">'+(isOpen?'Details schließen':'Details & Korrektur')+'</button>';
+  if(isOpen){
+    const history=hasPR?getPRCardHistoryV133(name):[];
+    const context=[rec?.planId&&'Plan: '+rec.planId,Number.isFinite(rec?.cycle)&&'Zyklus: '+(rec.cycle+1),Number.isFinite(rec?.week)&&'Woche: '+(rec.week+1),Number.isFinite(rec?.day)&&'Tag: '+(rec.day+1),rec?.planDate&&'Datum: '+rec.planDate,rec?.machine&&'Gerät: '+rec.machine].filter(Boolean).join(' · ');
+    const jsName=name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    html+='<div class="pr-card-details">'
+      +(context?'<div class="pr-card-context">'+escHtml(context)+'</div>':'')
+      +(history.length>=2?'<div class="pr-card-context">1RM-Verlauf</div><div class="pr-spark-wrap open">'+buildPRSparklineV133(history)+'</div>':'')
+      +(options.editable?'<div class="pr-edit-row"><span class="pr-override-label">Korrektur</span><input class="pr-edit-inp" type="number" id="pr_inp_'+inputId+'" placeholder="kg" step="0.5" min="0" value="'+(hasPR?escHtml(rec.orm):'')+'"><button class="pr-edit-btn" onclick="savePRManual(\''+jsName+'\')">Speichern</button>' +(hasPR?'<button class="pr-del-btn" onclick="deletePR(\''+jsName+'\')">×</button>':'')+'</div>':'')
+      +'</div>';
+  }
+  return html+'</div>';
+}
+
+function renderRecordsV133(){
+  const list=document.getElementById('recordsList');
+  const overview=document.getElementById('recordsOverview');
+  const summary=document.getElementById('prSummary');
+  const searchResult=document.getElementById('prSearchResult');
+  if(!list)return;
+  const getVisibleRecord=name=>{const identity=exerciseIdentity.resolveDisplayName(name);return getRecord(name,identity);};
+  const allPRs=Object.keys(store).filter(isPRStorageKey).filter(key=>shouldShowPRRecordName(getPRStorageDisplayName(key)));
+  const currentWeekDates=new Set((getPlanWeek(C,W)?.days||[]).map(day=>day.date));
+  const newThisWeek=allPRs.filter(key=>currentWeekDates.has(String((store[key]||{}).planDate||(store[key]||{}).date||''))).length;
+  if(summary)summary.textContent=allPRs.length?allPRs.length+' PR'+(allPRs.length!==1?'s':'')+' · '+newThisWeek+' neu diese Woche':'Noch keine PRs erfasst';
+  const rebuildStatus=document.getElementById('prRebuildStatus');
+  if(rebuildStatus){const rebuilt=store._lastPrRebuild;rebuildStatus.textContent=rebuilt?'Letzter Neuaufbau: '+(rebuilt.rebuilt||0)+' PRs · '+(rebuilt.preservedManual||0)+' manuell erhalten · '+(rebuilt.skippedLegacy||0)+' Legacy unverändert':'';}
+
+  const ranked=allPRs.map(key=>({name:getPRStorageDisplayName(key),rec:store[key]||{}})).filter(item=>item.rec.orm).sort((a,b)=>b.rec.orm-a.rec.orm).slice(0,3);
+  const top3='<div class="pr-insight"><div class="pr-primary">TOP 3</div><div class="pr-sub">Stärkste lokale PRs nach 1RM.</div><div class="pr-insight-grid">'
+    +(ranked.length?ranked.map((item,index)=>'<div class="pr-insight-kv"><div class="pr-insight-k">#'+(index+1)+' · '+escHtml(item.name)+'</div><div class="pr-insight-v good">'+escHtml(item.rec.orm)+' kg</div></div>').join(''):'<div class="pr-insight-kv"><div class="pr-insight-k">Top 3</div><div class="pr-insight-v">—</div></div>')
+    +'</div></div>';
+  if(overview)overview.innerHTML=buildPrInsightSummary()+top3;
+
+  const passesFilter=rec=>prFilter==='has_pr'?!!rec?.orm:prFilter==='no_pr'?!rec?.orm:true;
+  const existingNames=new Set(PR_GROUPS.flatMap(group=>group.exercises));
+  const groupModels=PR_GROUPS.map((group,index)=>({id:'prg_'+index,label:group.label,tier:group.tier,items:group.exercises.map(name=>({name,rec:getVisibleRecord(name),editable:true,key:'std_'+name}))}));
+  const modernRecords=allPRs.filter(key=>key.startsWith('rec_v2_')).map(key=>({storageKey:key,name:getPRStorageDisplayName(key),rec:store[key]||{}}));
+  const v2NameCount=modernRecords.reduce((counts,item)=>{counts[item.name]=(counts[item.name]||0)+1;return counts;},{});
+  const additional=modernRecords.filter(item=>!existingNames.has(item.name)||v2NameCount[item.name]>1).map(item=>({name:item.name,rec:item.rec,editable:false,key:'v2_'+item.storageKey,source:'Varianten-PR'}));
+  if(additional.length)groupModels.push({id:'prg_variants',label:'Weitere Varianten',tier:3,items:additional});
+  let searchHits=0,html='';
+  groupModels.forEach(group=>{
+    const selectable=group.items.filter(item=>shouldShowPRRecordName(item.name)&&passesFilter(item.rec));
+    const matches=selectable.filter(item=>matchesPRSearch(item.name,item.rec));
+    searchHits+=matches.length;
+    if(!matches.length&&prSearchTerm)return;
+    if(!selectable.length&&!prSearchTerm)return;
+    const isOpen=prOpenGroups.has(group.id)||(!!prSearchTerm&&matches.length>0);
+    const count=group.items.filter(item=>!!item.rec?.orm).length;
+    html+='<button type="button" class="pr-group-title tier-'+group.tier+(isOpen?' open':'')+'" id="'+group.id+'_hdr" aria-expanded="'+isOpen+'" onclick="togglePRGroup(\''+group.id+'\')"><span>'+group.label+'</span><span class="pr-group-meta"><span class="pr-count-badge'+(count?'':' empty')+'">'+count+'/'+group.items.length+'</span><svg class="pr-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span></button>';
+    html+='<div class="pr-group-body'+(isOpen?' open':'')+'" id="'+group.id+'_body">';
+    if(isOpen)html+=matches.map(item=>buildPRCardV133({...item,tier:group.tier})).join('');
+    html+='</div>';
+  });
+  const legacy=Object.keys(store).filter(key=>key.startsWith('rec_')&&!key.startsWith('rec_v2_')).map(key=>({name:key.slice(4),rec:store[key]||{}})).filter(item=>item.rec.orm);
+  const legacyMatches=legacy.filter(item=>matchesPRSearch(item.name,item.rec));
+  searchHits+=legacyMatches.length;
+  if(legacy.length&&(!prSearchTerm||legacyMatches.length)){
+    const legacyOpen=prLegacyOpen||(!!prSearchTerm&&legacyMatches.length>0);
+    html+='<button type="button" class="pr-group-title tier-3'+(legacyOpen?' open':'')+'" id="prLegacy_hdr" aria-expanded="'+legacyOpen+'" onclick="togglePRLegacy()"><span>Legacy-PRs</span><span class="pr-group-meta"><span class="pr-count-badge">'+legacy.length+'</span><svg class="pr-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span></button>';
+    html+='<div class="pr-legacy-note">Namensbasiert, nicht migriert und nicht Varianten zugeordnet.</div>';
+    if(legacyOpen)html+='<div class="pr-legacy-grid">'+legacyMatches.map(item=>'<div class="pr-legacy-card"><div class="pr-legacy-name">'+escHtml(item.name)+'</div><div class="pr-legacy-value">'+escHtml(item.rec.orm)+' kg</div><div class="pr-meta">'+formatPRDateForDisplay(item.rec.date)+(item.rec.machine?' · '+escHtml(item.rec.machine):'')+'</div></div>').join('')+'</div>';
+  }
+  if(searchResult)searchResult.textContent=prSearchTerm?(searchHits?searchHits+' Treffer – passende Bereiche sind geöffnet.':'Keine PRs gefunden. Suche löschen, um alle Bereiche zu sehen.'):'Durchsucht Anzeigenamen, Varianten, Legacy-Namen und Geräte.';
+  list.innerHTML=html||'<div class="pr-empty-state"><b>Keine passenden PRs</b>Filter oder Suche anpassen.</div>';
+}
+
 function renderRecords() {
+  return renderRecordsV133();
   const list = document.getElementById('recordsList');
   const summary = document.getElementById('prSummary');
   if (!list) return;
@@ -8361,12 +8563,20 @@ function renderRecords() {
 
 
 function togglePRGroup(groupId) {
-  const hdr  = document.getElementById(groupId+'_hdr');
-  const body = document.getElementById(groupId+'_body');
-  if (!hdr || !body) return;
-  const isOpen = body.classList.contains('open');
-  hdr.classList.toggle('open', !isOpen);
-  body.classList.toggle('open', !isOpen);
+  if(prOpenGroups.has(groupId))prOpenGroups.delete(groupId);
+  else prOpenGroups.add(groupId);
+  renderRecords();
+}
+
+function togglePRCard(cardKey){
+  if(prOpenCards.has(cardKey))prOpenCards.clear();
+  else{prOpenCards.clear();prOpenCards.add(cardKey);}
+  renderRecords();
+}
+
+function togglePRLegacy(){
+  prLegacyOpen=!prLegacyOpen;
+  renderRecords();
 }
 
 function savePRManual(exName) {
