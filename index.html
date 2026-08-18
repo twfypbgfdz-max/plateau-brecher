@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<meta name="theme-color" content="#080808">
+<meta name="theme-color" content="#050607">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="PB">
@@ -11,27 +11,76 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&family=DM+Mono:wght@400;500&display=swap');
 :root{
-  --bg:#090909;
-  --sur:#131313;
-  --sur2:#1a1a1a;
-  --sur3:#242424;
-  --bor:#343434;
-  --bor2:#4a4a4a;
-  --acc:#c8ff00;
-  --acc2:#ff3d00;
-  --acc3:#00d4ff;
-  --tx:#f3f3f0;
-  --tx2:#c4c4be;
-  --mu:#92928b;
-  --ok:#00e676;
-  --warn:#ffab00;
-  --r:10px;
+  /* ── V2 SURFACE-SYSTEM ────────────────────────────
+     Flächen über Flächen werden schrittweise transparenter.
+     bg-app (deckend) < bg-base < bg-card < bg-card-soft < bg-overlay/chip
+     Inputs bleiben bewusst deckender als ihre Umgebung (Lesbarkeit). */
+  --bg-app:#050607;
+  --bg-base:rgba(12,14,16,.96);
+  --bg-card:rgba(18,20,22,.92);
+  --bg-card-soft:rgba(22,24,27,.82);
+  --bg-overlay:rgba(20,23,26,.74);
+  /* Sticky-Leisten liegen dauerhaft über scrollendem Inhalt und brauchen
+     etwas mehr Deckkraft als frei schwebende Overlays. */
+  --bg-sticky:rgba(9,11,13,.86);
+  --bg-input:rgba(16,18,20,.88);
+  --bg-chip:rgba(28,31,34,.72);
+  --text-primary:#F3F5F7;
+  --text-secondary:#B8BDC4;
+  --text-muted:#7A818A;
+  --line-soft:rgba(255,255,255,.08);
+  --line-mid:rgba(255,255,255,.14);
+  --accent:#C8FF00;
+  --accent-strong:#D8FF2E;
+  --accent-soft:rgba(200,255,0,.14);
+  --cyan:#00C8FF;
+  --success:#20E28F;
+  --warning:#FFB020;
+  --danger:#FF5D5D;
+  --blur-soft:blur(10px);
+  --blur-strong:blur(18px);
+  /* ── Alias-Ebene: bestehende Komponenten erben das neue System ── */
+  --bg:var(--bg-app);
+  --sur:var(--bg-card);
+  --sur2:var(--bg-card-soft);
+  --sur3:var(--bg-chip);
+  --bor:var(--line-soft);
+  --bor2:var(--line-mid);
+  --acc:var(--accent);
+  --acc2:var(--danger);
+  --acc3:var(--cyan);
+  --tx:var(--text-primary);
+  --tx2:var(--text-secondary);
+  --mu:var(--text-muted);
+  --ok:var(--success);
+  --warn:var(--warning);
+  --r:12px;
+  --r-sm:9px;
+  --r-pill:999px;
   --safe-top:env(safe-area-inset-top);
   --safe-bottom:env(safe-area-inset-bottom);
 }
 [data-theme="light"]{
-  --bg:#f0f0ec;--sur:#fff;--sur2:#f6f6f2;--sur3:#ededeb;--bor:#deded8;--bor2:#c7c7bf;
-  --acc:#1a1a00;--acc2:#cc3300;--acc3:#0066aa;--tx:#111;--tx2:#4f4f4b;--mu:#777;--ok:#007a3d;--warn:#a76500;
+  --bg-app:#F2F3F1;
+  --bg-base:rgba(255,255,255,.96);
+  --bg-card:rgba(255,255,255,.94);
+  --bg-card-soft:rgba(246,246,243,.86);
+  --bg-overlay:rgba(250,250,248,.78);
+  --bg-sticky:rgba(250,250,248,.9);
+  --bg-input:rgba(255,255,255,.94);
+  --bg-chip:rgba(236,236,232,.8);
+  --text-primary:#14161A;
+  --text-secondary:#4A4F55;
+  --text-muted:#787E85;
+  --line-soft:rgba(0,0,0,.09);
+  --line-mid:rgba(0,0,0,.16);
+  --accent:#1A1A00;
+  --accent-strong:#000;
+  --accent-soft:rgba(0,0,0,.06);
+  --cyan:#0066AA;
+  --success:#007A3D;
+  --warning:#A76500;
+  --danger:#CC3300;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;}
@@ -1251,6 +1300,606 @@ main{padding:14px;max-width:860px;}
 .mheat-sub{font-family:'DM Mono',monospace;font-size:9.5px;color:var(--tx2);margin-top:5px;line-height:1.35;}
 .mheat-disbalance{background:rgba(255,61,0,.09);border:1px solid rgba(255,61,0,.32);border-radius:var(--r);padding:9px 12px;margin-top:8px;font-family:'DM Mono',monospace;font-size:10px;color:#ffb199;display:none;line-height:1.45;}
 .mheat-disbalance.show{display:block;}
+
+/* ════════════════════════════════════════════════════════════
+   V2 DESIGN LAYER — Plateau-Brecher V14.0.0-designv2
+   Liegt bewusst am Ende des Stylesheets: überschreibt die
+   V13-Regeln per Kaskade, ohne sie zu entfernen. Damit bleibt
+   jede bestehende Klasse (auch JS-generierte) funktionsfähig.
+   ════════════════════════════════════════════════════════════ */
+
+/* ── 1. BASIS ─────────────────────────────────────────────── */
+body{
+  background:var(--bg-app);
+  background-image:
+    radial-gradient(120% 60% at 50% -10%, rgba(200,255,0,.045), transparent 62%),
+    radial-gradient(90% 50% at 100% 0%, rgba(0,200,255,.03), transparent 60%);
+  background-attachment:fixed;
+  color:var(--text-primary);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  padding-bottom:calc(var(--safe-bottom) + 104px);
+}
+[data-theme="light"] body{
+  background-image:radial-gradient(120% 60% at 50% -10%, rgba(0,0,0,.035), transparent 62%);
+}
+main{padding:14px 14px 6px;}
+
+/* ── 2. TYPOGRAFIE & HIERARCHIE ───────────────────────────
+   Genau eine dominante Headline pro Screen (.pb-screen-title).
+   Barlow bleibt für Zahlen/Kennwerte, wird bei Fließtext ruhiger. */
+.pb-screen-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:2px 0 12px;flex-wrap:wrap;}
+.pb-screen-title{font-family:'Barlow Condensed',sans-serif;font-size:29px;letter-spacing:1.4px;line-height:1;color:var(--text-primary);margin:0;text-transform:none;}
+.pb-screen-sub{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.1px;text-transform:uppercase;color:var(--text-muted);line-height:1.4;}
+.pb-syslabel{font-family:'DM Mono',monospace;font-size:8.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--text-muted);}
+.tab-hd{padding:2px 0 12px;align-items:flex-end;}
+.tab-h2{font-family:'Barlow Condensed',sans-serif;font-size:29px;letter-spacing:1.4px;color:var(--text-primary);line-height:1;}
+.setup-h2{font-size:29px;letter-spacing:1.4px;color:var(--text-primary);margin-bottom:3px;}
+.setup-sub{font-size:9px;letter-spacing:1.1px;text-transform:uppercase;color:var(--text-muted);margin-bottom:14px;}
+/* TRAINING: der Trainingstag ist die eine dominante Headline des Screens */
+.wtitle{font-size:28px;letter-spacing:1.4px;color:var(--text-primary);line-height:1;}
+/* Sekundäre Überschriften deutlich zurücknehmen */
+.ctitle{font-size:16px;letter-spacing:1px;color:var(--text-secondary);}
+.day-status-main{font-size:19px;letter-spacing:.6px;color:var(--text-primary);}
+.readiness-title,.plan-week-title,.pwindow-title,.top-progress-title,.prog-chart-title,
+.step-title,.data-quality-title,.update-status-title,.ki-empty-title{
+  font-family:'Barlow Condensed',sans-serif;letter-spacing:.8px;color:var(--text-primary);
+}
+.step-title{font-size:16px;}
+.sel-label{font-size:8.5px;letter-spacing:1.5px;color:var(--text-muted);}
+
+/* ── 3. HEADER ────────────────────────────────────────────── */
+header{
+  padding:9px 14px;padding-top:calc(9px + var(--safe-top));
+  border-bottom:1px solid var(--line-soft);
+  background:var(--bg-sticky);
+  backdrop-filter:var(--blur-strong);-webkit-backdrop-filter:var(--blur-strong);
+  align-items:center;gap:12px;
+}
+[data-theme="light"] header{background:var(--bg-sticky);}
+.hd-main{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.hd-brand{display:flex;align-items:center;gap:8px;min-width:0;}
+.logo{font-size:24px;letter-spacing:2.2px;color:var(--accent);}
+[data-theme="light"] .logo{color:var(--text-primary);}
+.hd-ver{
+  font-family:'DM Mono',monospace;font-size:8px;letter-spacing:1.1px;text-transform:uppercase;
+  color:var(--text-secondary);background:var(--bg-chip);
+  border:1px solid var(--line-soft);border-radius:var(--r-pill);
+  padding:3px 8px;line-height:1;white-space:nowrap;
+}
+.hd-sys{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.9px;color:var(--text-muted);text-transform:uppercase;line-height:1.3;}
+.hd-sys-sep{opacity:.4;}
+/* Tages-Badge: vom lauten Lime-Pill zum ruhigen Systemchip */
+.hbadge{
+  background:var(--accent-soft);color:var(--accent);
+  border:1px solid rgba(200,255,0,.18);
+  font-size:8px;font-weight:500;letter-spacing:1.1px;padding:3px 8px;margin-top:0;
+}
+[data-theme="light"] .hbadge{background:var(--accent-soft);color:var(--text-primary);border-color:var(--line-mid);}
+.splash-build{font-family:'DM Mono',monospace;font-size:8px;color:var(--text-muted);margin-top:0;}
+.hdate-span{font-size:8px;color:var(--text-muted);letter-spacing:.9px;text-transform:uppercase;}
+.header-right{gap:6px;}
+.icon-btn{
+  background:var(--bg-chip);border:1px solid var(--line-soft);color:var(--text-secondary);
+  width:34px;height:34px;border-radius:var(--r-sm);
+}
+.icon-btn:hover{border-color:var(--line-mid);color:var(--text-primary);background:var(--bg-card-soft);}
+
+/* ── 4. TABS ──────────────────────────────────────────────── */
+.tabs{
+  background:var(--bg-sticky);
+  backdrop-filter:var(--blur-strong);-webkit-backdrop-filter:var(--blur-strong);
+  border-bottom:1px solid var(--line-soft);
+  padding:7px 10px;gap:4px;
+  top:calc(56px + var(--safe-top));
+}
+[data-theme="light"] .tabs{background:var(--bg-sticky);border-bottom-color:var(--line-soft);}
+.tab{
+  border:1px solid transparent;border-radius:var(--r-pill);
+  padding:9px 13px;min-height:38px;font-size:9.5px;letter-spacing:1.1px;
+  color:var(--text-muted);background:transparent;
+}
+.tab:hover{color:var(--text-secondary);background:rgba(255,255,255,.035);}
+.tab.active{
+  color:var(--accent);background:var(--accent-soft);
+  border-color:rgba(200,255,0,.22);border-bottom-color:rgba(200,255,0,.22);
+}
+[data-theme="light"] .tab.active{color:var(--text-primary);background:var(--accent-soft);border-color:var(--line-mid);border-bottom-color:var(--line-mid);}
+.tab svg{opacity:.75;}
+.tab.active svg{opacity:1;}
+
+/* ── 5. FLÄCHEN-/TRANSPARENZSYSTEM ────────────────────────
+   Ebene 1 Karte: fast deckend. Ebene 2 (Karte in Karte): weicher
+   und transparenter, ohne eigene harte Outline. */
+.excard,.pr-card,.setup-step,.prog-chart-wrap,.weekly-overview,.pr-insight,.ki-auto-panel,
+.tfreq-card,.pwindow-card,.top-progress-card,.coach-insight-card,.progress-timeline-card,
+.mheat-card,.readiness-card,.plan-week-view,.spark-wrap,.ov-card,.ov-today-vol,.ai-section{
+  background:var(--bg-card);
+  border:1px solid var(--line-soft);
+  border-radius:var(--r);
+  box-shadow:none;
+}
+/* Aufgesetzte Flächen innerhalb einer Karte */
+.last-training-box,.set-history-box,.coach-rec,.load-suggest,.machine-pr-line,.machine-warning,
+.prev-session-line,.set-progress-line,.sbox,.setup-mini-card,.setup-note,.setup-diag-item,
+.data-quality-item,.weekly-kv,.pr-insight-kv,.pwindow-stat,.tfreq-stat,.prog-stat-card,
+.ki-prompt-chip,.pr-empty-state,.setup-source-note,.vol-total-wrap{
+  background:var(--bg-card-soft);
+  border:1px solid transparent;
+  border-radius:var(--r-sm);
+}
+.last-training-box{border-left:2px solid rgba(0,200,255,.28);border-radius:0 var(--r-sm) var(--r-sm) 0;}
+.coach-rec{border-left:2px solid rgba(200,255,0,.3);border-radius:0 var(--r-sm) var(--r-sm) 0;}
+.coach-rec.warn{border-left-color:rgba(255,176,32,.4);background:rgba(255,176,32,.06);}
+.load-suggest{border-left:2px solid rgba(0,200,255,.22);border-radius:0 var(--r-sm) var(--r-sm) 0;background:rgba(0,200,255,.05);}
+.machine-warning{background:rgba(255,176,32,.07);border-left:2px solid rgba(255,176,32,.35);border-radius:0 var(--r-sm) var(--r-sm) 0;}
+/* Chips */
+.mtag,.exercise-focus-chip,.last-training-set,.coach-insight-chip,.top-progress-rank,
+.set-quick-btn,.set-compare-chip,.pr-card-status,.hof-badge{
+  background:var(--bg-chip);border:1px solid transparent;color:var(--text-secondary);
+}
+.exercise-focus-chip.next{background:var(--accent-soft);border-color:rgba(200,255,0,.2);color:var(--accent);}
+.exercise-focus-chip.action{background:rgba(0,200,255,.08);border-color:rgba(0,200,255,.2);color:var(--cyan);}
+
+/* ── 6. WENIGER OUTLINES ──────────────────────────────────── */
+.bw-box,.cinfo,.day-status-card,.info-row .bw-box{
+  background:var(--bg-card);border:1px solid var(--line-soft);border-radius:var(--r);
+}
+.balance-row,.prog-bw-kv{border-color:var(--line-soft);}
+.ltable td{border-bottom-color:var(--line-soft);}
+.hist-row{border-bottom-color:var(--line-soft);}
+.pr-group-title{border-bottom:1px solid var(--line-soft);}
+/* Fokus ist der einzige Ort mit Lime-Rand */
+.sinput:focus,.rpe-input:focus,.notes:focus,.url-input:focus,.pr-search-input:focus,
+.ai-key-input:focus,.ki-textarea:focus,.swap-field-input:focus,.machine-select:focus,
+.plan-select:focus,.prog-ex-select:focus,.pr-edit-inp:focus,.pain-input:focus{
+  border-color:rgba(200,255,0,.30);
+  box-shadow:0 0 0 3px rgba(200,255,0,.07);
+  background:var(--bg-input);
+  outline:none;
+}
+:focus-visible{outline:2px solid rgba(200,255,0,.45);outline-offset:2px;}
+
+/* ── 7. EINGABEFELDER (bewusst deckender) ─────────────────── */
+.sinput,.rpe-input,.notes,.url-input,.pr-search-input,.ai-key-input,.ki-textarea,
+.swap-field-input,.machine-select,.plan-select,.prog-ex-select,.pain-input,.swap-custom-inp,.pr-edit-inp{
+  background:var(--bg-input);
+  border:1px solid var(--line-soft);
+  color:var(--text-primary);
+  border-radius:var(--r-sm);
+}
+.bw-input{border-bottom-color:var(--line-mid);font-size:19px;}
+.bw-input:focus{border-bottom-color:var(--accent);}
+
+/* ── 8. TRAINING — Karte & Progressive Disclosure ─────────── */
+.excard{margin-bottom:8px;overflow:hidden;}
+.excard::before{width:2px;background:var(--line-soft);}
+.excard.done{background:var(--bg-card);border-color:rgba(32,226,143,.16);}
+.excard.done::before{background:var(--success);}
+.excard.open-ex{
+  background:var(--bg-card);
+  border-color:var(--line-mid);
+  box-shadow:0 10px 26px rgba(0,0,0,.28);
+}
+.excard.open-ex::before{background:rgba(200,255,0,.45);width:2px;}
+.excard.active-ex:not(.stagnation-card){
+  background:var(--bg-card);
+  border-color:rgba(200,255,0,.22);
+  box-shadow:0 10px 26px rgba(0,0,0,.28);
+}
+.excard.active-ex::before{background:var(--accent);width:3px;}
+.excard.stagnation-card{border-color:rgba(255,93,93,.35);box-shadow:none;}
+.excard.stagnation-card .exname::after{color:var(--danger);}
+.excard.pr-card::after{background:var(--accent-soft);color:var(--accent);border:1px solid rgba(200,255,0,.25);border-radius:var(--r-pill);font-weight:500;letter-spacing:.8px;}
+.exhead{padding:12px 12px 12px 16px;align-items:center;}
+.exname{font-size:14px;font-weight:600;letter-spacing:.1px;}
+.exstatus{font-size:9px;color:var(--text-muted);}
+.active-badge{background:var(--accent-soft);color:var(--accent);border-color:rgba(200,255,0,.28);font-weight:500;}
+[data-theme="light"] .active-badge{background:var(--accent-soft);color:var(--text-primary);border-color:var(--line-mid);}
+.prev-badge{background:rgba(0,200,255,.07);border-color:rgba(0,200,255,.16);color:var(--cyan);}
+.plan-edit-btn{border-color:var(--line-soft);background:var(--bg-chip);color:var(--text-muted);}
+/* Accordion ohne max-height-Deckel: die neuen Ebenen können frei wachsen */
+.exbody{max-height:0;overflow:hidden;transition:none;padding:0 12px 0 16px;border-top:0;}
+.exbody.open{
+  max-height:none;overflow:visible;
+  padding:10px 12px 14px 16px;
+  border-top:1px solid var(--line-soft);
+  animation:pbFade .22s ease;
+}
+@keyframes pbFade{from{opacity:0;transform:translateY(-3px);}to{opacity:1;transform:none;}}
+.open-ex .ex-chevron{color:var(--accent);}
+
+/* Ebene 1 — immer sichtbar, klarer Fokus */
+.ex-level-1{display:block;}
+.exercise-focus-bar{
+  background:transparent;border:none;border-radius:0;
+  padding:0;margin:0 0 2px;
+}
+/* Satzzähler und "nächster Satz" stehen bereits in der Satz-Statuszeile.
+   Die Duplikate in der Fokusleiste bleiben im DOM (JS aktualisiert sie),
+   werden aber nicht doppelt angezeigt. */
+.exercise-focus-chip[id^="setFocusCount_"],
+.exercise-focus-chip[id^="setFocusNext_"]{display:none;}
+.exercise-focus-meta{gap:6px;}
+/* Ebene 2 / 3 — aufklappbare Gruppen */
+.ex-more{
+  margin:9px 0 0;border-radius:var(--r-sm);
+  background:var(--bg-card-soft);
+  backdrop-filter:var(--blur-soft);-webkit-backdrop-filter:var(--blur-soft);
+  border:1px solid var(--line-soft);overflow:hidden;
+}
+.ex-more+.ex-more{margin-top:6px;}
+.ex-more>summary{
+  list-style:none;cursor:pointer;-webkit-tap-highlight-color:transparent;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  min-height:42px;padding:10px 11px;
+  font-family:'DM Mono',monospace;font-size:8.5px;letter-spacing:1.3px;text-transform:uppercase;
+  color:var(--text-muted);
+}
+.ex-more>summary::-webkit-details-marker{display:none;}
+.ex-more>summary::after{content:'+';font-family:'DM Mono',monospace;font-size:14px;line-height:1;color:var(--text-muted);}
+.ex-more[open]>summary::after{content:'–';}
+.ex-more[open]>summary{color:var(--text-secondary);border-bottom:1px solid var(--line-soft);}
+.ex-more-count{margin-left:auto;padding-right:8px;color:var(--text-muted);letter-spacing:.8px;text-transform:none;font-size:8px;}
+.ex-more-body{padding:10px 11px 11px;animation:pbFade .2s ease;}
+.ex-more-body>*:last-child{margin-bottom:0;}
+.ex-more.level-2{border-color:rgba(200,255,0,.12);}
+
+/* ── 9. SATZ-EINGABE (Fokus während des Trainings) ────────── */
+.sets-grid{grid-template-columns:34px 1fr 1fr 56px;gap:6px 7px;margin:8px 0 6px;}
+.sinput{font-size:17px;font-weight:700;min-height:48px;padding:9px 10px;border-radius:var(--r-sm);text-align:center;}
+.sinput::placeholder{font-size:10.5px;font-weight:400;color:var(--text-muted);}
+.set-label{
+  font-size:9px;letter-spacing:1.2px;color:var(--text-muted);
+  display:flex;align-items:center;justify-content:center;min-height:48px;
+  border-radius:var(--r-sm);
+}
+.set-row-done{background:rgba(32,226,143,.05);}
+.set-row-done.set-label{color:var(--success);background:rgba(32,226,143,.08);}
+.sinput.set-row-done{border-color:rgba(32,226,143,.16);color:var(--text-secondary);}
+.set-row-current{background:transparent;box-shadow:none;}
+.set-label.set-row-current{
+  background:var(--accent-soft);border:1px solid rgba(200,255,0,.28);
+  color:var(--accent);font-weight:700;min-height:48px;
+}
+.sinput.set-row-current{
+  border-color:rgba(200,255,0,.30);background:var(--bg-input);
+  box-shadow:0 0 0 3px rgba(200,255,0,.06);color:var(--text-primary);
+}
+.orm-inline{
+  font-size:9px;color:var(--text-secondary);background:transparent;
+  min-width:0;text-align:right;padding:3px 4px;font-weight:500;
+}
+.orm-inline.set-row-current{color:var(--accent);}
+.set-progress-line{padding:7px 9px;margin:6px 0 2px;font-size:8.5px;}
+.set-quick-btn{font-size:8px;padding:5px 8px;min-height:28px;border-radius:var(--r-pill);}
+.set-quick-btn.weight{background:var(--accent-soft);border-color:rgba(200,255,0,.18);color:var(--accent);}
+.quick-apply-btn{background:rgba(0,200,255,.08);border-color:rgba(0,200,255,.2);color:var(--cyan);min-height:28px;}
+/* Primäraktion "erledigt" */
+.done-btn{
+  margin-top:10px;min-height:48px;border-radius:var(--r-sm);
+  background:var(--bg-chip);border:1px solid var(--line-soft);
+  color:var(--text-secondary);font-size:10px;letter-spacing:1.5px;
+}
+.done-btn:hover{border-color:rgba(32,226,143,.35);color:var(--success);background:rgba(32,226,143,.06);}
+.done-btn.done-st{background:rgba(32,226,143,.1);border-color:rgba(32,226,143,.3);color:var(--success);}
+/* Sekundäre Aktionen zurücknehmen */
+.rpe-row{margin:10px 0 0;gap:9px;}
+.rpe-input{min-height:44px;width:76px;font-size:15px;}
+.hist-btn{color:var(--text-muted);background:transparent;}
+.warmup-toggle{color:var(--warning);opacity:.85;min-height:34px;}
+.wu-set{background:rgba(255,176,32,.08);border-color:rgba(255,176,32,.18);color:var(--warning);}
+.sbox{padding:9px 10px;}
+.sval{font-size:19px;color:var(--text-primary);}
+.skey{font-size:8px;letter-spacing:1.3px;}
+.notes{min-height:56px;height:auto;font-size:12px;}
+
+/* ── 10. TAGESSTATUS / SELEKTOREN ─────────────────────────── */
+.dbtn{
+  background:var(--bg-chip);border:1px solid var(--line-soft);color:var(--text-secondary);
+  border-radius:var(--r-pill);min-height:34px;padding:6px 12px;font-size:8.5px;letter-spacing:1.1px;
+}
+.dbtn:hover{border-color:var(--line-mid);color:var(--text-primary);}
+.dbtn.active{
+  background:var(--accent-soft);border-color:rgba(200,255,0,.3);color:var(--accent);
+  font-weight:600;box-shadow:none;
+}
+[data-theme="light"] .dbtn.active{background:var(--accent-soft);border-color:var(--line-mid);color:var(--text-primary);box-shadow:none;}
+.prog-bar{height:3px;background:rgba(255,255,255,.07);border-radius:var(--r-pill);}
+.prog-fill{background:var(--accent);}
+.next-ex-line b{color:var(--accent);}
+.deload-tag{background:rgba(255,93,93,.12);border-color:rgba(255,93,93,.22);color:#ffb0b0;}
+.cinfo{background:var(--bg-card);}
+.template-save-btn,.plan-copy-btn,.test-btn,.copy-btn{
+  background:var(--bg-chip);border:1px solid var(--line-soft);color:var(--text-secondary);
+  border-radius:var(--r-sm);min-height:38px;
+}
+.test-btn:hover,.copy-btn:hover{border-color:var(--line-mid);color:var(--text-primary);background:var(--bg-card-soft);}
+
+/* ── 11. PLAN — kompakter, schneller scannbar ─────────────── */
+.plan-week-view{padding:11px;margin-bottom:10px;}
+.plan-week-grid{gap:4px;}
+/* Zwei kompakte Zeilen statt drei: Datum links, Tag/Muskelgruppe mittig,
+   Übungszahl rechts — die Woche bleibt auf einen Blick scannbar. */
+.plan-week-day{
+  background:var(--bg-card-soft);border:1px solid transparent;border-radius:var(--r-sm);
+  min-height:46px;padding:7px 10px;color:var(--text-secondary);
+  grid-template-columns:44px minmax(0,1fr) auto;
+  grid-template-areas:"date tag count" "date muscle count";
+  gap:0 8px;align-items:center;
+}
+.plan-week-date{grid-area:date;align-self:center;}
+.plan-week-tag{grid-area:tag;color:var(--text-primary);line-height:1.3;}
+.plan-week-muscle{grid-area:muscle;color:var(--text-muted);font-size:8.5px;line-height:1.3;}
+.plan-week-count{grid-area:count;align-self:center;}
+.plan-week-day:hover{background:var(--bg-chip);border-color:var(--line-soft);}
+.plan-week-day.active{
+  background:var(--accent-soft);border-color:rgba(200,255,0,.24);color:var(--text-primary);
+  backdrop-filter:var(--blur-soft);-webkit-backdrop-filter:var(--blur-soft);
+}
+.plan-week-date{color:var(--text-muted);font-weight:500;}
+.plan-week-day.active .plan-week-date{color:var(--accent);font-weight:700;}
+.plan-day-detail{
+  margin-top:10px;background:var(--bg-card-soft);
+  border:1px solid rgba(200,255,0,.14);border-radius:var(--r);padding:11px;
+  backdrop-filter:var(--blur-soft);-webkit-backdrop-filter:var(--blur-soft);
+}
+.plan-day-ex-item{
+  background:var(--bg-chip);border:1px solid transparent;border-radius:var(--r-sm);
+  min-height:46px;color:var(--text-secondary);
+}
+.plan-day-ex-item:hover,.plan-day-ex-item:focus-visible{border-color:rgba(200,255,0,.24);}
+.plan-day-ex-action{color:var(--text-muted);}
+.plan-day-ex-item:hover .plan-day-ex-action{color:var(--accent);}
+.plan-select{background:var(--bg-input);min-height:38px;}
+
+/* ── 12. PRS — Zahlen dominanter als ihre Karten ──────────── */
+.pr-insight{background:var(--bg-card);padding:13px;}
+.pr-primary{font-size:20px;color:var(--text-primary);letter-spacing:.6px;}
+.pr-insight-kv{background:var(--bg-card-soft);}
+.pr-insight-v{font-size:21px;color:var(--text-primary);}
+.pr-insight-k{color:var(--text-muted);}
+.pr-top3 .pr-insight-kv{border-left:2px solid rgba(200,255,0,.22);}
+.pr-filter-chip{
+  background:var(--bg-chip);border:1px solid var(--line-soft);color:var(--text-secondary);
+  min-height:36px;padding:8px 13px;
+}
+.pr-filter-chip.active{background:var(--accent-soft);border-color:rgba(200,255,0,.3);color:var(--accent);font-weight:600;}
+[data-theme="light"] .pr-filter-chip.active{background:var(--accent-soft);border-color:var(--line-mid);color:var(--text-primary);}
+.pr-search-input{min-height:42px;font-size:10.5px;}
+/* Gruppentitel als ruhige Trennlinie statt als eigene Box */
+.pr-group-title{
+  font-size:14px;letter-spacing:1.4px;padding:12px 0 8px;color:var(--text-muted);
+  background:transparent;border:0;border-bottom:1px solid var(--line-soft);
+  border-radius:0;margin-bottom:10px;
+}
+.pr-group-title:hover{border-color:transparent;border-bottom-color:var(--line-mid);}
+.pr-group-title.open{
+  color:var(--accent);border-color:transparent;border-bottom-color:rgba(200,255,0,.28);
+}
+[data-theme="light"] .pr-group-title.open{color:var(--text-primary);border-bottom-color:var(--line-mid);}
+.pr-group-title.tier-1{color:var(--text-secondary);}
+.pr-group-title.tier-1.open{color:var(--accent);}
+.pr-count-badge{background:var(--bg-chip);color:var(--text-secondary);border:1px solid var(--line-soft);font-weight:500;}
+.pr-card{background:var(--bg-card);padding:14px;}
+.pr-card:hover{background:var(--bg-card);border-color:var(--line-mid);}
+.pr-card.has-pr{border-left:1px solid var(--line-soft);}
+.pr-card.has-pr.tier-1{border-left:2px solid rgba(200,255,0,.5);border-color:var(--line-soft);background:var(--bg-card);}
+.pr-card.no-pr{opacity:.7;border-style:solid;background:rgba(255,255,255,.014);}
+.pr-ex-name{font-size:13px;font-weight:600;color:var(--text-secondary);}
+.pr-card.tier-1 .pr-ex-name{font-size:13.5px;font-weight:700;color:var(--text-primary);}
+.pr-badge{font-size:33px;color:var(--text-primary);}
+.pr-card.tier-1.has-pr .pr-badge{font-size:38px;color:var(--accent);}
+.pr-badge-unit{color:var(--text-muted);}
+.pr-value-label{color:var(--text-muted);}
+.pr-spark-toggle{background:var(--bg-chip);border-color:var(--line-soft);border-radius:var(--r-sm);}
+.pr-maintenance{border-color:var(--line-soft);background:var(--bg-card-soft);border-radius:var(--r);}
+.hof-card{background:var(--bg-card);border-color:var(--line-soft);}
+.hof-card.rank-1{background:var(--bg-card);border-color:rgba(200,255,0,.2);}
+.hof-orm{color:var(--text-secondary);}
+.hof-card.rank-1 .hof-orm{color:var(--accent);}
+
+/* ── 13. KI / ANALYSE — klare Zustände ────────────────────── */
+.ki-auto-panel{background:var(--bg-card);}
+.ki-auto-hd{border-bottom-color:var(--line-soft);padding:11px 12px;}
+.ki-auto-run-btn{
+  background:var(--accent);color:#05070a;box-shadow:none;font-weight:700;
+  min-height:40px;border-radius:var(--r-sm);letter-spacing:1.2px;
+}
+.ki-auto-run-btn:hover:not(:disabled){background:var(--accent-strong);}
+[data-theme="light"] .ki-auto-run-btn{background:var(--text-primary);color:#fff;}
+.ki-auto-label{display:flex;flex-direction:column;gap:5px;min-width:0;}
+.ki-state{
+  display:flex;align-items:center;gap:8px;
+  font-family:'DM Mono',monospace;font-size:8.5px;letter-spacing:1.2px;text-transform:uppercase;
+  color:var(--text-muted);
+}
+.ki-state-dot{width:6px;height:6px;border-radius:50%;background:var(--text-muted);flex:0 0 auto;}
+.ki-state[data-state="running"] .ki-state-dot{background:var(--accent);animation:dotPulse 1s ease-in-out infinite;}
+.ki-state[data-state="running"]{color:var(--accent);}
+.ki-state[data-state="ready"] .ki-state-dot{background:var(--success);}
+.ki-state[data-state="ready"]{color:var(--success);}
+.ki-state[data-state="error"] .ki-state-dot{background:var(--danger);}
+.ki-state[data-state="error"]{color:var(--danger);}
+.ki-auto-idle{color:var(--text-secondary);}
+.ki-model-btn{background:var(--bg-chip);border-color:var(--line-soft);color:var(--text-secondary);min-height:40px;border-radius:var(--r-sm);}
+.ki-model-btn.active{background:var(--bg-chip);border-color:var(--line-soft);color:var(--text-secondary);}
+.ki-groq-panel{background:var(--bg-card-soft);border-color:var(--line-soft);}
+.ki-msg.user{background:var(--bg-chip);border-color:transparent;}
+.ki-msg.ai{background:var(--bg-card);border-color:var(--line-soft);}
+.ki-textarea{min-height:46px;}
+.ki-send-btn{background:var(--accent);color:#05070a;border-radius:var(--r-sm);min-height:46px;}
+[data-theme="light"] .ki-send-btn{background:var(--text-primary);color:#fff;}
+.ki-finding{border-bottom-color:var(--line-soft);}
+
+/* ── 14. SETUP — technisch, aber gruppiert ────────────────── */
+.setup-group{margin:0 0 18px;}
+.setup-group-hd{
+  display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+  font-family:'DM Mono',monospace;font-size:8.5px;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--text-muted);padding:0 2px 8px;border-bottom:1px solid var(--line-soft);margin-bottom:12px;
+}
+.setup-group-hd b{color:var(--text-secondary);font-weight:500;letter-spacing:1.5px;}
+.setup-step{background:var(--bg-card);padding:14px;margin-top:16px;}
+.setup-step:hover{border-color:var(--line-soft);}
+.step-num{
+  background:var(--bg-chip);border:1px solid var(--line-soft);color:var(--text-secondary);
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;padding:3px 9px;
+}
+[data-theme="light"] .step-num{background:var(--bg-chip);color:var(--text-primary);}
+.setup-details{background:var(--bg-card-soft);border-color:var(--line-soft);}
+.setup-details[open]{background:var(--bg-card-soft);}
+.setup-details-summary{font-size:14px;min-height:46px;}
+.code-box{
+  background:rgba(4,5,6,.85);border:1px solid var(--line-soft);
+  color:var(--success);font-size:10px;border-radius:var(--r-sm);
+}
+.url-input{min-height:42px;}
+.url-save-btn{background:var(--accent);color:#05070a;border-radius:var(--r-sm);min-height:42px;font-weight:700;}
+[data-theme="light"] .url-save-btn{background:var(--text-primary);color:#fff;}
+.danger-zone{border-color:rgba(255,93,93,.16);background:rgba(255,93,93,.03);}
+.btn-danger{border-color:rgba(255,93,93,.26);color:#ffa8a8;background:rgba(255,93,93,.05);}
+
+/* ── 15. STICKY SAVE BAR — floating Glass-Layer ───────────── */
+.save-footer{
+  left:0;right:0;bottom:0;
+  padding:9px 12px;padding-bottom:calc(9px + var(--safe-bottom));
+  background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;
+  border-top:none;pointer-events:none;
+}
+[data-theme="light"] .save-footer{background:transparent;}
+.save-dock{
+  pointer-events:auto;
+  display:flex;align-items:center;gap:10px;
+  max-width:840px;margin:0 auto;
+  padding:8px 9px 8px 13px;
+  border-radius:16px;
+  background:var(--bg-sticky);
+  backdrop-filter:var(--blur-strong);-webkit-backdrop-filter:var(--blur-strong);
+  border:1px solid var(--line-soft);
+  box-shadow:0 10px 30px rgba(0,0,0,.45);
+}
+.save-dock-info{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;}
+.api-status{margin-top:0;font-size:8.5px;letter-spacing:.6px;gap:6px;min-width:0;}
+.api-status span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.api-dot{width:6px;height:6px;}
+.api-dot.connected{background:var(--success);box-shadow:none;}
+.api-dot.error{background:var(--danger);}
+.save-state{
+  display:flex;align-items:center;gap:6px;
+  font-family:'DM Mono',monospace;font-size:8.5px;letter-spacing:1.1px;text-transform:uppercase;
+  color:var(--text-muted);line-height:1.2;
+}
+.save-state-dot{width:6px;height:6px;border-radius:50%;background:var(--text-muted);flex:0 0 auto;transition:background .2s;}
+.save-state[data-state="dirty"]{color:var(--accent);}
+.save-state[data-state="dirty"] .save-state-dot{background:var(--accent);}
+.save-state[data-state="saving"]{color:var(--warning);}
+.save-state[data-state="saving"] .save-state-dot{background:var(--warning);animation:dotPulse 1s ease-in-out infinite;}
+.save-state[data-state="saved"]{color:var(--success);}
+.save-state[data-state="saved"] .save-state-dot{background:var(--success);}
+.save-state[data-state="error"]{color:var(--danger);}
+.save-state[data-state="error"] .save-state-dot{background:var(--danger);}
+.save-btn{
+  width:auto;flex:0 0 auto;
+  gap:7px;padding:0 16px;min-height:44px;
+  border-radius:12px;
+  background:var(--accent);color:#05070a;
+  font-family:'DM Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;
+}
+.save-btn:hover{background:var(--accent-strong);}
+.save-btn:disabled{background:var(--bg-chip);color:var(--text-muted);}
+[data-theme="light"] .save-btn{background:var(--text-primary);color:#fff;}
+.save-btn svg{width:14px;height:14px;flex:0 0 auto;}
+.last-sync-txt{margin-left:0;font-size:8.5px;}
+
+/* ── 16. OVERLAYS / MODALS ────────────────────────────────── */
+.modal-bg{background:rgba(3,4,5,.72);backdrop-filter:var(--blur-soft);-webkit-backdrop-filter:var(--blur-soft);}
+.modal{
+  background:var(--bg-base);border:1px solid var(--line-mid);border-radius:16px;
+  box-shadow:0 24px 60px rgba(0,0,0,.5);
+}
+.modal-title{font-size:20px;letter-spacing:1.2px;color:var(--text-primary);}
+[data-theme="light"] .modal-title{color:var(--text-primary);}
+#histOverlay{background:rgba(3,4,5,.72);}
+#histBox{background:var(--bg-base);border-color:var(--line-mid);border-radius:16px;}
+.swap-item,.swap-scope-option,.swap-mode-option{background:var(--bg-card-soft);border-color:var(--line-soft);border-radius:var(--r-sm);}
+.swap-scope-option:has(input:checked),.swap-mode-option:has(input:checked){border-color:rgba(200,255,0,.3);background:var(--accent-soft);}
+.swap-confirm-btn,.rename-btn-confirm{background:var(--accent);color:#05070a;border-radius:var(--r-sm);min-height:44px;font-weight:700;}
+[data-theme="light"] .swap-confirm-btn,[data-theme="light"] .rename-btn-confirm{background:var(--text-primary);color:#fff;}
+.consent-box{background:var(--bg-base);border:1px solid var(--line-mid);border-radius:16px;}
+.status{background:var(--bg-card-soft);border-radius:0 var(--r-sm) var(--r-sm) 0;}
+
+/* ── 16b. TOUCH-ZIELE ─────────────────────────────────────
+   Alle antippbaren Elemente auf mindestens 36–38 px Höhe.
+   Optisch bleiben Sekundäraktionen ruhig; nur die Trefferfläche wächst. */
+.dbtn,.tab,.icon-btn,.pr-filter-chip,.machine-select,.plan-select,.prog-ex-select,
+.template-save-btn,.plan-copy-btn,.ki-model-btn{min-height:38px;}
+.dbtn{padding:7px 12px;}
+.icon-btn{width:38px;height:38px;}
+.tab{min-height:38px;}
+.set-quick-btn,.quick-apply-btn,.hist-btn,.plan-edit-btn,.exercise-focus-chip{
+  min-height:32px;display:inline-flex;align-items:center;justify-content:center;
+}
+.set-quick-btn{padding:6px 9px;}
+.hist-btn{padding:4px 9px;font-size:11px;}
+.plan-edit-btn{height:32px;min-height:32px;padding:6px 10px;}
+.exercise-focus-chip{padding:6px 9px;}
+.warmup-toggle{min-height:38px;padding:8px 0;}
+.set-history-title{min-height:34px;padding:6px 0;align-items:center;}
+.spark-header{min-height:38px;}
+.bw-input{min-height:36px;padding:4px 0;}
+.rpe-input{min-height:44px;}
+.modal-close,.sc-close,.hist-close-btn,#histClose{
+  min-width:34px;min-height:34px;display:inline-flex;align-items:center;justify-content:center;
+}
+.pr-edit-inp,.pr-edit-btn,.pr-del-btn{min-height:36px;}
+.copy-btn,.url-save-btn,.test-btn{min-height:40px;}
+.swap-item{min-height:44px;}
+
+/* ── 17. MOTION ───────────────────────────────────────────── */
+.sec.active{animation:pbFade .2s ease;}
+.tab,.dbtn,.pr-filter-chip,.icon-btn,.save-btn,.done-btn{transition:background .16s ease,border-color .16s ease,color .16s ease,transform .08s ease;}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms!important;animation-iteration-count:1!important;
+    transition-duration:.001ms!important;scroll-behavior:auto!important;
+  }
+}
+
+/* ── 18. MOBILE (iPhone zuerst) ───────────────────────────── */
+@media (max-width:640px){
+  main{padding:11px 11px 4px;}
+  .tabs{top:calc(54px + var(--safe-top));padding:6px 8px;}
+  .tab{padding:8px 11px;min-height:38px;font-size:9px;}
+  .pb-screen-title,.tab-h2,.setup-h2{font-size:25px;}
+  .logo{font-size:22px;}
+  .exhead{padding:12px 11px 12px 15px;}
+  .exbody.open{padding:9px 11px 13px 15px;}
+  .sets-grid{grid-template-columns:30px minmax(0,1fr) minmax(0,1fr) 50px;gap:5px 6px;}
+  .sinput{font-size:16px;min-height:46px;padding:9px 6px;}
+  .set-label,.set-label.set-row-current{min-height:46px;font-size:8.5px;}
+  .orm-inline{font-size:8.5px;color:var(--text-muted);background:transparent;}
+  .orm-inline.set-row-current{color:var(--accent);}
+  .done-btn{min-height:48px;}
+  .ex-more>summary{min-height:44px;padding:11px 10px;}
+  .save-footer{padding:8px 10px;padding-bottom:calc(8px + var(--safe-bottom));}
+  .save-dock{padding:7px 8px 7px 12px;border-radius:15px;gap:8px;}
+  .save-btn{min-height:42px;padding:0 13px;font-size:9.5px;letter-spacing:.9px;}
+  .save-btn .save-btn-label{display:inline;}
+  .plan-week-day{min-height:44px;}
+  .pr-badge{font-size:30px;}
+  .pr-card.tier-1.has-pr .pr-badge{font-size:34px;}
+}
+@media (max-width:360px){
+  .save-btn .save-btn-label{display:none;}
+  .save-btn{padding:0 14px;}
+}
+/* Blur nur dort, wo er trägt — ältere/schwächere Mobile-Safari-Kontexte
+   bekommen deckendere Fallbacks statt teurer Filter. */
+@supports not ((backdrop-filter:blur(2px)) or (-webkit-backdrop-filter:blur(2px))){
+  header,.tabs,.save-dock,.ex-more,.plan-day-detail,.plan-week-day.active{background:var(--bg-base);}
+  .modal-bg,#histOverlay{background:rgba(3,4,5,.94);}
+}
 </style>
 </head>
 <body>
@@ -1262,13 +1911,19 @@ main{padding:14px;max-width:860px;}
   </div>
 </div>
 <header>
-  <div>
-    <div class="logo">PB<span class="splash-logo-ver"> <span data-app-version>…</span></span></div>
-    <span class="hbadge" id="todayBadge">Lädt…</span>
-    <div class="splash-build">Build: <span id="buildDateTxt"></span></div>
+  <div class="hd-main">
+    <div class="hd-brand">
+      <div class="logo">PB</div>
+      <span class="hd-ver" data-app-version>…</span>
+      <span class="hbadge" id="todayBadge">Lädt…</span>
+    </div>
+    <div class="hd-sys">
+      <span class="hdate-span" id="hdate"></span>
+      <span class="hd-sys-sep">/</span>
+      <span>Build <span id="buildDateTxt"></span></span>
+    </div>
   </div>
   <div class="header-right">
-    <span class="hdate-span" id="hdate"></span>
     <button class="icon-btn" onclick="toggleTheme()" title="Hell/Dunkel">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
     </button>
@@ -1316,6 +1971,10 @@ main{padding:14px;max-width:860px;}
 
 <!-- PLAN TAB -->
 <div class="sec" id="tab-plan">
+  <div class="pb-screen-head">
+    <h2 class="pb-screen-title">Plan</h2>
+    <span class="pb-screen-sub">Zyklus · Woche · Tag</span>
+  </div>
   <div class="sel-row plan-select-row"><span class="sel-label">Plan</span><div id="planSelRow" class="plan-select-wrap"></div></div>
   <div class="sel-row sel-row-cycle"><span class="sel-label">Zyklus</span><div id="cycleSelRow" class="flex-row-wrap"></div></div>
   <div class="sel-row"><span class="sel-label">Woche</span><div id="weekSelRow" class="flex-row-wrap"></div></div>
@@ -1325,10 +1984,12 @@ main{padding:14px;max-width:860px;}
 
 <!-- SETUP TAB -->
 <div class="sec" id="tab-setup">
-  <h2 class="setup-h2">Google Sheet verbinden</h2>
-  <p class="setup-sub">Einmalig 5 Minuten — danach vollautomatisch</p>
+  <h2 class="setup-h2">Setup</h2>
+  <p class="setup-sub">Google Sheet verbinden — einmalig, danach automatisch</p>
+  <div class="setup-group-hd"><b>Google Sheet</b><span>Datenquelle</span></div>
   <div class="setup-step"><div class="step-num">1</div><div class="step-title">Google Sheet öffnen</div><div class="step-desc"><b><a href="https://docs.google.com/spreadsheets/d/1NA5OUomzaSFSw6_VzdJ6U7FaD1bU0qTEsQCtIneJ1JI/edit" target="_blank">→ Plateau-Brecher Sheet öffnen ↗</a></b></div></div>
   <div class="setup-step"><div class="step-num">2</div><div class="step-title">Apps Script öffnen</div><div class="step-desc">Im Sheet oben: <b>Erweiterungen → Apps Script</b></div></div>
+  <div class="setup-group-hd"><b>Apps Script</b><span>Backend-Code</span></div>
   <div class="setup-step">
     <div class="step-num">3</div><div class="step-title">Apps Script Code</div>
     <div class="step-desc">Nur ändern, wenn <b>SCRIPT_CODE</b> aktualisiert wurde. App-Testversionen brauchen nicht automatisch ein neues Apps-Script-Deployment.</div>
@@ -1341,6 +2002,7 @@ main{padding:14px;max-width:860px;}
     <button class="copy-btn" onclick="copyScript()"><svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Script kopieren</button>
     <div class="step-desc step-desc-mt">Dann: <b>Bereitstellen → Neue Bereitstellung → Web-App</b><br>Zugriff: <b>Jeder</b> → Bereitstellen → Zugriff erlauben<br>→ Du bekommst eine <b>Web-App-URL</b></div>
   </div>
+  <div class="setup-group-hd"><b>Verbindung</b><span>URL &amp; Secret</span></div>
   <div class="setup-step">
     <div class="step-num">4</div><div class="step-title">URL eintragen & testen</div>
     <div class="url-input-wrap">
@@ -1359,6 +2021,7 @@ main{padding:14px;max-width:860px;}
       <span>ZYKLUS MASTER wird nicht verwendet.</span>
     </div>
   </div>
+  <div class="setup-group-hd"><b>Analyse</b><span>optional</span></div>
   <div class="setup-step">
     <div class="step-num">5</div><div class="step-title">Groq optional – nur Coach-Texte</div>
     <div class="step-desc step-desc-mb">Lokale Analyse funktioniert ohne API-Key. Ein Groq-Key wird nur für optionale Coach-Formulierungen genutzt und nur lokal gespeichert.</div>
@@ -1368,6 +2031,7 @@ main{padding:14px;max-width:860px;}
     <div class="status" id="aiKeyStatus"></div>
   </div>
   <!-- Daten & Log -->
+  <div class="setup-group-hd"><b>Status, Wartung &amp; Diagnose</b><span>lokal</span></div>
   <div class="setup-step">
     <div class="step-num">6</div><div class="step-title">Daten & Log</div>
     <details class="setup-details">
@@ -1474,7 +2138,9 @@ main{padding:14px;max-width:860px;}
   <!-- Auto-Analyse Panel -->
   <div class="ki-auto-panel" id="kiAutoPanel">
     <div class="ki-auto-hd">
-      <span class="ki-auto-label">TRAININGSFEEDBACK</span>
+      <div class="ki-auto-label">TRAININGSFEEDBACK
+        <div class="ki-state" id="kiState" data-state="idle" aria-live="polite"><span class="ki-state-dot"></span><span id="kiStateTxt">Noch nicht gestartet</span></div>
+      </div>
       <button class="ki-auto-run-btn" id="kiAutoRunBtn" onclick="runAutoAnalysis()">▶ Analyse starten</button>
     </div>
     <div class="ki-auto-body" id="kiAutoBody">
@@ -1518,13 +2184,17 @@ main{padding:14px;max-width:860px;}
 
 <!-- FIXED FOOTER -->
 <div class="save-footer" id="saveFooter">
-
-  <button class="save-btn" id="saveBtn" onclick="saveToSheet()">
-    <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-    <span id="saveBtnTxt">In Google Sheet speichern</span>
-    <span id="saveSpin" class="save-spin-wrap"><div class="spinner"></div></span>
-  </button>
-  <div class="api-status" id="apiStatus"><div class="api-dot" id="apiDot"></div><span id="apiStatusTxt">API nicht verbunden — gehe zu Setup</span><span id="lastSyncTxt" class="last-sync-txt"></span></div>
+  <div class="save-dock">
+    <div class="save-dock-info">
+      <div class="save-state" id="saveState" data-state="idle" aria-live="polite"><span class="save-state-dot"></span><span id="saveStateTxt">Keine Änderungen</span></div>
+      <div class="api-status" id="apiStatus"><div class="api-dot" id="apiDot"></div><span id="apiStatusTxt">API nicht verbunden — gehe zu Setup</span><span id="lastSyncTxt" class="last-sync-txt"></span></div>
+    </div>
+    <button class="save-btn" id="saveBtn" onclick="saveToSheet()">
+      <svg viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      <span class="save-btn-label" id="saveBtnTxt">Änderungen speichern</span>
+      <span id="saveSpin" class="save-spin-wrap"><div class="spinner"></div></span>
+    </button>
+  </div>
 </div>
 
 <!-- SWAP MODAL -->
@@ -1796,9 +2466,22 @@ const PLAN = [{"weeks":[{"weekLabel":"Woche 1","isDeload":false,"isSchool":false
 // STORAGE
 // ============================================================
 const SK='pb_v12_0_test';
-const APP_VERSION='V13.3.4-test';
-const BUILD_DATE='02.08.2026';
+const APP_VERSION='V14.0.0-designv2-test';
+const BUILD_DATE='17.08.2026';
 /*
+CHANGELOG V14.0.0-designv2-test  (UI/UX-Designvariante, Basis: V13.3.4-test)
+- Reines UI/UX-Redesign. Datenlogik, Sheet-Anbindung, PLAN, PRs, SETUP, KI
+  und der Storage-Key `pb_v12_0_test` bleiben unverändert.
+- Neues Surface-/Transparenzsystem: Flächen über Flächen werden stufenweise
+  transparenter; Floating-/Sticky-Ebenen mit Blur, Inputs bewusst deckender.
+- Weniger Rahmen und Outlines; Lime-Rand nur noch bei aktivem Fokus.
+- TRAINING mit Progressive Disclosure: Ebene 1 (Satzeingabe) immer sichtbar,
+  Ebene 2 (Kontext/Empfehlung) kompakt, Ebene 3 (Verlauf/Statistik/Notizen)
+  eingeklappt. Keine Funktion entfernt.
+- Sticky Save Bar als kompakter Floating-Dock mit Speicherstatus
+  (Änderungen offen / wird gespeichert / gespeichert / Fehler).
+  Keine automatische Speicherung.
+
 CHANGELOG V13.3.4-test
 - Moderne V2-PRs werden einmalig einer festen Kategorie oder „Weitere Varianten“ zugeordnet.
 - Top 3 ist auf Mobil ein einspaltiger, gleichmäßiger Kartenstapel.
@@ -2766,6 +3449,7 @@ function saveTrainingStats(){
     dur:document.getElementById('durInput')?.value||''
   };
   persist();
+  pbMarkDirty();
 }
 function loadTrainingStats(){
   const k=statsKey(C,W,D);
@@ -2983,7 +3667,7 @@ function renderDataQualityCard(){
 // ============================================================
 let C=0,W=0,D=0;
 
-function saveBW(val){store[bwKey(C,W,D)]=val;persist();}
+function saveBW(val){store[bwKey(C,W,D)]=val;persist();pbMarkDirty();}
 function loadBW(){
   const val=store[bwKey(C,W,D)]||'';
   const el=document.getElementById('bwInput');
@@ -4910,6 +5594,7 @@ function renderWorkout(){
 
     // Load Suggestion — nur wenn Vorwoche-Daten vorhanden und noch kein Gewicht eingetragen
     let loadSuggest='';
+    let suggestValue=null; // V2: fuer die Kurzvorschau der eingeklappten Ebene 2
     if(!week.isDeload&&prevG&&prevOrm&&!d.g1&&prevData){
       const prevRpe=parseFloat(prevData.rpe)||0;
       // Basis: letztes eingetragenes Gewicht (S1), nicht 1RM — robuster gegen Datenfehler
@@ -4922,6 +5607,7 @@ function renderWorkout(){
       if(suggestG>prevG*1.2) suggestG=prevG;
       // Nur anzeigen wenn Wert plausibel (> 0, < 500 kg)
       if(suggestG>0&&suggestG<500){
+        suggestValue=suggestG;
         loadSuggest='<div class="load-suggest">💡 Vorschlag Geräte-Training: <b>'+suggestG+' kg</b>'+(hint?' <span class="load-hint">'+hint+'</span>':'')+'</div>';
       }
     }else if(!week.isDeload&&!prevEntry&&!d.g1){
@@ -4960,6 +5646,21 @@ function renderWorkout(){
       return 'set-row-empty';
     };
 
+    /* V2 — Progressive Disclosure: kurze Vorschau in der Kopfzeile der
+       eingeklappten Ebenen, damit ohne Aufklappen sichtbar bleibt,
+       was dahinter liegt. Rein informativ, keine Logikänderung. */
+    const level2Parts=[escHtml(getMachineValue({machine:machineValue}))];
+    if(suggestValue!==null)level2Parts.push('Vorschlag '+suggestValue+' kg');
+    else if(prevEntry&&prevEntry.g1)level2Parts.push('zuletzt '+escHtml(prevEntry.g1)+' kg');
+    const level2Count=[loadSuggest,coachRecHtml,machinePrLine,lastTrainingBox,machineWarning].filter(Boolean).length;
+    if(level2Count)level2Parts.push(level2Count+' Hinweis'+(level2Count===1?'':'e'));
+    const level2Hint=level2Parts.join(' · ');
+    const level3Parts=[];
+    level3Parts.push(orm?'1RM '+orm+' kg':'1RM —');
+    if(rec&&rec.orm)level3Parts.push('Best '+rec.orm+' kg');
+    if(String(d.notes||'').trim())level3Parts.push('Notiz');
+    const level3Hint=level3Parts.join(' · ');
+
     html+='<div class="excard '+(d.done?'done ':'')+( isOpen?'open-ex ':'')+(isActiveExercise?'active-ex ':'')+( isPR?'pr-card':'')+( isStag?'stagnation-card':'')+'" id="ec'+i+'">'
       +'<div class="exhead" onclick="toggleEx('+i+')">'
       +'<div class="exname">'+(i+1)+'. <span id="exlabel'+i+'">'+exName+'</span>'
@@ -4974,21 +5675,8 @@ function renderWorkout(){
       +'<svg class="ex-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>'
       +'</div></div>'
       +'<div class="exbody '+(isOpen?'open':'')+'" id="eb'+i+'">'
-      +'<button class="warmup-toggle '+(wu?'':'disabled')+'" id="wutog'+i+'" onclick="toggleWarmup('+i+')"'+(wu?'':' style="opacity:.4;pointer-events:none;"')+'>'
-      +'<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>'
-      +'🔥 WARMUP-SÄTZE '+(wu?'('+Math.round(wu*0.4*2)/2+' / '+Math.round(wu*0.6*2)/2+' / '+Math.round(wu*0.8*2)/2+' kg)':'(Gew. S1 eingeben)')+
-      '</button>'
-      +'<div class="warmup-body" id="wubody'+i+'">'
-      +'<div class="wu-sets">'
-      +(wu?'<span class="wu-set">40% → '+Math.round(wu*0.4*2)/2+' kg</span><span class="wu-set">60% → '+Math.round(wu*0.6*2)/2+' kg</span><span class="wu-set">80% → '+Math.round(wu*0.8*2)/2+' kg</span>':'')
-      +'</div></div>'
-      +loadSuggest
-      +coachRecHtml
-      +machinePrLine
-      +lastTrainingBox
-      +setHistoryBox
-      +machineRow
-      +machineWarning
+      /* ── EBENE 1 — immer sichtbar: Satzfokus, Eingabe, Hauptaktion ── */
+      +'<div class="ex-level-1">'
       +focusBar
       +setProgressLine
       +'<div class="sets-grid">'
@@ -5019,12 +5707,38 @@ function renderWorkout(){
       +'<input class="rpe-input" type="number" placeholder="—" min="1" max="10" step="0.5" value="'+(d.rpe||'')+'" onchange="upd('+i+',\'rpe\',this.value)" id="rpe'+i+'">'
       +'<span class="rpe-scale">/ 10</span>'
       +'</div>'
+      +'</div>'
+      /* ── EBENE 2 — Kontext: eingeklappt, Kernaussage steht in der Kopfzeile ── */
+      +'<details class="ex-more level-2">'
+      +'<summary>Kontext &amp; Empfehlung<span class="ex-more-count">'+level2Hint+'</span></summary>'
+      +'<div class="ex-more-body">'
+      +'<button class="warmup-toggle '+(wu?'':'disabled')+'" id="wutog'+i+'" onclick="toggleWarmup('+i+')"'+(wu?'':' style="opacity:.4;pointer-events:none;"')+'>'
+      +'<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>'
+      +'🔥 WARMUP-SÄTZE '+(wu?'('+Math.round(wu*0.4*2)/2+' / '+Math.round(wu*0.6*2)/2+' / '+Math.round(wu*0.8*2)/2+' kg)':'(Gew. S1 eingeben)')+
+      '</button>'
+      +'<div class="warmup-body" id="wubody'+i+'">'
+      +'<div class="wu-sets">'
+      +(wu?'<span class="wu-set">40% → '+Math.round(wu*0.4*2)/2+' kg</span><span class="wu-set">60% → '+Math.round(wu*0.6*2)/2+' kg</span><span class="wu-set">80% → '+Math.round(wu*0.8*2)/2+' kg</span>':'')
+      +'</div></div>'
+      +loadSuggest
+      +coachRecHtml
+      +machinePrLine
+      +lastTrainingBox
+      +machineRow
+      +machineWarning
+      +'</div></details>'
+      /* ── EBENE 3 — Verlauf, Statistik, Notizen: standardmäßig eingeklappt ── */
+      +'<details class="ex-more level-3">'
+      +'<summary>Verlauf &amp; Details<span class="ex-more-count">'+level3Hint+'</span></summary>'
+      +'<div class="ex-more-body">'
+      +setHistoryBox
       +'<div class="stats-row">'
       +'<div class="sbox"><div class="skey">1RM Est.</div><div class="sval" id="orm'+i+'">'+(orm?orm+' kg':'—')+'</div></div>'
       +'<div class="sbox"><div class="skey">Globale Bestleistung</div><div class="sval pr-warn-val">'+(rec?rec.orm+' kg':'—')+'</div></div>'
       +'</div>'
       +buildSparkline(i, orm)
       +'<textarea class="notes" placeholder="Notizen…" onchange="upd('+i+',\'notes\',this.value)">'+d.notes+'</textarea>'
+      +'</div></details>'
       +'</div></div>';
   });
 
@@ -5157,6 +5871,7 @@ function copyPreviousSetToNext(i){
 
 function toggleDone(idx){
   const d=getD(C,W,D,idx);d.done=!d.done;persist();
+  pbMarkDirty();
   haptic(d.done?20:10);
   if(d.done){
     const orm=calc1RM(d);
@@ -5543,6 +6258,7 @@ async function preflightSheetNamesForSave(sheetName,day,c=C,w=W,d=D){
 
 function upd(idx,field,val){
   const d=getD(C,W,D,idx);d[field]=val;persist();
+  pbMarkDirty();
   if(field==='machine'){renderWorkout();return;}
   const orm=calc1RM(d);
   const oe=document.getElementById('orm'+idx);
@@ -6306,6 +7022,45 @@ function getSwapScopeLabel(scope){
   return scope==='day'?'diesem Trainingstag':(scope==='plan'?'diesem Plan':'dieser Stelle');
 }
 
+// PLAN-Aenderungsschutz: geloggte Planstellen (Satzdaten/RPE/erledigt vorhanden)
+// werden von getSwapScopeSlots() ausgeschlossen, damit kein Uebungswechsel
+// historische Trainingsdaten einer anderen Identitaet zuordnet. Eine reine
+// Umbenennung (Modus "rename") aendert weder variantId noch dataKey(...) noch
+// die Sheet-Zuordnung (siehe renameDisplay() und getSheetExerciseName()) und
+// darf deshalb ausnahmsweise auch die konkret ausgewaehlte, bereits geloggte
+// Stelle betreffen. Fuer "variant"/"replace" bleibt der Schutz uneingeschraenkt,
+// weil dort eine neue variantId entsteht. Die Ausnahme gilt nur fuer
+// scope==='instance': bei Tag-/Plan-weiten Aenderungen bleibt eine geloggte
+// Zielstelle unveraendert (siehe confirmSwap).
+function computeSwapApplicableSlots(target,scope,mode){
+  const base=getSwapScopeOverrideSlots(target,scope);
+  let slots=base.slots;
+  let skippedRecorded=base.skippedRecorded;
+  let overrideSlots=base.overrideSlots;
+  const targetLogged=hasRecordedPlanSlot(target.c,target.w,target.d,target.idx,target.planId);
+  const targetIncludedBase=slots.some(slot=>slot.c===target.c&&slot.w===target.w&&slot.d===target.d&&slot.idx===target.idx);
+  const renameException=mode==='rename'&&scope==='instance'&&targetLogged&&!targetIncludedBase;
+  if(renameException){
+    const targetSlot={c:target.c,w:target.w,d:target.d,idx:target.idx};
+    slots=[...slots,targetSlot];
+    skippedRecorded=Math.max(0,skippedRecorded-1);
+    if(Object.prototype.hasOwnProperty.call(store,exnameInstanceKey(targetSlot.c,targetSlot.w,targetSlot.d,targetSlot.idx,target.planId))||Object.prototype.hasOwnProperty.call(store,exerciseIdentitySlotKey(targetSlot.c,targetSlot.w,targetSlot.d,targetSlot.idx,target.planId))){
+      overrideSlots=[...overrideSlots,targetSlot];
+    }
+  }
+  return {slots,skippedRecorded,overrideSlots,targetLogged,targetIncluded:targetIncludedBase||renameException,renameException};
+}
+
+function buildSwapLoggedBlockedMessage(scope){
+  return scope==='instance'
+    ?'Diese Planstelle enthält bereits Trainingsdaten und ist deshalb vor Übungswechseln geschützt.'
+    :'Alle passenden Planstellen in '+getSwapScopeLabel(scope)+' enthalten bereits Trainingsdaten und sind geschützt.';
+}
+function buildSwapPartialMessage(count,scope){
+  return 'Die ausgewählte Stelle enthält bereits Trainingsdaten und blieb unverändert. '
+    +count+' andere ungeloggte Planstelle(n) in '+getSwapScopeLabel(scope)+' wurden geändert.';
+}
+
 function updateSwapScopePreview(){
   const target=getValidatedSwapTarget();
   const note=document.getElementById('swapScopeNote');
@@ -6313,13 +7068,19 @@ function updateSwapScopePreview(){
   const restoreBtn=document.getElementById('swapRestoreBtn');
   if(!target){if(impact)impact.textContent='Planansicht hat sich geändert – bitte Übung erneut auswählen.';return;}
   const scope=getSwapScope();
-  const result=getSwapScopeOverrideSlots(target,scope);
   const mode=getSwapMode();
+  const result=computeSwapApplicableSlots(target,scope,mode);
   const scopeText=(mode==='replace'?'Neue Übung mit eigener Historie. ':'')+'Änderung nur in '+getSwapScopeLabel(scope)+'. Abgeschlossene Satzdaten, PRs, Verlauf und Sheet-Zuordnung bleiben unverändert.';
   if(note)note.textContent=scopeText;
-  if(impact)impact.textContent=result.slots.length+' ungeloggte Stelle(n) betroffen'
-    +(result.overrideSlots.length?' · '+result.overrideSlots.length+' Override(s) beim Wiederherstellen löschbar':'')
-    +(result.skippedRecorded?' · '+result.skippedRecorded+' geloggte Stelle(n) geschützt':'')+'.';
+  if(impact){
+    if(!result.slots.length)impact.textContent=buildSwapLoggedBlockedMessage(scope);
+    else if(result.targetLogged&&!result.targetIncluded)impact.textContent=buildSwapPartialMessage(result.slots.length,scope)+' (Vorschau)';
+    else impact.textContent=result.slots.length+' ungeloggte Stelle(n) betroffen'
+      +(result.overrideSlots.length?' · '+result.overrideSlots.length+' Override(s) beim Wiederherstellen löschbar':'')
+      +(result.skippedRecorded?' · '+result.skippedRecorded+' geloggte Stelle(n) geschützt':'')
+      +(result.renameException?' · Anzeigename wird trotz vorhandener Trainingsdaten geändert':'')
+      +'.';
+  }
   if(restoreBtn){
     restoreBtn.hidden=!result.overrideSlots.length;
   }
@@ -6456,20 +7217,35 @@ function confirmSwap(name){
   if(!target){invalidateSwapForChangedPlan();return;}
   const mode=getSwapMode();
   const current=getSwapTargetIdentity(target);
+  const impactEl=document.getElementById('swapImpact');
   const movementName=String(document.getElementById('swapMovementInp')?.value||'').trim();
   const variantName=String(document.getElementById('swapVariantInp')?.value||'').trim()||'Standard';
   const displayName=String(document.getElementById('swapDisplayInp')?.value||name||'').trim();
-  if(!displayName||((mode==='variant'||mode==='replace')&&!movementName)){showStatus('err','Bitte Basisübung und Anzeigename angeben.');return;}
+  if(!displayName||((mode==='variant'||mode==='replace')&&!movementName)){
+    if(impactEl)impactEl.textContent='Bitte Basisübung und Anzeigename angeben.';
+    return;
+  }
   const scope=getSwapScope();
-  const result=getSwapScopeSlots(target,scope);
-  if(!result.slots.length){showStatus('err','Keine ungeloggte Planstelle für diese Änderung verfügbar.');return;}
+  // computeSwapApplicableSlots() schuetzt geloggte Planstellen wie bisher und
+  // erlaubt nur bei reiner Umbenennung ("rename") eine Ausnahme fuer die
+  // konkret ausgewaehlte Stelle (scope==='instance') — siehe Kommentar dort.
+  const result=computeSwapApplicableSlots(target,scope,mode);
+  if(!result.slots.length){
+    // Fix 1: sichtbar im PLAN-Dialog statt in der TRAINING-Statuszeile (#status),
+    // die im PLAN-Tab nicht sichtbar ist. Dialog bleibt bewusst offen.
+    if(impactEl)impactEl.textContent=buildSwapLoggedBlockedMessage(scope);
+    return;
+  }
   if(scope!=='instance'&&!confirm('Die Änderung wird an '+result.slots.length+' ungeloggten Stelle(n) in '+getSwapScopeLabel(scope)+' angewendet. Fortfahren?'))return;
   let next;
   if(mode==='rename')next=exerciseIdentity.renameDisplay(current.variantId,displayName)||{...current,displayName};
   else if(mode==='variant'){
     const selected=document.getElementById('swapExistingVariantSel')?.value||'';
     next=exerciseIdentity.createOrSelect(movementName,variantName,displayName,selected?{variantId:selected}:null);
-    if(next.movementId!==current.movementId){showStatus('err','Gerätevarianten müssen dieselbe Basisübung behalten.');return;}
+    if(next.movementId!==current.movementId){
+      if(impactEl)impactEl.textContent='Gerätevarianten müssen dieselbe Basisübung behalten.';
+      return;
+    }
   }else next=exerciseIdentity.createOrSelect(movementName,variantName,displayName);
   _swapBusy=true;
   const scrollY=window.scrollY;
@@ -6481,10 +7257,22 @@ function confirmSwap(name){
     setExerciseInstanceName(slot.c,slot.w,slot.d,slot.idx,next.displayName,target.planId);
   });
   persist();
-  closeSwap();
   renderPlanWeekView();
   renderWorkout();
-  requestAnimationFrame(()=>window.scrollTo({top:scrollY,behavior:'auto'}));
+  _swapBusy=false;
+  if(result.targetIncluded){
+    // Volltreffer: die ausgewaehlte Stelle wurde geaendert (ggf. per
+    // Rename-Ausnahme trotz vorhandener Trainingsdaten) — Dialog schliesst
+    // wie bisher.
+    closeSwap();
+    requestAnimationFrame(()=>window.scrollTo({top:scrollY,behavior:'auto'}));
+  }else{
+    // Fix 2: die ausgewaehlte Stelle war geloggt und blieb bewusst
+    // unveraendert, andere Stellen im gewaehlten Umfang wurden trotzdem
+    // geaendert (bereits gerendert). Dialog bleibt offen und zeigt das
+    // Ergebnis, statt still zu schliessen.
+    if(impactEl)impactEl.textContent=buildSwapPartialMessage(result.slots.length,scope);
+  }
 }
 
 function confirmSwapCustom(){
@@ -6717,6 +7505,7 @@ async function saveToSheet(){
       showStatus('err','⚠ Speichern konnte nicht bestätigt werden — bitte erneut versuchen');
       addToErrorLog('SYNC_UNVERIFIED','Speichern nicht bestätigt: '+toSend.length+' Übung(en) ('+day.date+')');
       setBtnLoading(false);
+      pbSetSaveState('error');
       return;
     }
 
@@ -6725,10 +7514,12 @@ async function saveToSheet(){
     haptic(30);
     addToErrorLog('SYNC_OK','Bulk gespeichert & bestätigt: '+toSend.length+' Übungen ('+day.date+')');
     updateLastSync();
+    pbSetSaveState('saved');
   }catch(e){
     bufferOffline(payload);
     showStatus('err','⚠ Offline — lokal gespeichert');
     addToErrorLog('OFFLINE','Offline-Buffer: '+e.message);
+    pbSetSaveState('error');
   }
   setBtnLoading(false);
 }
@@ -6761,12 +7552,33 @@ async function verifySheetSave(sheetName,date,toSend){
   }
 }
 
+/* V2: Speicherstatus der Sticky-Save-Bar. Rein visuell — die
+   bestehende Google-Sheet-Speicherlogik bleibt unverändert und es
+   wird nichts automatisch gespeichert. */
+const PB_SAVE_STATE_TEXT={
+  idle:'Keine Änderungen',
+  dirty:'Änderungen offen',
+  saving:'Wird gespeichert…',
+  saved:'Gespeichert ✓',
+  error:'Fehler beim Speichern'
+};
+let pbSaveState='idle';
+function pbSetSaveState(state){
+  pbSaveState=PB_SAVE_STATE_TEXT[state]?state:'idle';
+  const wrap=document.getElementById('saveState');
+  const txt=document.getElementById('saveStateTxt');
+  if(wrap)wrap.dataset.state=pbSaveState;
+  if(txt)txt.textContent=PB_SAVE_STATE_TEXT[pbSaveState];
+}
+function pbMarkDirty(){if(pbSaveState!=='saving')pbSetSaveState('dirty');}
+
 function setBtnLoading(on){
   document.getElementById('saveBtn').disabled=on;
-  document.getElementById('saveBtnTxt').textContent=on?'Speichern…':'In Google Sheet speichern';
+  document.getElementById('saveBtnTxt').textContent=on?'Speichern…':'Änderungen speichern';
   document.getElementById('saveSpin').style.display=on?'inline-block':'none';
   const dot=document.getElementById('apiDot');
   if(dot){dot.className='api-dot '+(on?'syncing':API_URL?'connected':'error');}
+  if(on)pbSetSaveState('saving');
 }
 function updateLastSync(){
   const now=new Date();
@@ -7508,6 +8320,22 @@ ANTWORTSTRUKTUR:
 FORMAT:
 Fuenf kurze Zeilen. Keine Einleitung, kein Roman.`;
 
+/* V2: sichtbarer Analyse-Zustand (nicht gestartet / läuft / Ergebnis / Fehler).
+   Rein visuell — die Analyse-Logik selbst ist unverändert. */
+const PB_KI_STATE_TEXT={
+  idle:'Noch nicht gestartet',
+  running:'Analyse läuft…',
+  ready:'Ergebnis vorhanden · Rückfrage möglich',
+  error:'Analyse unvollständig'
+};
+function pbSetKiState(state){
+  const key=PB_KI_STATE_TEXT[state]?state:'idle';
+  const wrap=document.getElementById('kiState');
+  const txt=document.getElementById('kiStateTxt');
+  if(wrap)wrap.dataset.state=key;
+  if(txt)txt.textContent=PB_KI_STATE_TEXT[key];
+}
+
 async function runAutoAnalysis() {
   const btn = document.getElementById('kiAutoRunBtn');
   const body = document.getElementById('kiAutoBody');
@@ -7515,6 +8343,7 @@ async function runAutoAnalysis() {
 
   btn.disabled = true;
   btn.textContent = '⏳';
+  pbSetKiState('running');
 
   // ── Schritt 1: Lokale Findings sofort anzeigen ─────────────
   const findings = buildPbAnalysisEngine();
@@ -7535,6 +8364,7 @@ async function runAutoAnalysis() {
   if (!store._aiKey) {
     btn.disabled = false;
     btn.textContent = '▶ Analyse starten';
+    pbSetKiState('ready');
     return;
   }
 
@@ -7570,10 +8400,12 @@ async function runAutoAnalysis() {
       +'<span class="ki-finding-text" style="color:var(--mu);">'+groqText.replace(/\n/g,'<br>')+'</span>'
       +'</div>';
 
+    pbSetKiState('ready');
   } catch(e) {
     const groqFinal = document.getElementById('groqRow');
     if(groqFinal) groqFinal.remove();
     addToErrorLog('KI_AUTO_ERROR', e.message);
+    pbSetKiState('error');
   }
 
   btn.disabled = false;
