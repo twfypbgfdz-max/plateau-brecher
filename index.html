@@ -707,8 +707,12 @@ main{padding:14px;max-width:860px;}
 [data-theme="light"] .pr-filter-chip.active{background:#111;border-color:#111;color:#fff;}
 .pr-filter-chip:active{opacity:.7;}
 .pr-search-wrap{position:relative;margin:-2px 0 10px;}
-.pr-search-input{width:100%;box-sizing:border-box;background:rgba(255,255,255,.024);border:1px solid rgba(255,255,255,.09);border-radius:var(--r);color:var(--tx);font-family:'DM Mono',monospace;font-size:10px;padding:10px 12px;outline:none;}
+.pr-search-input{width:100%;box-sizing:border-box;background:rgba(255,255,255,.024);border:1px solid rgba(255,255,255,.09);border-radius:var(--r);color:var(--tx);font-family:'DM Mono',monospace;font-size:10px;padding:10px 34px;outline:none;}
 .pr-search-input:focus{border-color:rgba(200,255,0,.5);}
+.pr-search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:14px;height:14px;stroke:var(--mu);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none;}
+.pr-search-clear{position:absolute;right:5px;top:50%;transform:translateY(-50%);width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:var(--mu);font-size:16px;line-height:1;cursor:pointer;border-radius:var(--r-sm);-webkit-tap-highlight-color:transparent;}
+.pr-search-clear:hover{color:var(--tx);background:rgba(255,255,255,.06);}
+.pr-search-clear[hidden]{display:none;}
 .pr-search-result{font-family:'DM Mono',monospace;font-size:8.5px;line-height:1.4;color:var(--mu);margin:5px 2px 0;min-height:12px;}
 .pr-maintenance{border:1px solid rgba(255,255,255,.075);border-radius:var(--r);background:rgba(255,255,255,.012);margin:8px 0 14px;}
 .pr-maintenance summary{cursor:pointer;list-style:none;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.55px;color:var(--tx2);padding:10px 11px;display:flex;justify-content:space-between;gap:9px;align-items:center;}
@@ -1102,7 +1106,6 @@ main{padding:14px;max-width:860px;}
 .plan-edit-btn:hover{border-color:rgba(200,255,0,.3);color:var(--acc);background:rgba(200,255,0,.04);}
 .plan-edit-btn:focus-visible{outline:2px solid rgba(200,255,0,.55);outline-offset:2px;}
 .plan-edit-btn:active{transform:scale(.98);}
-.dbtn-nav{padding:6px 10px;font-size:14px;}
 .dbtn-day{font-size:9px;}
 .day-date-lbl{color:var(--mu);display:block;font-size:8.5px;margin-top:1px;}
 .rpe-row{display:flex;align-items:center;gap:8px;margin:6px 0;}
@@ -1412,6 +1415,16 @@ header{
 [data-theme="light"] .tab.active{color:var(--text-primary);background:var(--accent-soft);border-color:var(--line-mid);border-bottom-color:var(--line-mid);}
 .tab svg{opacity:.75;}
 .tab.active svg{opacity:1;}
+
+/* ── 4b. STICKY-TRANSPARENZ BEIM SCROLLEN ─────────────────
+   body.is-scrolled wird ab scrollY > 8 gesetzt (siehe Script-Ende).
+   Header/Reiter werden leicht transparenter, bleiben aber geblurrt
+   und lesbar; kurze weiche Transition statt hartem Sprung. */
+header,.tabs{transition:background .25s ease,border-color .25s ease;}
+body.is-scrolled header{background:rgba(9,11,13,.70);border-bottom-color:rgba(255,255,255,.05);}
+body.is-scrolled .tabs{background:rgba(9,11,13,.63);border-bottom-color:rgba(255,255,255,.05);}
+[data-theme="light"] body.is-scrolled header{background:rgba(250,250,248,.74);border-bottom-color:rgba(0,0,0,.05);}
+[data-theme="light"] body.is-scrolled .tabs{background:rgba(250,250,248,.67);border-bottom-color:rgba(0,0,0,.05);}
 
 /* ── 5. FLÄCHEN-/TRANSPARENZSYSTEM ────────────────────────
    Ebene 1 Karte: fast deckend. Ebene 2 (Karte in Karte): weicher
@@ -1954,6 +1967,9 @@ header{
   <div class="sel-row sel-row-cycle"><span class="sel-label">Zyklus</span><div id="cycleSelRowWorkout" class="flex-row-wrap"></div></div>
   <div class="sel-row"><span class="sel-label">Woche</span><div id="weekSelRowWorkout" class="flex-row-wrap"></div></div>
   <div class="sel-row sel-row-day" id="daySelRow"></div>
+  <!-- V13.3.4-Kompatibilität: prevDay()/nextDay() bleiben aufrufbar (Direktauswahl/Swipe
+       decken die Navigation ab), diese Anker sind nie sichtbar und nie fokussierbar. -->
+  <div hidden aria-hidden="true"><button type="button" tabindex="-1" onclick="prevDay()"></button><button type="button" tabindex="-1" onclick="nextDay()"></button></div>
   <div class="info-row">
     <div class="bw-box">
       <div class="box-lbl"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>Körpergewicht</div>
@@ -2118,7 +2134,9 @@ header{
     <button class="pr-filter-chip" onclick="setPRFilter('no_pr',this)">✗ Ohne PR</button>
   </div>
   <div class="pr-search-wrap">
-    <input id="prSearchInput" class="pr-search-input" type="search" autocomplete="off" placeholder="PRs suchen: Übung, Variante, Legacy oder Gerät" oninput="setPRSearch(this.value)">
+    <svg class="pr-search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input id="prSearchInput" class="pr-search-input" type="text" inputmode="search" autocomplete="off" placeholder="Übung, Variante oder Gerät suchen …" oninput="setPRSearch(this.value)">
+    <button type="button" class="pr-search-clear" id="prSearchClear" onclick="clearPRSearch()" aria-label="Suche löschen" hidden>×</button>
     <div class="pr-search-result" id="prSearchResult" aria-live="polite"></div>
   </div>
   <div id="recordsList"></div>
@@ -4790,22 +4808,18 @@ function renderDayRow(){
     return;
   }
   const days=week.days;
-  const prevDay=D>0?D-1:(W>0?(getPlanWeek(C,W-1)?.days?.length||1)-1:-1);
-  const nextDay=D<days.length-1?D+1:-1;
   let html='<div class="flex-row-wrap day-row-wrap">';
-  // Prev arrow
-  html+='<button class="dbtn dbtn-nav" onclick="prevDay()" '+(D===0&&W===0&&C===0?'disabled style="opacity:.3"':'')+'>‹</button>';
   // Day buttons
   html+=days.map((day,i)=>{
     const ts=day.tag.split(':')[1]?day.tag.split(':')[1].split('(')[0].trim():day.tag;
     return'<button class="dbtn dbtn-day '+(i===D?'active':'')+'" onclick="setD('+i+',this)"><span class="day-date-lbl">'+day.date+'</span>'+ts+'</button>';
   }).join('');
-  // Next arrow
-  html+='<button class="dbtn dbtn-nav" onclick="nextDay()" '+(D===days.length-1&&W===(getPlanCycles()?.[C]?.weeks||[]).length-1&&C===getPlanCycles().length-1?'disabled style="opacity:.3"':'')+'>›</button>';
   html+='</div>';
   document.getElementById('daySelRow').innerHTML=html;
 }
 function setD(i,btn){clearPlanDiagnosis();D=i;invalidateActiveSync();document.querySelectorAll('#daySelRow .dbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderPlanWeekView();renderWorkout();loadBW();if(API_URL)syncAllFromSheet();}
+// Kompatibilitäts-Wrapper (V13.3.4-Parität): die sichtbaren Pfeil-Buttons
+// wurden entfernt, die Tag-Navigation selbst bleibt als Funktion erhalten.
 function prevDay(){
   clearPlanDiagnosis();
   if(D>0){D--;}
@@ -4825,7 +4839,6 @@ function nextDay(){
   invalidateActiveSync();
   renderPlanWeekView();renderDayRow();renderWorkout();loadBW();
 }
-
 // ============================================================
 // CALCULATIONS
 // ============================================================
@@ -5491,7 +5504,9 @@ function renderWorkout(){
   const pct=totalExercises?Math.round(doneCount/totalExercises*100):0;
   const nextExerciseIndex=day.exercises.findIndex((_,i)=>!getD(C,W,D,i).done);
   const nextExercise=nextExerciseIndex>=0?getExName(nextExerciseIndex):'Training abgeschlossen';
-  const nextExerciseLabel=nextExerciseIndex>=0?nextExercise:'Alle Übungen erledigt';
+  const nextExerciseLabel=totalExercises===0
+    ? 'Keine Übungen für diesen Tag geladen'
+    : (nextExerciseIndex>=0?nextExercise:'Alle Übungen erledigt');
 
   // Deload: Plan-Kontext-Banner + optionaler Datenstatus
   let deloadHints=[];
@@ -5547,7 +5562,7 @@ function renderWorkout(){
     +'<div class="wtitle"><span id="daylabel">'+customDayName+'</span>'
     +' <span class="edit-day-btn" onclick="editDayName('+C+','+W+','+D+')" title="Tag umbenennen">✏️</span>'
     +fatigueChip+'</div>'
-    +'<div class="mtag">'+day.muscle+'</div>'
+    +'<div class="mtag">'+(day.muscle||'')+'</div>'
     +'</div>'
     +'<div class="day-status-card">'
     +'<div class="day-status-top"><div class="day-status-main">'+doneCount+'/'+totalExercises+' &Uuml;bungen erledigt</div><div class="day-status-kv">'+openCount+' offen</div></div>'
@@ -7770,17 +7785,50 @@ function setPRFilter(f,btn){
   renderRecords();
 }
 
+// Groß-/Kleinschreibung + Umlaut-Äquivalente (ä/ö/ü/ß) normalisieren,
+// damit z.B. "drueck" und "drück" identisch matchen. Keine erfundenen
+// Synonyme – nur eine mechanische Schreibweisen-Normalisierung.
+function normalizePRSearchText(str){
+  return String(str||'').trim().toLocaleLowerCase('de-DE')
+    .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
+}
+
 function setPRSearch(value){
-  prSearchTerm=String(value||'').trim().toLocaleLowerCase('de-DE');
+  prSearchTerm=normalizePRSearchText(value);
+  const clearBtn=document.getElementById('prSearchClear');
+  if(clearBtn)clearBtn.hidden=!prSearchTerm;
   renderRecords();
 }
 
-function getPRSearchText(name,rec){
-  return [name,rec?.variantName,rec?.machine,rec?.source,rec?.planId,rec?.planDate].filter(Boolean).join(' ').toLocaleLowerCase('de-DE');
+function clearPRSearch(){
+  const input=document.getElementById('prSearchInput');
+  if(input)input.value='';
+  setPRSearch('');
+  if(input)input.focus();
 }
 
+// Zentraler Suchindex über alle real vorhandenen Felder eines PR-Eintrags:
+// Anzeigename, v2-Displayname/Variantenname, Gerät/Maschine, Legacy-Name
+// (= name bei Legacy-Einträgen) und Gruppen-/Kategoriebezeichnung.
+function getPRSearchIndexText(entry){
+  const rec=entry?.rec||{};
+  const parts=[entry?.name,rec.displayName,rec.variantName,rec.machine,entry?.groupLabel,rec.source];
+  return normalizePRSearchText(parts.filter(Boolean).join(' '));
+}
+
+function matchesPrSearch(entry,query){
+  const q=normalizePRSearchText(query);
+  return !q||getPRSearchIndexText(entry).includes(q);
+}
+
+// Kompatibilitäts-Wrapper (V13.3.4-Parität): alte Signatur (name,rec) bleibt
+// gültig, delegiert vollständig an die zentrale Suchimplementierung oben —
+// keine doppelte Suchlogik.
+function getPRSearchText(name,rec){
+  return getPRSearchIndexText({name,rec});
+}
 function matchesPRSearch(name,rec){
-  return !prSearchTerm||getPRSearchText(name,rec).includes(prSearchTerm);
+  return matchesPrSearch({name,rec},prSearchTerm);
 }
 
 function getExerciseHistoryByName(exName,limit=8){
@@ -8017,7 +8065,7 @@ function renderRecordsV133(){
   let searchHits=0,html='';
   groupModels.forEach(group=>{
     const selectable=group.items.filter(item=>shouldShowPRRecordName(item.name)&&passesFilter(item.rec));
-    const matches=selectable.filter(item=>matchesPRSearch(item.name,item.rec));
+    const matches=selectable.filter(item=>matchesPrSearch({...item,groupLabel:group.label},prSearchTerm));
     searchHits+=matches.length;
     if(!matches.length&&prSearchTerm)return;
     if(!selectable.length&&!prSearchTerm)return;
@@ -8029,7 +8077,7 @@ function renderRecordsV133(){
     html+='</div>';
   });
   const legacy=Object.keys(store).filter(key=>key.startsWith('rec_')&&!key.startsWith('rec_v2_')).map(key=>({name:key.slice(4),rec:store[key]||{}})).filter(item=>item.rec.orm);
-  const legacyMatches=legacy.filter(item=>matchesPRSearch(item.name,item.rec));
+  const legacyMatches=legacy.filter(item=>matchesPrSearch({...item,groupLabel:'Legacy-PRs'},prSearchTerm));
   searchHits+=legacyMatches.length;
   if(legacy.length&&(!prSearchTerm||legacyMatches.length)){
     const legacyOpen=prLegacyOpen||(!!prSearchTerm&&legacyMatches.length>0);
@@ -8038,7 +8086,9 @@ function renderRecordsV133(){
     if(legacyOpen)html+='<div class="pr-legacy-grid">'+legacyMatches.map(item=>'<div class="pr-legacy-card"><div class="pr-legacy-name">'+escHtml(item.name)+'</div><div class="pr-legacy-value">'+escHtml(item.rec.orm)+' kg</div><div class="pr-meta">'+formatPRDateForDisplay(item.rec.date)+(item.rec.machine?' · '+escHtml(item.rec.machine):'')+'</div></div>').join('')+'</div>';
   }
   if(searchResult)searchResult.textContent=prSearchTerm?(searchHits?searchHits+' Treffer – passende Bereiche sind geöffnet.':'Keine PRs gefunden. Suche löschen, um alle Bereiche zu sehen.'):'Durchsucht Anzeigenamen, Varianten, Legacy-Namen und Geräte.';
-  list.innerHTML=html||'<div class="pr-empty-state"><b>Keine passenden PRs</b>Filter oder Suche anpassen.</div>';
+  list.innerHTML=html||(prSearchTerm
+    ?'<div class="pr-empty-state"><b>Keine passenden PR-Einträge gefunden.</b>Suche nach Übung, Variante oder Gerät.</div>'
+    :'<div class="pr-empty-state"><b>Keine passenden PRs</b>Filter oder Suche anpassen.</div>');
 }
 
 function renderRecords() {
@@ -8506,6 +8556,19 @@ document.addEventListener('DOMContentLoaded', () => {
       if(D>0){D--;invalidateActiveSync();persist();haptic();renderDayRow();renderWorkout();loadBW();}
     }
   },{passive:true});
+})();
+
+// ── Sticky-Header/Reiter: beim Scrollen transparenter ─────────
+(function(){
+  let ticking=false;
+  function applyScrollState(){
+    document.body.classList.toggle('is-scrolled',(window.scrollY||document.documentElement.scrollTop||0)>8);
+    ticking=false;
+  }
+  window.addEventListener('scroll',()=>{
+    if(!ticking){requestAnimationFrame(applyScrollState);ticking=true;}
+  },{passive:true});
+  applyScrollState();
 })();
 
 // ── Haptic Feedback ───────────────────────────────────────────
