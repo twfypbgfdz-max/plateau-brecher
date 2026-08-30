@@ -50,3 +50,8 @@ node_modules/
 # Plateau-Brecher Schutz-Marker (lokal, nicht committen)
 /.protected
 /.approval-signoff
+
+# Parallele-Sessions-Sperre (siehe CLAUDE.md/AGENTS.md)
+.agent-lock.json
+.agent-lock.json.*.tmp
+.agent-lock.guard.json
