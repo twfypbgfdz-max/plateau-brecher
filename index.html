@@ -2488,11 +2488,11 @@ const PLAN = [{"weeks":[{"weekLabel":"Woche 1","isDeload":false,"isSchool":false
 // Neuer 5-Tage-Split ab 04.09.2026. Vergangene Trainingstage bleiben unverändert,
 // damit vorhandene Satzdaten und Bestleistungen ihren historischen Übungen zugeordnet bleiben.
 const CURRENT_TRAINING_SPLIT={
-  PULL:['Latzug-Maschine (breit)','Hammer Strength Row (eng)','Prime Row seated','Hammer Strength Row (eng)','High Row Maschine','Face-Pulls (Kabel)','Bizeps-Maschine (Preacher)'],
-  PUSH:['Incline Chest Press','Brustpresse (horizontal)','Butterfly','Seithebe-Maschine','Schulterdrück-Maschine','Trizeps-Dips-Maschine'],
-  LEGS:['Beinbeuger unilateral','Hack Squat','Rumänisches Kreuzheben','Hip Thrust','Beinpresse (45 Grad)','Beinstrecker-Maschine','Wadenheben stehend'],
-  TORSO:['Latzug-Maschine (breit)','Incline Chest Press','Hammer Strength Row (eng)','Brustpresse (horizontal)','Prime Row seated','Butterfly','Hammer Strength Row (eng)','High Row Maschine'],
-  LIMBS:['Beinbeuger unilateral','Beinpresse (45 Grad)','Rumänisches Kreuzheben','Beinstrecker-Maschine','Trizepsstrecken','Bizeps-Maschine (Preacher)','Seithebe-Maschine','Face-Pulls (Kabel)']
+  PULL:['Latzug breit','Enges Rudern','Breites Rudern','Enges Rudern','Überzüge','Face Pulls','Bizep'],
+  PUSH:['Schräg','Schräg/flach','Butterfly','Seitheben','Schulterdrücken','Trizep'],
+  LEGS:['Beuger','Hack Squat','RDLS KH','Hip Thrust','Bein Presse','Strecker','Waden'],
+  TORSO:['Latzug breit','Schrägbank','Enges Rudern','Flach/Schrägbank','T-Bar','Butterfly','Enges Rudern','Überzüge'],
+  LIMBS:['Beuger','Bein Presse','RDLS KH','Strecker','Trizeps Strecken','Bizep Curls','Seitheben','Face Pulls']
 };
 let useCurrentTrainingSplit=false;
 PLAN.forEach((cycle,cycleIndex)=>cycle.weeks.forEach(week=>week.days.forEach(day=>{
