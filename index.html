@@ -2494,13 +2494,22 @@ const CURRENT_TRAINING_SPLIT={
   TORSO:['Latzug breit','Schrägbank','Enges Rudern','Flach/Schrägbank','T-Bar','Butterfly','Enges Rudern','Überzüge'],
   LIMBS:['Beuger','Bein Presse','RDLS KH','Strecker','Trizeps Strecken','Bizep Curls','Seitheben','Face Pulls']
 };
-let useCurrentTrainingSplit=false;
-PLAN.forEach((cycle,cycleIndex)=>cycle.weeks.forEach(week=>week.days.forEach(day=>{
-  if(cycleIndex===4&&day.date==='04.09')useCurrentTrainingSplit=true;
-  if(!useCurrentTrainingSplit)return;
-  const splitName=String(day.tag||'').match(/TAG \d+:\s*(PULL|PUSH|LEGS|TORSO|LIMBS)/i)?.[1]?.toUpperCase();
-  if(splitName&&CURRENT_TRAINING_SPLIT[splitName])day.exercises=[...CURRENT_TRAINING_SPLIT[splitName]];
-})));
+function applyCurrentTrainingSplit(cycles){
+  let useCurrentTrainingSplit=false;
+  let changed=false;
+  (cycles||[]).forEach((cycle,cycleIndex)=>cycle.weeks.forEach(week=>week.days.forEach(day=>{
+    if(cycleIndex===4&&day.date==='04.09')useCurrentTrainingSplit=true;
+    if(!useCurrentTrainingSplit)return;
+    const splitName=String(day.tag||'').match(/TAG \d+:\s*(PULL|PUSH|LEGS|TORSO|LIMBS)/i)?.[1]?.toUpperCase();
+    const exercises=CURRENT_TRAINING_SPLIT[splitName];
+    if(exercises&&JSON.stringify(day.exercises)!==JSON.stringify(exercises)){
+      day.exercises=[...exercises];
+      changed=true;
+    }
+  })));
+  return changed;
+}
+applyCurrentTrainingSplit(PLAN);
 
 // ============================================================
 // STORAGE
@@ -2831,6 +2840,8 @@ function ensurePlannerV13(){
       if(!plan.name){plan.name='Trainingsplan '+(idx+1);changed=true;}
       if(!Array.isArray(plan.cycles)){plan.cycles=[];changed=true;}
     });
+    const legacyMainPlan=existing.plans.find(plan=>plan.id==='plan_v12_import');
+    if(legacyMainPlan&&applyCurrentTrainingSplit(legacyMainPlan.cycles))changed=true;
     if(!existing.activePlanId||!existing.plans.some(p=>p.id===existing.activePlanId)){
       existing.activePlanId=existing.plans[0].id;
       changed=true;
