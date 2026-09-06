@@ -3266,7 +3266,34 @@ function getV2RecordKey(identity){return identity?.variantId?'rec_v2_'+safePlanI
 function isPRStorageKey(key){return String(key||'').startsWith('rec_');}
 function getPRStorageDisplayName(key){const record=store[key]||{};return String(key||'').startsWith('rec_v2_')?String(record.displayName||record.variantName||'Unbenannte Variante'):String(key||'').slice(4);}
 /* EXERCISE_IDENTITY_MODEL_END */
-function getD(c,w,d,e){const k=dataKey(c,w,d,e);if(!store[k])store[k]={g1:'',r1:'',g2:'',r2:'',g3:'',r3:'',notes:'',done:false,machine:'Standard'};return store[k];}
+const TWO_SET_WORKING_SET_CUTOFF='06.09';
+const trainingDataContexts=new WeakMap();
+function getPlanDateOrder(date){
+  const match=String(date||'').trim().match(/^(\d{1,2})\.(\d{1,2})$/);
+  return match?parseInt(match[2],10)*100+parseInt(match[1],10):0;
+}
+function usesTwoWorkingSets(day){
+  return getPlanDateOrder(day?.date)>=getPlanDateOrder(TWO_SET_WORKING_SET_CUTOFF);
+}
+function bindTrainingDataContext(data,c,w,d,e){
+  if(data&&typeof data==='object')trainingDataContexts.set(data,{c,w,d,e});
+  return data;
+}
+function getWorkingSetCountForDay(day,exName){
+  if(usesTwoWorkingSets(day))return 2;
+  return isLimbsLimitedSetExercise(exName,day)?2:3;
+}
+function getWorkingSetCountForData(data){
+  const context=data&&typeof data==='object'?trainingDataContexts.get(data):null;
+  if(!context)return 3;
+  const day=getPlanDay(context.c,context.w,context.d);
+  const exName=day?.exercises?.[context.e]||'';
+  return getWorkingSetCountForDay(day,exName);
+}
+function getWorkingSetPairs(data,setCount=getWorkingSetCountForData(data)){
+  return [['g1','r1'],['g2','r2'],['g3','r3']].slice(0,setCount);
+}
+function getD(c,w,d,e){const k=dataKey(c,w,d,e);if(!store[k])store[k]={g1:'',r1:'',g2:'',r2:'',g3:'',r3:'',notes:'',done:false,machine:'Standard'};return bindTrainingDataContext(store[k],c,w,d,e);}
 function getRecord(n,identity){
   if(!identity)return store['rec_'+n]||null;
   const v2Key=getV2RecordKey(identity);
@@ -3287,9 +3314,9 @@ function getPRSetCandidate(weightValue,repsValue,setIndex=0){
   if(!Number.isFinite(ormRaw)||ormRaw<=0)return null;
   return {orm:Math.round(ormRaw),ormRaw,weight,reps,setIndex};
 }
-function getBestSetFromTrainingData(d){
+function getBestSetFromTrainingData(d,setCount=getWorkingSetCountForData(d)){
   let best=null;
-  [['g1','r1'],['g2','r2'],['g3','r3']].forEach(([gKey,rKey],setIndex)=>{
+  getWorkingSetPairs(d,setCount).forEach(([gKey,rKey],setIndex)=>{
     const candidate=getPRSetCandidate(d?.[gKey],d?.[rKey],setIndex);
     if(!candidate)return;
     if(!best||candidate.orm>best.orm||(candidate.orm===best.orm&&(candidate.weight>best.weight||(candidate.weight===best.weight&&candidate.setIndex<best.setIndex))))best=candidate;
@@ -3342,7 +3369,8 @@ function comparePRCandidates(candidate,existing){
   return 0;
 }
 function buildPRCandidateFromData(data,context={}){
-  const set=getBestSetFromTrainingData(data);
+  const setCount=usesTwoWorkingSets({date:context.planDate})?2:getWorkingSetCountForData(data);
+  const set=getBestSetFromTrainingData(data,setCount);
   if(!set)return null;
   return {...set,date:context.date||'',planDate:context.planDate||'',source:context.source||'local',machine:getMachineValue(data),cycle:context.cycle??null,week:context.week??null,day:context.day??null};
 }
@@ -3720,8 +3748,9 @@ function buildDataQualityReport(){
     if(shouldHidePRDisplayName(name))addQualityIssue(issues,name+': Alias-PR wird in der PR-Seite ausgeblendet');
   });
   Object.keys(store).filter(k=>/^\d+_\d+_\d+_\d+$/.test(k)).forEach(k=>{
-    const d=store[k]||{};
-    [['g1','r1'],['g2','r2'],['g3','r3']].forEach(([g,r],idx)=>{
+    const [c,w,day,e]=k.split('_').map(Number);
+    const d=bindTrainingDataContext(store[k]||{},c,w,day,e);
+    getWorkingSetPairs(d).forEach(([g,r],idx)=>{
       const gv=String(d[g]||'').trim();
       const rv=String(d[r]||'').trim();
       if((gv&&!rv)||(!gv&&rv))addQualityIssue(issues,k+' S'+(idx+1)+': Gewicht/Wdh unvollständig');
@@ -3805,7 +3834,7 @@ function currentCockpitTrainingUrl(){
 }
 function dayHasAnyTrainingData(c,w,d,day){
   const exercises=Array.isArray(day?.exercises)?day.exercises:[];
-  return exercises.some((_,index)=>{const data=store[dataKey(c,w,d,index)];return !!(data&&calcTotal(data));});
+  return exercises.some((_,index)=>{const data=store[dataKey(c,w,d,index)];return !!(data&&calcTotal(bindTrainingDataContext(data,c,w,d,index)));});
 }
 function buildCockpitApiSummary(now=new Date()){
   const day=getPlanDay(C,W,D);const week=getPlanWeek(C,W);
@@ -3897,7 +3926,10 @@ function buildCockpitTrainingSummary(){
       ||baseDay.exercises?.[i]
       ||'');
   };
-  const exerciseDataAt=(c,w,d,i)=>store[scopedReadKey(c+'_'+w+'_'+d+'_'+i)]||null;
+  const exerciseDataAt=(c,w,d,i)=>{
+    const data=store[scopedReadKey(c+'_'+w+'_'+d+'_'+i)]||null;
+    return data?bindTrainingDataContext(data,c,w,d,i):null;
+  };
   const dayHasData=(c,w,d,day)=>(day?.exercises||[]).some((_,i)=>{
     const raw=exerciseDataAt(c,w,d,i);
     return !!(raw&&calcTotal(raw));
@@ -4901,13 +4933,13 @@ function nextDay(){
 function calcTotal(d){
   let t=0;
   const p=(v)=>parseFloat(String(v||0).replace(',','.'));
-  if(d.g1&&d.r1)t+=p(d.g1)*p(d.r1);
-  if(d.g2&&d.r2)t+=p(d.g2)*p(d.r2);
-  if(d.g3&&d.r3)t+=p(d.g3)*p(d.r3);
+  getWorkingSetPairs(d).forEach(([g,r])=>{
+    if(d?.[g]&&d?.[r])t+=p(d[g])*p(d[r]);
+  });
   return t?Math.round(t):null;
 }
 
-// POS = Progressive Overload Score (Gesamtlast S1+S2+S3)
+// POS = Progressive Overload Score (Gesamtlast der am Trainingstag aktiven Arbeitssätze)
 function calcPOS(d){ return calcTotal(d)||0; }
 
 // Stagnation über letzte 3 Einheiten prüfen
@@ -4941,7 +4973,8 @@ function checkStagnation(exIdx){
 function calc1RM(d){
   let best=null;
   const p=(v)=>parseFloat(String(v||0).replace(',','.'));
-  [[d.g1,d.r1],[d.g2,d.r2],[d.g3,d.r3]].forEach(([g,r])=>{
+  getWorkingSetPairs(d).forEach(([gKey,rKey])=>{
+    const g=d?.[gKey],r=d?.[rKey];
     if(g&&r){const e=p(g)*(1+p(r)/30);if(!best||e>best)best=e;}
   });
   return best?Math.round(best):null;
@@ -5061,11 +5094,7 @@ function toggleReadinessPanel(){
 }
 
 function countFilledWorkSets(d){
-  let count=0;
-  if(d?.g1&&d?.r1)count++;
-  if(d?.g2&&d?.r2)count++;
-  if(d?.g3&&d?.r3)count++;
-  return count;
+  return getWorkingSetPairs(d).filter(([g,r])=>d?.[g]&&d?.[r]).length;
 }
 
 function setProgressNum(v){
@@ -5283,7 +5312,7 @@ const AI = {
       const stag=checkStagnation(i);
       return{
         name,trend,stagnation:stag,
-        current:{g1:d.g1,r1:d.r1,g2:d.g2,r2:d.r2,g3:d.g3,r3:d.r3,pos,orm:calc1RM(d),rpe:d.rpe},
+        current:{g1:d.g1,r1:d.r1,g2:d.g2,r2:d.r2,g3:getWorkingSetCountForData(d)>=3?d.g3:'',r3:getWorkingSetCountForData(d)>=3?d.r3:'',pos,orm:calc1RM(d),rpe:d.rpe},
         pr:rec?{orm:rec.orm,date:rec.date}:null,
         summary:'Übung '+name+': '+trend+(stag?' [⚠ '+stag.toUpperCase()+']':'')
       };
@@ -5423,10 +5452,10 @@ function isLimbsLimitedSetExercise(exName,day){
 }
 function getVisibleSetCountForExercise(i){
   const day=getPlanDay(C,W,D);
-  return isLimbsLimitedSetExercise(getExName(i),day)?2:3;
+  return getWorkingSetCountForDay(day,getExName(i));
 }
 function hasExerciseSetData(d){
-  return ['g1','r1','g2','r2','g3','r3'].some(k=>String(d?.[k]||'').trim()!=='');
+  return getWorkingSetPairs(d).some(([g,r])=>String(d?.[g]||'').trim()!==''||String(d?.[r]||'').trim()!=='');
 }
 function escHtml(v){
   return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -5445,7 +5474,7 @@ function renderLastTrainingBox(prevEntry,machine,idx){
       +'<div class="last-training-note">Keine Historie f&uuml;r dieses Ger&auml;t</div>'
       +'</div>';
   }
-  const sets=[['g1','r1'],['g2','r2'],['g3','r3']]
+  const sets=getWorkingSetPairs(data)
     .map(([g,r],idx)=>({idx:idx+1,g:String(data[g]||'').trim(),r:String(data[r]||'').trim()}))
     .filter(s=>s.g||s.r);
   if(!sets.length)return '';
@@ -5531,7 +5560,7 @@ function renderSetHistoryBox(exName,machine,idx){
       const d=r.data||{};
       const first=(String(d.g1||'').trim()||'—')+' kg × '+(String(d.r1||'').trim()||'—');
       const second=(d.g2&&d.r2)?' · S2 '+d.g2+'×'+d.r2:'';
-      const third=(d.g3&&d.r3)?' · S3 '+d.g3+'×'+d.r3:'';
+      const third=(getWorkingSetCountForData(d)>=3&&d.g3&&d.r3)?' · S3 '+d.g3+'×'+d.r3:'';
       return '<div class="set-history-row"><span class="set-history-date">'+escHtml(r.date)+'</span><span class="set-history-main">'+escHtml(first+second+third)+'</span></div>';
     }).join('')
     +'</div></div>';
@@ -6176,14 +6205,15 @@ function getPlanPositionByDate(c,date){
   return null;
 }
 
-function sheetRowToTrainingData(row){
-  return{
+function sheetRowToTrainingData(row,context){
+  const data={
     g1:String(row[6]||'').trim(), r1:String(row[7]||'').trim(),
     g2:String(row[8]||'').trim(), r2:String(row[9]||'').trim(),
     g3:String(row[10]||'').trim(), r3:String(row[11]||'').trim(),
     rpe:String(row[14]||'').trim(),
     notes:String(row[18]||'').trim()
   };
+  return context?bindTrainingDataContext(data,context.c,context.w,context.d,context.e):data;
 }
 
 function buildSheetHistoryForCycle(c,data){
@@ -6197,7 +6227,8 @@ function buildSheetHistoryForCycle(c,data){
     const pos=getPlanPositionByDate(c,lastDate);
     if(!pos||pos.isDeload)return;
     const trainingTag=String(row[3]||'').trim();
-    const trainingData=sheetRowToTrainingData(row);
+    const exIdx=getPlanDay(c,pos.w,pos.d)?.exercises?.findIndex(name=>normExLookupName(name)===normExLookupName(rowEx))??-1;
+    const trainingData=sheetRowToTrainingData(row,{c,w:pos.w,d:pos.d,e:Math.max(0,exIdx)});
     const orm=calc1RM(trainingData);
     const g1=parseFloat(String(trainingData.g1||'').replace(',','.'))||null;
     if(!orm&&!g1)return;
@@ -7491,7 +7522,9 @@ async function saveToSheet(){
       attachExerciseIdentityToData(d,snapC,snapW,snapD,i);
       const p=prev[i]||{};
       const dayValues=getDayValues();
-      const dirty=['g1','r1','g2','r2','g3','r3','rpe','notes'].some(f=>String(d[f])!==String(p[f]||''));
+      const activeSetFields=getWorkingSetPairs(d).flat();
+      const usesThirdSet=getWorkingSetCountForData(d)>=3;
+      const dirty=[...activeSetFields,'rpe','notes'].some(f=>String(d[f])!==String(p[f]||''));
       const dayDirty=['kg','kcal','bpm','duration'].some(f=>String(dayValues[f])!==String(p[f]||''));
       if(!dirty&&!dayDirty&&p.sent)return null;
       return{
@@ -7503,7 +7536,7 @@ async function saveToSheet(){
         kg:       dayValues.kg,
         g1:d.g1||'', r1:d.r1||'',
         g2:d.g2||'', r2:d.r2||'',
-        g3:d.g3||'', r3:d.r3||'',
+        g3:usesThirdSet?(d.g3||''):'', r3:usesThirdSet?(d.r3||''):'',
         rpe:      d.rpe||'',
         kcal:     dayValues.kcal,
         bpm:      dayValues.bpm,
