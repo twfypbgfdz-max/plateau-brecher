@@ -2494,6 +2494,7 @@ const CURRENT_TRAINING_SPLIT={
   TORSO:['Latzug breit','Schrägbank','Enges Rudern','Flach/Schrägbank','T-Bar','Butterfly','Enges Rudern','Überzüge'],
   LIMBS:['Beuger','Bein Presse','RDLS KH','Strecker','Trizeps Strecken','Bizep Curls','Seitheben','Face Pulls']
 };
+const CURRENT_TRAINING_SPLIT_REVISION='2026-09-04-coach-labels';
 function applyCurrentTrainingSplit(cycles){
   let useCurrentTrainingSplit=false;
   let changed=false;
@@ -2510,6 +2511,29 @@ function applyCurrentTrainingSplit(cycles){
   return changed;
 }
 applyCurrentTrainingSplit(PLAN);
+
+function migrateStoredCurrentTrainingSplit(planner){
+  const mainPlan=planner.plans.find(plan=>plan.id==='plan_v12_import');
+  if(!mainPlan)return{changed:false,storeChanged:false};
+  let changed=applyCurrentTrainingSplit(mainPlan.cycles);
+  if(planner.currentTrainingSplitRevision===CURRENT_TRAINING_SPLIT_REVISION)return{changed,storeChanged:false};
+  let storeChanged=false;
+  let useCurrentTrainingSplit=false;
+  (mainPlan.cycles||[]).forEach((cycle,c)=>cycle.weeks.forEach((week,w)=>week.days.forEach((day,d)=>{
+    if(c===4&&day.date==='04.09')useCurrentTrainingSplit=true;
+    if(!useCurrentTrainingSplit)return;
+    (day.exercises||[]).forEach((name,idx)=>{
+      const dayId=safePlanId(getPlanInstanceDayId(day,c,w,d));
+      const date=safePlanId(day.date||'no_date');
+      const instanceKey='exname_instance_plan_v12_import_'+dayId+'_'+date+'_'+c+'_'+w+'_'+d+'_'+idx;
+      const identityKey='exidentity_instance_plan_v12_import_'+dayId+'_'+date+'_'+c+'_'+w+'_'+d+'_'+idx;
+      if(store[instanceKey]!==name){store[instanceKey]=name;storeChanged=true;}
+      if(Object.prototype.hasOwnProperty.call(store,identityKey)){delete store[identityKey];storeChanged=true;}
+    });
+  })));
+  planner.currentTrainingSplitRevision=CURRENT_TRAINING_SPLIT_REVISION;
+  return{changed:true,storeChanged};
+}
 
 // ============================================================
 // STORAGE
@@ -2812,6 +2836,7 @@ function cloneLegacyPlanToPlannerV13(){
     schemaVersion:1,
     createdAt:new Date().toISOString(),
     source:'V12_PLAN_IMPORT',
+    currentTrainingSplitRevision:CURRENT_TRAINING_SPLIT_REVISION,
     activePlanId:'plan_v12_import',
     plans:[{
       id:'plan_v12_import',
@@ -2826,6 +2851,7 @@ function ensurePlannerV13(){
   const existing=store._plannerV13;
   if(existing&&typeof existing==='object'){
     let changed=false;
+    let storeChanged=false;
     if(existing.schemaVersion!==2){existing.schemaVersion=2;changed=true;}
     existing.plans=Array.isArray(existing.plans)?existing.plans:[];
     if(!existing.plans.length){
@@ -2840,8 +2866,9 @@ function ensurePlannerV13(){
       if(!plan.name){plan.name='Trainingsplan '+(idx+1);changed=true;}
       if(!Array.isArray(plan.cycles)){plan.cycles=[];changed=true;}
     });
-    const legacyMainPlan=existing.plans.find(plan=>plan.id==='plan_v12_import');
-    if(legacyMainPlan&&applyCurrentTrainingSplit(legacyMainPlan.cycles))changed=true;
+    const splitMigration=migrateStoredCurrentTrainingSplit(existing);
+    if(splitMigration.changed)changed=true;
+    if(splitMigration.storeChanged)storeChanged=true;
     if(!existing.activePlanId||!existing.plans.some(p=>p.id===existing.activePlanId)){
       existing.activePlanId=existing.plans[0].id;
       changed=true;
@@ -2851,7 +2878,8 @@ function ensurePlannerV13(){
     if(!Array.isArray(existing.templates.weeks)){existing.templates.weeks=[];changed=true;}
     if(!Array.isArray(existing.templates.plans)){existing.templates.plans=[];changed=true;}
     store._plannerV13=existing;
-    if(changed)persistPlannerV13Only();
+    if(storeChanged)persist();
+    else if(changed)persistPlannerV13Only();
     return store._plannerV13;
   }
   store._plannerV13=cloneLegacyPlanToPlannerV13();
